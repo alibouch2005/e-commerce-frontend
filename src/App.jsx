@@ -1,22 +1,32 @@
-import { useEffect } from "react";
-import api from "./Api/axios";
-function App() {
+import { BrowserRouter,Routes,Route } from "react-router-dom";
 
-  useEffect(() => {
+import Home from "./pages/Home";
+// import Login from "./pages/Login";
+// import Products from "./pages/Products";
+// import Cart from "./pages/Cart";
 
-    api.get("/api/products?page=1")
-      .then(res => {
-        console.log(res.data);
-      })
-      .catch(err => {
-        console.log(err);
-      });
+function App(){
 
-  }, []);
+  return(
 
-  return (
-    <h1 >Frontend React connecté à Laravel</h1>
-  );
+    <BrowserRouter>
+
+      <Routes>
+
+        <Route path="/" element={<Home />} />
+
+        {/* <Route path="/login" element={<Login />} />
+
+        <Route path="/products" element={<Products />} />
+
+        <Route path="/cart" element={<Cart />} /> */}
+
+      </Routes>
+
+    </BrowserRouter>
+
+  )
+
 }
 
 export default App;
