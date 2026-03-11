@@ -1,40 +1,79 @@
 import { useState } from "react";
 import { login } from "../services/authService";
 
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [error,setError] = useState("");
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
-    try {
-      const res = await login(email, password);
+    try{
+
+      const res = await login(email,password);
 
       console.log(res.data.user);
 
       alert("Connexion réussie");
-    } catch (err) {
-      console.log("Erreur login", err?.response.data.message || err.message);
-     
+
+    }catch(err){
+
+      const message =
+        err?.response?.data?.message || "Erreur login";
+
+      console.log(message);
+
+      setError(message);
+
     }
+
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="email"
-        placeholder="email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
 
-      <input
-        type="password"
-        placeholder="password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+    <div className="max-w-md mx-auto mt-20">
 
-      <button>Login</button>
-    </form>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4"
+      >
+
+        <Input
+          label="Email"
+          type="email"
+          placeholder="Votre email"
+          value={email}
+          onChange={(e)=>setEmail(e.target.value)}
+        />
+
+        <Input
+          label="Mot de passe"
+          type="password"
+          placeholder="Votre mot de passe"
+          value={password}
+          onChange={(e)=>setPassword(e.target.value)}
+        />
+
+        {error && (
+          <p className="text-red-500 text-sm">
+            {error}
+          </p>
+        )}
+
+        <Button type="submit" variant="primary" size="md" >
+          Se connecter
+        </Button>
+
+      </form>
+
+    </div>
+
   );
+
 }
