@@ -11,6 +11,14 @@ export const login = async (email, password) => {
 
 };
 
+export const register = async (data) => {
+
+  await api.get("/sanctum/csrf-cookie");
+
+  return api.post("/api/register", data);
+
+};
+
 export const logout = () => {
   return api.post("/api/logout");
 };
