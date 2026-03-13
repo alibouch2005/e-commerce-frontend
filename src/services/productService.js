@@ -1,10 +1,8 @@
 import api from "../Api/axios";
 
 export const getProducts = (params = {}) => {
+  return api.get("/api/products", { params });
 
-  return api.get("/api/products", {
-    params
-  });
 
 };
 
