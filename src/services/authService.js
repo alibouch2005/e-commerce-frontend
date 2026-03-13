@@ -23,6 +23,16 @@ export const logout = () => {
   return api.post("/api/logout");
 };
 
+export const forgotPassword = async (email) => {
+
+  return api.post("/api/forgot-password", { email });
+
+};
+
+export const resetPassword = (data) => {
+  return api.post("/api/reset-password", data);
+};
+
 export const getUser = () => {
   return api.get("/api/user");
 };
