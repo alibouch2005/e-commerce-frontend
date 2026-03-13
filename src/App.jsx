@@ -5,6 +5,8 @@ import Login from "./pages/Login";
 import Products from "./pages/Products";
 import Register from "./pages/Register";
 import Navbar from "./components/layout/Navbar";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 // import Cart from "./pages/Cart";
 
 function App() {
@@ -20,6 +22,8 @@ function App() {
 
         {/* <Route path="/cart" element={<Cart />} /> */}
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </BrowserRouter>
   );
