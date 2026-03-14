@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useContext} from "react";
 import { useParams } from "react-router-dom";
 import { getProduct } from "../services/productService";
 import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
 import { addToCart } from "../services/cartService";
+import { CartContext } from "../context/CartContext";
 
 export default function ProductDetails() {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
+  const { addItem } = useContext(CartContext);
 
   useEffect(() => {
     getProduct(id)
@@ -29,7 +31,7 @@ export default function ProductDetails() {
 
   const handleAddToCart = async () => {
     try {
-      await addToCart(product.id, 1);
+      await addItem(product.id, 1);
 
       alert("Produit ajouté au panier");
     } catch (err) {
