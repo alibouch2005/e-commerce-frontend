@@ -9,8 +9,8 @@ import CategoryFilter from "../components/categories/CategoryFilter";
 export default function Products() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [category,setCategory] = useState(null);
-  
+  const [category, setCategory] = useState(null);
+
   const { products, lastPage, loading } = useProducts(page, search, category);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function Products() {
       <h1 className="text-2xl font-bold mb-6">Nos Produits</h1>
 
       <ProductSearch setSearch={setSearch} />
-      <CategoryFilter setCategory={setCategory} />
+      <CategoryFilter category={category} setCategory={setCategory} />
 
       {loading ? <ProductSkeletonGrid /> : <ProductGrid products={products} />}
 
