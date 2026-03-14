@@ -9,7 +9,7 @@ export default function Cart(){
     return <p className="text-center mt-10">Chargement panier...</p>;
   }
 
-  if(!cart || cart.items.length === 0){
+  if(!cart || !cart.items || cart.items.length === 0){
     return (
       <div className="text-center mt-20">
         <h2 className="text-2xl font-semibold">
