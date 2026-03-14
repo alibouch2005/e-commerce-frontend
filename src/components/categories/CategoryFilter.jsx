@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCategories } from "../../services/categoryService";
 
-export default function CategoryFilter({ setCategory }) {
+export default function CategoryFilter({ category, setCategory }) {
 
   const [categories,setCategories] = useState([]);
 
@@ -19,18 +19,24 @@ export default function CategoryFilter({ setCategory }) {
 
       <button
         onClick={()=>setCategory(null)}
-        className="px-4 py-2 bg-gray-200 rounded-lg"
+        className={`px-4 py-2 rounded-lg transition
+        ${category === null 
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 hover:bg-gray-300"}`}
       >
         Tous
       </button>
 
-      {categories.map(category=>(
+      {categories.map(cat=>(
         <button
-          key={category.id}
-          onClick={()=>setCategory(category.id)}
-          className="px-4 py-2 bg-gray-200 rounded-lg"
+          key={cat.id}
+          onClick={()=>setCategory(cat.id)}
+          className={`px-4 py-2 rounded-lg transition
+          ${category === cat.id
+            ? "bg-blue-600 text-white"
+            : "bg-gray-200 hover:bg-gray-300"}`}
         >
-          {category.name}
+          {cat.name}
         </button>
       ))}
 
