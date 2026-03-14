@@ -2,7 +2,7 @@ import { useEffect, useState ,useContext} from "react";
 import { useParams } from "react-router-dom";
 import { getProduct } from "../services/productService";
 import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
-import { addToCart } from "../services/cartService";
+//import { addToCart } from "../services/cartService";
 import { CartContext } from "../context/CartContext";
 
 export default function ProductDetails() {
