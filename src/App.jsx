@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Navbar from "./components/layout/Navbar";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ProductDetails from "./pages/ProductDetails";
 // import Cart from "./pages/Cart";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
       </Routes>
     </BrowserRouter>
   );
