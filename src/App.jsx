@@ -8,7 +8,7 @@ import Navbar from "./components/layout/Navbar";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProductDetails from "./pages/ProductDetails";
-// import Cart from "./pages/Cart";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
@@ -21,11 +21,11 @@ function App() {
 
         <Route path="/products" element={<Products />} />
 
-        {/* <Route path="/cart" element={<Cart />} /> */}
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/products/:id" element={<ProductDetails />} />
+        <Route path="/cart" element={<Cart />} />
       </Routes>
     </BrowserRouter>
   );
