@@ -2,26 +2,24 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProduct } from "../services/productService";
 import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
+import { addToCart } from "../services/cartService";
 
-export default function ProductDetails(){
-
+export default function ProductDetails() {
   const { id } = useParams();
 
-  const [product,setProduct] = useState(null);
+  const [product, setProduct] = useState(null);
 
-  useEffect(()=>{
-
+  useEffect(() => {
     getProduct(id)
-      .then(res=>{
+      .then((res) => {
         setProduct(res.data);
       })
-      .catch(err=>{
+      .catch((err) => {
         console.error(err);
       });
+  }, [id]);
 
-  },[id]);
-
-  if(!product){
+  if (!product) {
     return <ProductDetailsSkeleton />;
   }
 
@@ -29,31 +27,31 @@ export default function ProductDetails(){
     ? `http://localhost:8000${product.image}`
     : "https://via.placeholder.com/600x400?text=Produit";
 
-  return(
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, 1);
 
+      alert("Produit ajouté au panier");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
     <div className="max-w-6xl mx-auto p-6">
-
       <div className="grid md:grid-cols-2 gap-8">
-
         <div className="bg-gray-100 h-80 rounded-lg flex items-center justify-center">
-
           <img
             src={imageUrl}
             alt={product.name}
             className="max-h-full object-contain"
           />
-
         </div>
 
         <div>
+          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
 
-          <h1 className="text-3xl font-bold mb-4">
-            {product.name}
-          </h1>
-
-          <p className="text-gray-500 mb-4">
-            {product.category?.name}
-          </p>
+          <p className="text-gray-500 mb-4">{product.category?.name}</p>
 
           <p className="text-lg mb-6 text-gray-700">
             {product.description || "Aucune description disponible"}
@@ -63,20 +61,16 @@ export default function ProductDetails(){
             {product.price} DH
           </p>
 
-          <p className="mb-6">
-            Stock : {product.stock}
-          </p>
+          <p className="mb-6">Stock : {product.stock}</p>
 
-          <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+          <button
+            onClick={handleAddToCart}
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700"
+          >
             Ajouter au panier
           </button>
-
         </div>
-
       </div>
-
     </div>
-
-  )
-
+  );
 }
