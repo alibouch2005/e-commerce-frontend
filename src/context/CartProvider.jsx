@@ -4,7 +4,7 @@ import { getCart, addToCart } from "../services/cartService";
 
 export default function CartProvider({ children }){
 
-  const [cart,setCart] = useState(null);
+  const [cart,setCart] = useState({ items: [] });
   const [loading,setLoading] = useState(true);
 
   useEffect(()=>{
