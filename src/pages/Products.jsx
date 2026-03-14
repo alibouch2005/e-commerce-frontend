@@ -1,34 +1,15 @@
-import { useEffect, useState } from "react";
-import { getProducts } from "../services/productService";
+import { useState, useEffect } from "react";
+import useProducts from "../hooks/useProducts";
 import ProductGrid from "../components/products/ProductGrid";
 import ProductPagination from "../components/products/ProductPagination";
 import ProductSearch from "../components/products/ProductSearch";
 
 export default function Products(){
 
-  const [products,setProducts] = useState([]);
   const [page,setPage] = useState(1);
-  const [lastPage,setLastPage] = useState(1);
   const [search,setSearch] = useState("");
-  const [loading,setLoading] = useState(false);
 
-  useEffect(()=>{
-
-    setLoading(true);
-
-    getProducts({ page, search })
-      .then(res=>{
-        setProducts(res.data.data);
-        setLastPage(res.data.last_page);
-      })
-      .catch(err=>{
-        console.error("Erreur produits :", err);
-      })
-      .finally(()=>{
-        setLoading(false);
-      });
-
-  },[page,search]);
+  const { products, lastPage, loading } = useProducts(page, search);
 
   useEffect(()=>{
     setPage(1);
