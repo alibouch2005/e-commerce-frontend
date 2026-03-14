@@ -6,8 +6,10 @@ export const getProducts = (params = {}) => {
 
 };
 
+
+
 export const getProduct = (id) => {
 
-  return api.get(`/api/products/${id}`);
+   return api.get(`/api/products/${id}`);
 
 };
