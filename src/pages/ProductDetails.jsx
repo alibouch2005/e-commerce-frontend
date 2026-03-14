@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProduct } from "../services/productService";
+import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
 
 export default function ProductDetails(){
 
@@ -10,15 +11,23 @@ export default function ProductDetails(){
 
   useEffect(()=>{
 
-    getProduct(id).then(res=>{
-      setProduct(res.data);
-    });
+    getProduct(id)
+      .then(res=>{
+        setProduct(res.data);
+      })
+      .catch(err=>{
+        console.error(err);
+      });
 
   },[id]);
 
   if(!product){
-    return <p className="text-center mt-10">Chargement...</p>;
+    return <ProductDetailsSkeleton />;
   }
+
+  const imageUrl = product.image
+    ? `http://localhost:8000${product.image}`
+    : "https://via.placeholder.com/600x400?text=Produit";
 
   return(
 
@@ -27,11 +36,13 @@ export default function ProductDetails(){
       <div className="grid md:grid-cols-2 gap-8">
 
         <div className="bg-gray-100 h-80 rounded-lg flex items-center justify-center">
-          {product.image ? (
-            <img src={`http://localhost:8000${product.image}`} alt={product.name}/>
-          ) : (
-            <span>Image produit</span>
-          )}
+
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="max-h-full object-contain"
+          />
+
         </div>
 
         <div>
@@ -44,11 +55,11 @@ export default function ProductDetails(){
             {product.category?.name}
           </p>
 
-          <p className="text-lg mb-6">
-            {product.description}
+          <p className="text-lg mb-6 text-gray-700">
+            {product.description || "Aucune description disponible"}
           </p>
 
-          <p className="text-2xl font-bold text-blue-600 mb-4">
+          <p className="text-2xl font-bold text-indigo-600 mb-4">
             {product.price} DH
           </p>
 
@@ -56,7 +67,7 @@ export default function ProductDetails(){
             Stock : {product.stock}
           </p>
 
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+          <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
             Ajouter au panier
           </button>
 
