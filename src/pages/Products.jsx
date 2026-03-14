@@ -10,18 +10,29 @@ export default function Products(){
   const [page,setPage] = useState(1);
   const [lastPage,setLastPage] = useState(1);
   const [search,setSearch] = useState("");
+  const [loading,setLoading] = useState(false);
 
   useEffect(()=>{
 
+    setLoading(true);
+
     getProducts({ page, search })
       .then(res=>{
-
         setProducts(res.data.data);
         setLastPage(res.data.last_page);
-
+      })
+      .catch(err=>{
+        console.error("Erreur produits :", err);
+      })
+      .finally(()=>{
+        setLoading(false);
       });
 
   },[page,search]);
+
+  useEffect(()=>{
+    setPage(1);
+  },[search]);
 
   return(
 
@@ -33,7 +44,11 @@ export default function Products(){
 
       <ProductSearch setSearch={setSearch} />
 
-      <ProductGrid products={products} />
+      {loading ? (
+        <p className="text-center">Chargement...</p>
+      ) : (
+        <ProductGrid products={products} />
+      )}
 
       <ProductPagination
         page={page}
