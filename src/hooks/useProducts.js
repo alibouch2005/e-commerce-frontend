@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getProducts } from "../services/productService";
 
-export default function useProducts(page, search){
+export default function useProducts(page, search, category) {
 
   const [products,setProducts] = useState([]);
   const [lastPage,setLastPage] = useState(1);
@@ -13,7 +13,7 @@ export default function useProducts(page, search){
     setLoading(true);
     setError(null);
 
-    getProducts({ page, search })
+    getProducts({ page, search ,  category_id: category })
       .then(res=>{
         setProducts(res.data.data);
         setLastPage(res.data.last_page);
@@ -26,7 +26,7 @@ export default function useProducts(page, search){
         setLoading(false);
       });
 
-  },[page,search]);
+  },[page,search,category]);
 
   return { products, lastPage, loading, error };
 
