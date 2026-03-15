@@ -27,7 +27,7 @@ export default function ProductDetails() {
 
   const imageUrl = product.image
     ? `http://localhost:8000${product.image}`
-    : "https://via.placeholder.com/600x400?text=Produit";
+    : "https://dummyimage.com/600x400/e5e7eb/6b7280&text=Produit";
 
   const handleAddToCart = async () => {
     try {
