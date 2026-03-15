@@ -4,7 +4,7 @@ export default function ProductCard({ product }) {
 
   const imageUrl = product.image
     ? `http://localhost:8000${product.image}`
-    : "https://via.placeholder.com/300x200?text=Produit";
+    : "https://dummyimage.com/300x200/e5e7eb/6b7280&text=Produit";
 
   return (
 
