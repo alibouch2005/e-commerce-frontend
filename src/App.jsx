@@ -9,11 +9,14 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
+      <Toaster position="top-right"/>
+
       <Routes>
         <Route path="/" element={<Home />} />
 
