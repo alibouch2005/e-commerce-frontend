@@ -2,29 +2,31 @@ import { useEffect, useState } from "react";
 import { CartContext } from "./CartContext";
 import { getCart, addToCart } from "../services/cartService";
 
-export default function CartProvider({ children }){
+export default function CartProvider({ children }) {
 
-  const [cart,setCart] = useState({ items: [] });
-  const [loading,setLoading] = useState(true);
+  const [cart, setCart] = useState({ items: [] });
+  const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{
-
+  useEffect(() => {
     loadCart();
+  }, []);
 
-  },[]);
+  
+  // Charger le panier
+  const loadCart = async () => {
 
-  const loadCart = async ()=>{
-
-    try{
+    try {
 
       const res = await getCart();
-      setCart(res.data);
 
-    }catch(err){
+      // important : récupérer data.data
+      setCart(res.data.data ?? { items: [] });
 
-      console.error(err);
+    } catch (err) {
 
-    }finally{
+      console.error("Erreur chargement panier:", err);
+
+    } finally {
 
       setLoading(false);
 
@@ -32,28 +34,32 @@ export default function CartProvider({ children }){
 
   };
 
-  const addItem = async (product_id, quantity = 1)=>{
+  // Ajouter produit
+  const addItem = async (product_id, quantity = 1) => {
 
-    try{
+    try {
 
-      const res = await addToCart(product_id, quantity);
-      setCart(res.data);
+      await addToCart(product_id, quantity);
 
-    }catch(err){
+      // recharger panier
+      await loadCart();
 
-      console.error(err);
+    } catch (err) {
+
+      console.error("Erreur ajout panier:", err);
 
     }
 
   };
 
-  return(
+  return (
 
     <CartContext.Provider
       value={{
         cart,
         addItem,
-        loading
+        loading,
+        reloadCart: loadCart
       }}
     >
 
