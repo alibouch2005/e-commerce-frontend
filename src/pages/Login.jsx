@@ -1,11 +1,14 @@
 import { useState , useContext} from "react";
 import { login } from "../services/authService";
-
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 
 export default function Login() {
+
+  const navigate = useNavigate();
+
 
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
@@ -21,6 +24,7 @@ export default function Login() {
       const res = await login(email,password);
 
       console.log(res.data.user);
+      navigate("/");
       setUser(res.data.user); // Mettre à jour l'état de l'utilisateur dans le contexte d'authentification
       alert("Connexion réussie");
 
