@@ -1,15 +1,24 @@
 import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
+import { updateQuantity, removeFromCart } from "../services/cartService";
 
-export default function Cart(){
+export default function Cart() {
 
-  const { cart, loading } = useContext(CartContext);
+  const { cart, loading, reloadCart } = useContext(CartContext);
 
-  if(loading){
-    return <p className="text-center mt-10">Chargement panier...</p>;
+  const subtotal = cart?.total || 0;
+  const shipping = subtotal > 0 ? 30 : 0;
+  const total = subtotal + shipping;
+
+  if (loading) {
+    return (
+      <p className="text-center mt-10">
+        Chargement panier...
+      </p>
+    );
   }
 
-  if(!cart || !cart.items || cart.items.length === 0){
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="text-center mt-20">
         <h2 className="text-2xl font-semibold">
@@ -19,7 +28,7 @@ export default function Cart(){
     );
   }
 
-  return(
+  return (
 
     <div className="max-w-6xl mx-auto p-6">
 
@@ -27,47 +36,115 @@ export default function Cart(){
         Votre panier
       </h1>
 
-      <div className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-6">
 
-        {cart.items.map(item => (
+        {/* PRODUITS */}
+        <div className="md:col-span-2 space-y-4">
 
-          <div
-            key={item.id}
-            className="flex items-center justify-between bg-white shadow p-4 rounded-lg"
-          >
+          {cart.items.map((item) => (
 
-            <div>
+            <div
+              key={item.id}
+              className="flex items-center justify-between bg-white shadow p-4 rounded-lg"
+            >
 
-              <h3 className="font-semibold">
-                {item.product.name}
-              </h3>
+              {/* Produit */}
+              <div>
+                <h3 className="font-semibold">
+                  {item.product}
+                </h3>
 
-              <p className="text-gray-500">
-                {item.price_at_addition} DH
-              </p>
+                <p className="text-gray-500">
+                  {item.price} DH
+                </p>
+              </div>
+
+              {/* Quantité */}
+              <div className="flex items-center gap-2">
+
+                <button
+                  onClick={async () => {
+                    if (item.quantity > 1) {
+                      await updateQuantity(item.id, item.quantity - 1);
+                      reloadCart();
+                    }
+                  }}
+                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  -
+                </button>
+
+                <span className="font-semibold">
+                  {item.quantity}
+                </span>
+
+                <button
+                  onClick={async () => {
+                    await updateQuantity(item.id, item.quantity + 1);
+                    reloadCart();
+                  }}
+                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  +
+                </button>
+
+              </div>
+
+              {/* Total produit */}
+              <div className="font-bold">
+                {item.total_price} DH
+              </div>
+
+              {/* Supprimer */}
+              <button
+                onClick={async () => {
+                  await removeFromCart(item.id);
+                  reloadCart();
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Supprimer
+              </button>
 
             </div>
 
-            <div>
+          ))}
 
-              Quantité : {item.quantity}
+        </div>
 
-            </div>
+        {/* RESUME */}
+        <div className="bg-white shadow rounded-lg p-6 h-fit sticky top-6">
 
-            <div className="font-bold">
+          <h2 className="text-xl font-bold mb-4">
+            Résumé
+          </h2>
 
-              {item.quantity * item.price_at_addition} DH
-
-            </div>
-
+          <div className="flex justify-between mb-2">
+            <span>Sous-total</span>
+            <span>{subtotal.toFixed(2)} DH</span>
           </div>
 
-        ))}
+          <div className="flex justify-between mb-2">
+            <span>Livraison</span>
+            <span>{shipping} DH</span>
+          </div>
+
+          <hr className="my-3" />
+
+          <div className="flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span>{total.toFixed(2)} DH</span>
+          </div>
+
+          <button className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition">
+            Passer la commande
+          </button>
+
+        </div>
 
       </div>
 
     </div>
 
   );
-
 }
