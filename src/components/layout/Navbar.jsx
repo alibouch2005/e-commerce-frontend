@@ -1,54 +1,43 @@
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { CartContext } from "../../context/CartContext";
 
 export default function Navbar() {
-
   const { user, logoutUser } = useContext(AuthContext);
+  const { cart } = useContext(CartContext);
 
   return (
-
     <nav className="bg-white shadow-md">
-
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
         {/* Logo */}
-        <Link 
-          to="/" 
-          className="text-2xl font-bold text-indigo-600"
-        >
+        <Link to="/" className="text-2xl font-bold text-indigo-600">
           AliShop
         </Link>
 
         {/* Menu */}
         <div className="flex items-center gap-6">
-
-          <Link 
+          <Link
             to="/products"
             className="text-gray-700 hover:text-indigo-600 transition"
           >
             Produits
           </Link>
 
-          <Link 
+          <Link
+            id="cart-icon"
             to="/cart"
             className="text-gray-700 hover:text-indigo-600 transition"
           >
-            Panier
+            Panier ({cart?.item_count || 0})
           </Link>
-
         </div>
 
         {/* Auth buttons */}
         <div className="flex items-center gap-4">
-
           {!user && (
-
             <>
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-indigo-600"
-              >
+              <Link to="/login" className="text-gray-700 hover:text-indigo-600">
                 Login
               </Link>
 
@@ -59,15 +48,11 @@ export default function Navbar() {
                 Register
               </Link>
             </>
-
           )}
 
           {user && (
-
             <>
-              <span className="text-gray-600">
-                Bonjour {user.name}
-              </span>
+              <span className="text-gray-600">Bonjour {user.name}</span>
 
               <button
                 onClick={logoutUser}
@@ -76,15 +61,9 @@ export default function Navbar() {
                 Logout
               </button>
             </>
-
           )}
-
         </div>
-
       </div>
-
     </nav>
-
   );
-
 }
