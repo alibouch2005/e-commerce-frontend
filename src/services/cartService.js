@@ -24,3 +24,6 @@ export const removeFromCart = (id) => {
 export const clearCart = () => {
   return api.delete("/api/cart/clear");
 };
+export const checkout = () => {
+  return api.post("/api/checkout");
+};
