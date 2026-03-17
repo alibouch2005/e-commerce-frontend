@@ -2,64 +2,61 @@ import { useState } from "react";
 import { forgotPassword } from "../services/authService";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+import toast from "react-hot-toast";
 
-export default function ForgotPassword(){
+export default function ForgotPassword() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const [email,setEmail] = useState("");
-const [message,setMessage] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e)=>{
+    if (!email) {
+      return toast.error("Veuillez entrer votre email");
+    }
 
-e.preventDefault();
+    try {
+      setLoading(true);
 
-try{
+      await forgotPassword(email);
 
-await forgotPassword(email);
+      toast.success("Email de réinitialisation envoyé 📩");
 
-setMessage("Email de réinitialisation envoyé");
+      setEmail(""); // reset champ
 
-}catch(err){
+    } catch (err) {
+      console.log(err.response?.data);
 
-console.log(err.response?.data);
+      toast.error(
+        err.response?.data?.message || "Erreur lors de l'envoi"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
-}
+  return (
+    <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow-lg rounded-xl">
 
-};
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+        Mot de passe oublié
+      </h1>
 
-return(
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-<div className="max-w-md mx-auto mt-20">
+        <Input
+          type="email"
+          placeholder="Votre email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-<h1 className="text-2xl font-bold mb-6">
-Mot de passe oublié
-</h1>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Envoi..." : "Envoyer"}
+        </Button>
 
-<form
-onSubmit={handleSubmit}
-className="flex flex-col gap-4"
->
+      </form>
 
-<Input
-type="email"
-placeholder="Email"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
-
-<Button type="submit">
-Envoyer
-</Button>
-
-</form>
-
-{message && (
-<p className="text-green-600 mt-4">
-{message}
-</p>
-)}
-
-</div>
-
-)
-
+    </div>
+  );
 }
