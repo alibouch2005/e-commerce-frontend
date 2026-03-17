@@ -10,6 +10,8 @@ import ResetPassword from "./pages/ResetPassword";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import { Toaster } from "react-hot-toast";
+import ChangePassword from "./pages/ChangePassword";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -29,6 +31,9 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/products/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/profile" element={<Profile />} />
+
       </Routes>
     </BrowserRouter>
   );
