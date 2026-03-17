@@ -12,12 +12,14 @@ import Cart from "./pages/Cart";
 import { Toaster } from "react-hot-toast";
 import ChangePassword from "./pages/ChangePassword";
 import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
-      <Toaster position="top-right"/>
+      <Toaster position="top-right" />
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -33,7 +35,8 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/profile" element={<Profile />} />
-
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Routes>
     </BrowserRouter>
   );
