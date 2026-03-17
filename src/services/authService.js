@@ -36,3 +36,8 @@ export const resetPassword = (data) => {
 export const getUser = () => {
   return api.get("/api/user");
 };
+
+// CHANGE PASSWORD
+export const changePassword = (data) => {
+  return api.patch("/api/user/change-password", data);
+};
