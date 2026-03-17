@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
     getUser()
       .then(res => {
-        setUser(res.data);
+        setUser(res.data.user); 
       })
       .catch(err => {
 
@@ -28,12 +28,16 @@ export function AuthProvider({ children }) {
 
   }, []);
 
+  // 🚪 LOGOUT
   const logoutUser = async () => {
 
-    await logout();
+    try {
+      await logout(); // call backend
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
 
-    setUser(null);
-
+    setUser(null); // clear frontend
   };
 
   return (
