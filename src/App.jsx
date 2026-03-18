@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,29 +16,63 @@ import ChangePassword from "./pages/ChangePassword";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
+import Deliveries from "./pages/Deliveries";
 
 function App() {
+  const { user } = useContext(AuthContext);
+
   return (
     <BrowserRouter>
       <Navbar />
       <Toaster position="top-right" />
 
       <Routes>
+
+        {/* PUBLIC */}
         <Route path="/" element={<Home />} />
-
-        <Route path="/login" element={<Login />} />
-
         <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetails />} />
 
+        {/* AUTH */}
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/products/:id" element={<ProductDetails />} />
+
+        {/* OPTIONAL (cart accessible) */}
         <Route path="/cart" element={<Cart />} />
-        <Route path="/change-password" element={<ChangePassword />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/checkout" element={<Checkout />} />
+
+        {/* 🔒 PROTECTED */}
+        <Route
+          path="/checkout"
+          element={user ? <Checkout /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/orders"
+          element={user ? <Orders /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/profile"
+          element={user ? <Profile /> : <Navigate to="/login" />}
+        />
+
+        <Route
+          path="/change-password"
+          element={user ? <ChangePassword /> : <Navigate to="/login" />}
+        />
+
+        {/* 🚚 LIVREUR */}
+        <Route
+          path="/deliveries"
+          element={
+            user?.role === "livreur"
+              ? <Deliveries />
+              : <Navigate to="/" />
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
