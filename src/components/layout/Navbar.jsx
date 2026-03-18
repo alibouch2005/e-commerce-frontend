@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
@@ -9,133 +9,150 @@ export default function Navbar() {
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef();
+  const navigate = useNavigate();
 
-  // 🔥 Fermer dropdown si clic dehors
+  const isLivreur = user?.role === "livreur";
+  const isClient = user?.role === "client";
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setOpen(false);
+    navigate("/login");
+  };
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
-        {/* Logo */}
-        <Link
-          to="/"
-          className="text-2xl font-bold text-indigo-600 hover:scale-105 transition"
-        >
+        {/* LOGO */}
+        <Link to="/" className="text-2xl font-bold text-indigo-600">
           🛒 AliShop
         </Link>
 
-        {/* Menu */}
+        {/* MENU */}
         <div className="flex items-center gap-6">
 
-          <Link
-            to="/products"
-            className="text-gray-700 hover:text-indigo-600 transition"
-          >
-            Produits
-          </Link>
+          {/* Produits (pas pour livreur) */}
+          {!isLivreur && (
+            <Link to="/products" className="hover:text-indigo-600">
+              Produits
+            </Link>
+          )}
 
-          {/* 🛍️ Panier avec badge */}
-          <Link
-           id="cart-icon"
-            to="/cart"
-            className="relative text-gray-700 hover:text-indigo-600 transition"
-          >
-            🛍️ Panier
+          {/* Panier (pas pour livreur) */}
+          {!isLivreur && (
+            <Link
+              id="cart-icon"
+              to="/cart"
+              className="relative hover:text-indigo-600"
+            >
+              🛍️ Panier
+              {cart?.item_count > 0 && (
+                <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {cart.item_count}
+                </span>
+              )}
+            </Link>
+          )}
 
-            {cart?.item_count > 0 && (
-              <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-bounce">
-                {cart.item_count}
-              </span>
-            )}
-          </Link>
+          {/* Livreur */}
+          {isLivreur && (
+            <Link to="/deliveries" className="hover:text-indigo-600">
+              🚚 Livraisons
+            </Link>
+          )}
         </div>
 
-        {/* Auth */}
+        {/* AUTH */}
         <div className="flex items-center gap-4">
-
-          {!user && (
+          {!user ? (
             <>
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-indigo-600"
-              >
-                Login
-              </Link>
-
+              <Link to="/login">Login</Link>
               <Link
                 to="/register"
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg"
               >
                 Register
               </Link>
             </>
-          )}
-
-          {user && (
+          ) : (
             <div className="relative" ref={dropdownRef}>
 
               {/* Bouton user */}
               <button
                 onClick={() => setOpen(!open)}
-                className="bg-gray-100 px-3 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2"
+                className="bg-gray-100 px-3 py-2 rounded-lg"
               >
                 👤 {user.name}
               </button>
 
-              {/* Dropdown */}
-              <div
-                className={`absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg overflow-hidden transform transition-all duration-200 ${
-                  open
-                    ? "opacity-100 scale-100"
-                    : "opacity-0 scale-95 pointer-events-none"
-                }`}
-              >
-                <Link
-                  to="/profile"
-                  className="block px-4 py-2 hover:bg-gray-100 transition"
-                >
-                  👤 Mon Profil
-                </Link>
+              {/* DROPDOWN */}
+              {open && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg overflow-hidden">
 
-                <Link
-                  to="/change-password"
-                  className="block px-4 py-2 hover:bg-gray-100 transition"
-                >
-                  🔐 Mot de passe
-                </Link>
+                  {/* Profil */}
+                  <Link
+                    to="/profile"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    👤 Profil
+                  </Link>
 
-                <Link
-                  to="/orders"
-                  className="block px-4 py-2 hover:bg-gray-100 transition"
-                >
-                  📦 Mes commandes
-                </Link>
+                  {/* Mot de passe */}
+                  <Link
+                    to="/change-password"
+                    onClick={() => setOpen(false)}
+                    className="block px-4 py-2 hover:bg-gray-100"
+                  >
+                    🔐 Mot de passe
+                  </Link>
 
-                <div className="border-t"></div>
+                  {/* Commandes (client فقط) */}
+                  {isClient && (
+                    <Link
+                      to="/orders"
+                      onClick={() => setOpen(false)}
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
+                      📦 Commandes
+                    </Link>
+                  )}
 
-                <button
-                  onClick={logoutUser}
-                  className="w-full text-left px-4 py-2 text-red-500 hover:bg-red-100 transition"
-                >
-                  🚪 Déconnexion
-                </button>
-              </div>
+                  {/* Livraisons (livreur فقط) */}
+                  {isLivreur && (
+                    <Link
+                      to="/deliveries"
+                      onClick={() => setOpen(false)}
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
+                      🚚 Livraisons
+                    </Link>
+                  )}
+
+                  <div className="border-t"></div>
+
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-red-500 hover:bg-red-100"
+                  >
+                    🚪 Déconnexion
+                  </button>
+
+                </div>
+              )}
             </div>
           )}
         </div>
