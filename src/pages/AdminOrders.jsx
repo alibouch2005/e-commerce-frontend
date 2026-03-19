@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import api from "../Api/axios";
 import toast from "react-hot-toast";
 
-
 export default function AdminOrders() {
 
   const [orders, setOrders] = useState([]);
   const [livreurs, setLivreurs] = useState([]);
+  const [loadingAssign, setLoadingAssign] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -17,7 +17,6 @@ export default function AdminOrders() {
     try {
       const res = await api.get("/api/admin/orders");
       setOrders(res.data.data || []);
-      console.log(res.data);
     } catch {
       toast.error("Erreur chargement commandes");
     }
@@ -33,15 +32,25 @@ export default function AdminOrders() {
   };
 
   const assignDelivery = async (orderId, livreurId) => {
+    if (!livreurId) return;
+
     try {
+      setLoadingAssign(orderId);
+
       await api.post("/api/deliveries/assign", {
         order_id: orderId,
         livreur_id: livreurId
       });
 
       toast.success("Livreur assigné 🚚");
-    } catch {
+
+      fetchOrders(); // 🔥 refresh UI
+
+    } catch (err) {
+      console.log(err.response?.data);
       toast.error("Erreur assignation");
+    } finally {
+      setLoadingAssign(null);
     }
   };
 
@@ -53,38 +62,66 @@ export default function AdminOrders() {
       </h1>
 
       <div className="space-y-4">
+
+        {orders.length === 0 && (
+          <p className="text-gray-500">Aucune commande</p>
+        )}
+
         {orders.map(order => (
-          <div key={order.id} className="bg-white p-4 rounded-xl shadow">
 
-            <div className="flex justify-between items-center">
+          <div
+            key={order.id}
+            className="bg-white p-5 rounded-xl shadow flex justify-between items-center"
+          >
 
-              <div>
-                <p>Commande #{order.id}</p>
-                <p className="text-gray-500">{order.total} DH</p>
-              </div>
+            {/* INFO */}
+            <div>
+              <p className="font-semibold">
+                Commande #{order.id}
+              </p>
 
-              <div className="flex gap-2">
+              <p className="text-gray-500">
+                {(order.total_price ?? order.total ?? 0)} DH
+              </p>
 
-                <select
-                  onChange={(e) =>
-                    assignDelivery(order.id, e.target.value)
-                  }
-                  className="border p-2 rounded"
-                >
-                  <option>Choisir livreur</option>
+              <p className="text-sm text-gray-400">
+                {new Date(order.created_at).toLocaleDateString()}
+              </p>
+            </div>
 
-                  {livreurs.map(l => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
+            {/* ACTION */}
+            <div className="flex items-center gap-3">
 
-              </div>
+              {/* LOADING */}
+              {loadingAssign === order.id && (
+                <span className="text-sm text-gray-500">
+                  Assignation...
+                </span>
+              )}
+
+              {/* SELECT */}
+              <select
+                disabled={loadingAssign === order.id}
+                onChange={(e) =>
+                  assignDelivery(order.id, e.target.value)
+                }
+                className="border p-2 rounded hover:border-indigo-500 focus:ring-2 focus:ring-indigo-400"
+              >
+                <option value="">Choisir livreur</option>
+
+                {livreurs.map(l => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
 
             </div>
+
           </div>
+
         ))}
+
       </div>
 
     </div>
