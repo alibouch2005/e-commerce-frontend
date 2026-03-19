@@ -18,6 +18,7 @@ import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Deliveries from "./pages/Deliveries";
 import AdminOrders from "./pages/AdminOrders";
+import AdminDashboard from "./pages/AdminDashboard";
 
 
 function App() {
@@ -77,14 +78,21 @@ function App() {
 
         {/* 🧑‍💼 ADMIN */}
         <Route
-          path="/admin"
+          path="/admin/orders"
           element={
             user?.role === "admin"
               ? <AdminOrders />
               : <Navigate to="/" />
           }
         />
-
+        <Route  
+          path="/admin/dashboard"
+          element={
+            user?.role === "admin"
+              ? <AdminDashboard />
+              : <Navigate to="/" />
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
