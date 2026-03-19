@@ -34,7 +34,6 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
         {/* LOGO */}
         <Link to="/" className="text-2xl font-bold text-indigo-600">
           🛒 AliShop
@@ -42,7 +41,6 @@ export default function Navbar() {
 
         {/* MENU */}
         <div className="flex items-center gap-6">
-
           {/* Produits (pas pour livreur) */}
           {!isLivreur && (
             <Link to="/products" className="hover:text-indigo-600">
@@ -72,6 +70,12 @@ export default function Navbar() {
               🚚 Livraisons
             </Link>
           )}
+          {/* ADMIN */}
+          {user?.role === "admin" && (
+            <Link to="/admin" className="hover:text-indigo-600">
+              🧑‍💼 Admin
+            </Link>
+          )}
         </div>
 
         {/* AUTH */}
@@ -88,7 +92,6 @@ export default function Navbar() {
             </>
           ) : (
             <div className="relative" ref={dropdownRef}>
-
               {/* Bouton user */}
               <button
                 onClick={() => setOpen(!open)}
@@ -100,7 +103,6 @@ export default function Navbar() {
               {/* DROPDOWN */}
               {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg overflow-hidden">
-
                   {/* Profil */}
                   <Link
                     to="/profile"
@@ -150,7 +152,6 @@ export default function Navbar() {
                   >
                     🚪 Déconnexion
                   </button>
-
                 </div>
               )}
             </div>
