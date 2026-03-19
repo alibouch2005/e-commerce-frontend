@@ -17,6 +17,8 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Deliveries from "./pages/Deliveries";
+import AdminOrders from "./pages/AdminOrders";
+
 
 function App() {
   const { user } = useContext(AuthContext);
@@ -69,6 +71,16 @@ function App() {
           element={
             user?.role === "livreur"
               ? <Deliveries />
+              : <Navigate to="/" />
+          }
+        />
+
+        {/* 🧑‍💼 ADMIN */}
+        <Route
+          path="/admin"
+          element={
+            user?.role === "admin"
+              ? <AdminOrders />
               : <Navigate to="/" />
           }
         />
