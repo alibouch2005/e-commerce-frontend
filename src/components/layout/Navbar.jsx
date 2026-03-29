@@ -78,7 +78,7 @@ export default function Navbar() {
           {/* ADMIN */}
           {isAdmin && (
             <>
-              <Link to="/admin" className="hover:text-indigo-600">
+              <Link to="/admin/dashboard" className="hover:text-indigo-600">
                 📊 Dashboard
               </Link>
 
