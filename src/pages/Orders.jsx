@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../Api/axios";
 import toast from "react-hot-toast";
 import OrdersSkeleton from "../components/orders/OrdersSkeleton";
-import DeliveryMap from "../components/DeliveryMap";
+
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -10,7 +10,7 @@ export default function Orders() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [livreurLocation, setLivreurLocation] = useState([33.58, -7.6]);
+ 
 
   const fetchOrders = () => {
     setLoading(true);
@@ -31,13 +31,7 @@ export default function Orders() {
       })
       .finally(() => setLoading(false));
   };
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLivreurLocation((prev) => [prev[0] + 0.001, prev[1] + 0.001]);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
+  
   useEffect(() => {
     fetchOrders();
   }, [page, status]);
@@ -198,13 +192,7 @@ export default function Orders() {
 
             <DeliveryTracking status={selectedOrder.status} />
 
-            {/* 🗺️ MAP AJOUTÉ ICI */}
-            <div className="mt-6 rounded overflow-hidden">
-              <DeliveryMap
-                clientLocation={[33.5731, -7.5898]}
-                livreurLocation={livreurLocation}
-              />
-            </div>
+            
 
             <button
               onClick={() => setSelectedOrder(null)}
