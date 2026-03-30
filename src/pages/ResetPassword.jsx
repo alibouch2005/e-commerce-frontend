@@ -41,7 +41,7 @@ export default function ResetPassword() {
 
       toast.success("Mot de passe réinitialisé 🎉");
 
-      // 🔥 redirection login
+      // redirection login
       setTimeout(() => {
         navigate("/login");
       }, 1500);
