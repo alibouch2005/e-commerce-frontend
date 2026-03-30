@@ -19,6 +19,9 @@ import Checkout from "./pages/Checkout";
 import Deliveries from "./pages/Deliveries";
 import AdminOrders from "./pages/AdminOrders";
 import AdminDashboard from "./pages/AdminDashboard";
+import GuestGuard from "./guards/GuestRoute";
+import AdminCategories from "./pages/AdminCategories";
+import AdminProducts from "./pages/AdminProducts";
 
 
 function App() {
@@ -37,10 +40,12 @@ function App() {
         <Route path="/products/:id" element={<ProductDetails />} />
 
         {/* AUTH */}
+         <Route element={<GuestGuard />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+         </Route>
 
         {/* OPTIONAL (cart accessible) */}
         <Route path="/cart" element={<Cart />} />
@@ -93,6 +98,23 @@ function App() {
               : <Navigate to="/" />
           }
         />
+        <Route
+          path="/admin/categories"
+          element={
+            user?.role === "admin"
+              ? <AdminCategories />
+              : <Navigate to="/" />
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            user?.role === "admin"
+              ? <AdminProducts />
+              : <Navigate to="/" />
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
