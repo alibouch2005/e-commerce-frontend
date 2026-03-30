@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { register } from "../services/authService";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Register() {
       [e.target.name]: e.target.value,
     });
   };
+   const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,19 +44,22 @@ export default function Register() {
     try {
       setLoading(true);
 
-      await register(form);
+      const res = await register(form);
+      const user = res?.data?.user;
+      console.log("REGISTER RESPONSE:", user); 
+      setUser(user);
 
       toast.success("Compte créé avec succès 🎉");
 
-      // 🔥 redirect login
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      
+      
+        navigate("/");
+    
 
     } catch (err) {
       console.log(err.response?.data);
 
-      // 🔥 afficher erreurs Laravel
+      // afficher erreurs Laravel
       if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
 
