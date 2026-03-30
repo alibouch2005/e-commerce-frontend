@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
 
     setUser(null); // clear frontend
   };
-
+if(loading) return <p>Loading...</p>;
   return (
 
     <AuthContext.Provider
