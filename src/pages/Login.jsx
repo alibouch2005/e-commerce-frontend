@@ -27,7 +27,7 @@ export default function Login() {
       setLoading(true);
 
       const res = await login(email, password);
-      const user = res.data.user;
+      const user = res?.data?.user;
 
       setUser(user);
 
