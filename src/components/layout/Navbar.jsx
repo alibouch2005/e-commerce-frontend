@@ -5,7 +5,6 @@ import { CartContext } from "../../context/CartContext";
 import { NotificationContext } from "../../context/NotificationContext";
 
 export default function Navbar() {
-
   const { user, logoutUser } = useContext(AuthContext);
   const { cart } = useContext(CartContext);
   const { notifications } = useContext(NotificationContext);
@@ -38,7 +37,6 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-
         {/* LOGO */}
         <Link to="/" className="text-2xl font-bold text-indigo-600">
           🛒 AliShop
@@ -46,18 +44,14 @@ export default function Navbar() {
 
         {/* MENU */}
         <div className="flex items-center gap-6">
-
           {/* CLIENT */}
-          {!isLivreur && (
+          {!isLivreur && !isAdmin && (
             <>
               <Link to="/products" className="hover:text-indigo-600">
                 Produits
               </Link>
 
-              <Link
-                to="/cart"
-                className="relative hover:text-indigo-600"
-              >
+              <Link to="/cart" className="relative hover:text-indigo-600">
                 🛍️ Panier
                 {cart?.item_count > 0 && (
                   <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
@@ -81,7 +75,12 @@ export default function Navbar() {
               <Link to="/admin/dashboard" className="hover:text-indigo-600">
                 📊 Dashboard
               </Link>
-
+              <Link to="/admin/categories" className="hover:text-indigo-600">
+                📂 Catégories
+              </Link>
+              <Link to="/admin/products" className="hover:text-indigo-600">
+                📦 Produits
+              </Link>
               <Link to="/admin/orders" className="hover:text-indigo-600">
                 📦 Commandes
               </Link>
@@ -91,7 +90,6 @@ export default function Navbar() {
 
         {/* AUTH */}
         <div className="flex items-center gap-4">
-
           {!user ? (
             <>
               <Link to="/login">Login</Link>
@@ -104,7 +102,6 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
-
               {/* 🔔 NOTIFICATIONS */}
               <div className="relative cursor-pointer">
                 🔔
@@ -117,7 +114,6 @@ export default function Navbar() {
 
               {/* USER DROPDOWN */}
               <div className="relative" ref={dropdownRef}>
-
                 <button
                   onClick={() => setOpen(!open)}
                   className="bg-gray-100 px-3 py-2 rounded-lg"
@@ -127,7 +123,6 @@ export default function Navbar() {
 
                 {open && (
                   <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg overflow-hidden">
-
                     <Link
                       to="/profile"
                       onClick={() => setOpen(false)}
@@ -172,14 +167,11 @@ export default function Navbar() {
                     >
                       🚪 Déconnexion
                     </button>
-
                   </div>
                 )}
-
               </div>
             </div>
           )}
-
         </div>
       </div>
     </nav>
