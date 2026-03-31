@@ -38,9 +38,7 @@ export default function Cart() {
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="text-center mt-20">
-        <h2 className="text-2xl font-semibold">
-          Votre panier est vide 🛒
-        </h2>
+        <h2 className="text-2xl font-semibold">Votre panier est vide 🛒</h2>
 
         <button
           onClick={() => navigate("/products")}
@@ -57,7 +55,6 @@ export default function Cart() {
       <h1 className="text-2xl font-bold mb-6">Votre panier</h1>
 
       <div className="grid md:grid-cols-3 gap-6">
-
         {/* 🛍️ PRODUITS */}
         <div className="md:col-span-2 space-y-4">
           {cart.items.map((item) => (
@@ -65,22 +62,21 @@ export default function Cart() {
               key={item.id}
               className="flex items-center justify-between bg-white shadow p-4 rounded-lg"
             >
-
               {/* Produit */}
               <div className="flex items-center gap-4">
                 <img
-                  src={`http://localhost:8000${item.product.image}`}
+                  src={
+                    item.product?.image
+                      ? item.product.image
+                      : "https://dummyimage.com/150x150/cccccc/000000&text=No+Image"
+                  }
                   className="w-16 h-16 object-cover rounded"
-                  alt={item.product.name}
+                  alt={item.product?.name}
                 />
 
                 <div>
-                  <h3 className="font-semibold">
-                    {item.product.name}
-                  </h3>
-                  <p className="text-gray-500">
-                    {item.price} DH
-                  </p>
+                  <h3 className="font-semibold">{item.product.name}</h3>
+                  <p className="text-gray-500">{item.price} DH</p>
                 </div>
               </div>
 
@@ -98,9 +94,7 @@ export default function Cart() {
                   -
                 </button>
 
-                <span className="font-semibold">
-                  {item.quantity}
-                </span>
+                <span className="font-semibold">{item.quantity}</span>
 
                 <button
                   onClick={async () => {
@@ -114,9 +108,7 @@ export default function Cart() {
               </div>
 
               {/* Total */}
-              <div className="font-bold">
-                {item.total_price} DH
-              </div>
+              <div className="font-bold">{item.total_price} DH</div>
 
               {/* Supprimer */}
               <button
