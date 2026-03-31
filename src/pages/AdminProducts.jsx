@@ -9,6 +9,7 @@ export default function AdminProducts() {
 
   const [form, setForm] = useState({
     name: "",
+    description: "",
     price: "",
     stock: "",
     category_id: "", // AJOUT
@@ -55,6 +56,7 @@ export default function AdminProducts() {
     const formData = new FormData();
 
     formData.append("name", form.name);
+    formData.append("description", form.description);
     formData.append("price", Number(form.price));
     formData.append("stock", Number(form.stock));
     formData.append("category_id", form.category_id); // FIX
@@ -86,6 +88,7 @@ export default function AdminProducts() {
 
       setForm({
         name: "",
+        description: "",
         price: "",
         stock: "",
         category_id: "",
@@ -121,6 +124,7 @@ export default function AdminProducts() {
 
     setForm({
       name: product.name ?? "",
+      description: product.description ?? "",
       price: product.price ?? "",
       stock: product.stock ?? "",
       category_id: product.category_id ?? product.category?.id ?? "",
@@ -138,148 +142,172 @@ export default function AdminProducts() {
 
       {/* FORM */}
       <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow mb-6"
+  onSubmit={handleSubmit}
+  className="bg-white p-6 rounded-2xl shadow mb-8 space-y-4"
+>
+  <h2 className="text-lg font-semibold">
+    {editingId ? "✏️ Modifier produit" : "➕ Ajouter produit"}
+  </h2>
+
+  {/* CATEGORY */}
+  <select
+    value={form.category_id}
+    onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+    className="border p-3 rounded w-full focus:ring-2 focus:ring-indigo-500"
+    required
+  >
+    <option value="">Choisir catégorie</option>
+    {categories.map((c) => (
+      <option key={c.id} value={c.id}>
+        {c.name}
+      </option>
+    ))}
+  </select>
+
+  {/* GRID */}
+  <div className="grid md:grid-cols-2 gap-4">
+
+    <input
+      type="text"
+      placeholder="Nom produit"
+      value={form.name}
+      onChange={(e) => setForm({ ...form, name: e.target.value })}
+      className="border p-3 rounded"
+      required
+    />
+
+    <input
+      type="number"
+      placeholder="Prix (DH)"
+      value={form.price}
+      onChange={(e) => setForm({ ...form, price: e.target.value })}
+      className="border p-3 rounded"
+      required
+    />
+
+    <input
+      type="number"
+      placeholder="Stock"
+      value={form.stock}
+      onChange={(e) => setForm({ ...form, stock: e.target.value })}
+      className="border p-3 rounded"
+      required
+    />
+
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => {
+        const file = e.target.files[0];
+        setImage(file);
+        if (file) setPreview(URL.createObjectURL(file));
+      }}
+      className="border p-2 rounded"
+    />
+  </div>
+
+  {/* DESCRIPTION */}
+  <textarea
+    placeholder="Description du produit..."
+    value={form.description}
+    onChange={(e) =>
+      setForm({ ...form, description: e.target.value })
+    }
+    className="border p-3 rounded w-full"
+    rows={3}
+  />
+
+  {/* PREVIEW */}
+  {preview && (
+    <div className="flex items-center gap-4">
+      <img
+        src={preview}
+        className="w-20 h-20 object-cover rounded shadow"
+      />
+      <button
+        type="button"
+        onClick={() => {
+          setPreview(null);
+          setImage(null);
+        }}
+        className="text-red-500"
       >
-        <h2 className="text-lg font-semibold mb-4">
-          {editingId ? "✏️ Modifier produit" : " ➕ Ajouter produit"}
-        </h2>
-        {/*  CATEGORY */}
-        <select
-          value={form.category_id}
-          onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-          className="border p-2 rounded mb-4 w-full"
-          required
-        >
-          <option value="">Choisir catégorie</option>
+        ❌ Supprimer
+      </button>
+    </div>
+  )}
 
-          {Array.isArray(categories) &&
-            categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-        </select>
-
-        <div className="grid md:grid-cols-3 gap-4">
-          <input
-            type="text"
-            placeholder="Nom"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-
-          <input
-            type="number"
-            placeholder="Prix"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-
-          <input
-            type="number"
-            placeholder="Stock"
-            value={form.stock}
-            onChange={(e) => setForm({ ...form, stock: e.target.value })}
-            className="border p-2 rounded"
-            required
-          />
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-
-              console.log("SELECTED FILE:", file); // 🔥 DEBUG
-
-              setImage(file);
-
-              if (file) {
-                setPreview(URL.createObjectURL(file));
-              }
-            }}
-            className="border p-2 rounded"
-          />
-          {preview && (
-            <div className="mt-3 flex items-center gap-3">
-              <img
-                src={preview}
-                alt="preview"
-                className="w-24 h-24 object-cover rounded-lg border shadow"
-              />
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPreview(null);
-                  setImage(null);
-                }}
-                className="text-red-500 text-sm"
-              >
-                ❌ Supprimer
-              </button>
-            </div>
-          )}
-        </div>
-
-        <button className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded">
-          {editingId ? "Modifier" : "Ajouter"}
-        </button>
-      </form>
+  <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700">
+    {editingId ? "Modifier" : "Ajouter"}
+  </button>
+</form>
 
       {/* LISTE */}
-      <div className="space-y-4">
-        {products.map((p) => {
-          console.log("Image:", p.image); // DEBUG
-          return (
-            <div
-              key={p.id}
-              className="bg-white p-4 rounded-xl shadow flex justify-between items-center"
-            >
-              <img
-                src={
-                  p.image
-                    ? p.image
-                    : "https://dummyimage.com/150x150/cccccc/000000&text=No+Image"
-                }
-                alt={p.name}
-                className="w-16 h-16 object-cover rounded"
-              />
+     <div className="space-y-4">
+  {products.map((p) => (
+    <div
+      key={p.id}
+      className="bg-white p-4 rounded-xl shadow flex items-center gap-4"
+    >
+      {/* IMAGE */}
+      <img
+        src={
+          p.image ||
+          "https://dummyimage.com/150x150/cccccc/000000&text=No+Image"
+        }
+        className="w-20 h-20 object-cover rounded-lg"
+      />
 
-              <div>
-                <p className="font-semibold">{p.name}</p>
+      {/* INFOS */}
+      <div className="flex-1">
+        <h3 className="font-semibold text-lg">{p.name}</h3>
 
-                <p className="text-gray-500">
-                  {p.price} DH • Stock {p.stock}
-                </p>
+        <p className="text-sm text-gray-500 line-clamp-2">
+          {p.description}
+        </p>
 
-                <p className="text-xs text-indigo-500">{p.category?.name}</p>
-              </div>
+        <div className="flex items-center gap-3 mt-1 text-sm">
+          <span className="text-indigo-600 font-bold">
+            {p.price} DH
+          </span>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(p)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  Modifier
-                </button>
+          <span
+            className={`px-2 py-1 rounded text-xs ${
+              p.stock > 0
+                ? "bg-green-100 text-green-600"
+                : "bg-red-100 text-red-500"
+            }`}
+          >
+            {p.stock > 0
+              ? `Stock ${p.stock}`
+              : "Rupture"}
+          </span>
+        </div>
 
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        <p className="text-xs text-gray-400">
+          {p.category?.name}
+        </p>
       </div>
+
+      {/* ACTIONS */}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => handleEdit(p)}
+          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+        >
+          Modifier
+        </button>
+
+        <button
+          onClick={() => handleDelete(p.id)}
+          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+        >
+          Supprimer
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
     </div>
   );
 }
