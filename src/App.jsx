@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import GuestGuard from "./guards/GuestRoute";
 import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
+import AdminGuard from "./guards/AdminGuard";
 
 
 function App() {
@@ -107,13 +108,13 @@ function App() {
           }
         />
         <Route
-          path="/admin/products"
-          element={
-            user?.role === "admin"
-              ? <AdminProducts />
-              : <Navigate to="/" />
-          }
-        />
+  path="/admin/products"
+  element={
+    <AdminGuard>
+      <AdminProducts />
+    </AdminGuard>
+  }
+/>
 
       </Routes>
     </BrowserRouter>
