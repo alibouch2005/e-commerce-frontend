@@ -17,56 +17,56 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Deliveries from "./pages/Deliveries";
+
 import AdminOrders from "./pages/AdminOrders";
 import AdminDashboard from "./pages/AdminDashboard";
-import GuestGuard from "./guards/GuestRoute";
 import AdminCategories from "./pages/AdminCategories";
 import AdminProducts from "./pages/AdminProducts";
-import AdminGuard from "./guards/AdminGuard";
 
+import GuestGuard from "./guards/GuestRoute";
+import AdminGuard from "./guards/AdminGuard";
+import AdminLayout from "./components/layout/AdminLayout";
+import Footer from "./components/layout/Footer";
+import AdminOrderDetails from "./pages/AdminOrderDetails";
 
 function App() {
   const { user } = useContext(AuthContext);
 
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar key={window.location.pathname} />
       <Toaster position="top-right" />
 
       <Routes>
-
         {/* PUBLIC */}
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductDetails />} />
 
         {/* AUTH */}
-         <Route element={<GuestGuard />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-         </Route>
+        <Route element={<GuestGuard />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
 
-        {/* OPTIONAL (cart accessible) */}
+        {/* CART */}
         <Route path="/cart" element={<Cart />} />
 
-        {/* 🔒 PROTECTED */}
+        {/* 🔒 USER */}
         <Route
           path="/checkout"
           element={user ? <Checkout /> : <Navigate to="/login" />}
         />
-
         <Route
           path="/orders"
           element={user ? <Orders /> : <Navigate to="/login" />}
         />
-
         <Route
           path="/profile"
           element={user ? <Profile /> : <Navigate to="/login" />}
         />
-
         <Route
           path="/change-password"
           element={user ? <ChangePassword /> : <Navigate to="/login" />}
@@ -76,47 +76,28 @@ function App() {
         <Route
           path="/deliveries"
           element={
-            user?.role === "livreur"
-              ? <Deliveries />
-              : <Navigate to="/" />
+            user?.role === "livreur" ? <Deliveries /> : <Navigate to="/" />
           }
         />
 
-        {/* 🧑‍💼 ADMIN */}
+        {/* 🧑‍💼 ADMIN (CLEAN VERSION) */}
         <Route
-          path="/admin/orders"
+          path="/admin"
           element={
-            user?.role === "admin"
-              ? <AdminOrders />
-              : <Navigate to="/" />
+            <AdminGuard>
+              <AdminLayout />
+            </AdminGuard>
           }
-        />
-        <Route  
-          path="/admin/dashboard"
-          element={
-            user?.role === "admin"
-              ? <AdminDashboard />
-              : <Navigate to="/" />
-          }
-        />
-        <Route
-          path="/admin/categories"
-          element={
-            user?.role === "admin"
-              ? <AdminCategories />
-              : <Navigate to="/" />
-          }
-        />
-        <Route
-  path="/admin/products"
-  element={
-    <AdminGuard>
-      <AdminProducts />
-    </AdminGuard>
-  }
-/>
-
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="orders/:id" element={<AdminOrderDetails />} />
+        </Route>
       </Routes>
+      {/* <Footer/> */}
     </BrowserRouter>
   );
 }
