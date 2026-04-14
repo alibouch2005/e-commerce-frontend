@@ -18,15 +18,34 @@ export default function Products() {
   }, [search, category]);
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Nos Produits</h1>
+    <div className="bg-[#F8F9FD] min-h-screen pb-20">
+      {/* HEADER SIMPLE */}
+      <div className="bg-white border-b px-8 py-10 mb-8 text-center">
+        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Catalogue</h1>
+        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Découvrez nos produits premium</p>
+      </div>
 
-      <ProductSearch setSearch={setSearch} />
-      <CategoryFilter category={category} setCategory={setCategory} />
+      <div className="max-w-7xl mx-auto px-6">
+        {/* FILTERS */}
+        <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 mb-10 space-y-6">
+          <ProductSearch setSearch={setSearch} />
+          <CategoryFilter category={category} setCategory={setCategory} />
+        </div>
 
-      {loading ? <ProductSkeletonGrid /> : <ProductGrid products={products} />}
-
-      <ProductPagination page={page} lastPage={lastPage} setPage={setPage} />
+        {/* CONTENT */}
+        {loading ? (
+          <ProductSkeletonGrid />
+        ) : (
+          <>
+            <ProductGrid products={products} />
+            {products.length > 0 && (
+              <div className="mt-12 flex justify-center">
+                <ProductPagination page={page} lastPage={lastPage} setPage={setPage} />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
