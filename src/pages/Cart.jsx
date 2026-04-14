@@ -65,11 +65,7 @@ export default function Cart() {
               {/* Produit */}
               <div className="flex items-center gap-4">
                 <img
-                  src={
-                    item.product?.image
-                      ? item.product.image
-                      : "https://dummyimage.com/150x150/cccccc/000000&text=No+Image"
-                  }
+                  src={`http://localhost:8000${item.image}`} // 🔥 URL IMAGE
                   className="w-16 h-16 object-cover rounded"
                   alt={item.product?.name}
                 />
