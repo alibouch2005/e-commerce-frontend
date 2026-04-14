@@ -20,6 +20,9 @@ export default function AdminOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingAssign, setLoadingAssign] = useState(null);
   const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState(
+  new Date().toISOString().slice(0, 10)
+);
 
   const statusConfig = {
     pending: {
@@ -109,6 +112,35 @@ export default function AdminOrders() {
       </div>
     );
   }
+ const exportPDF = async () => {
+  try {
+    toast.loading("Génération du PDF...", { id: "pdf" });
+
+    const res = await api.get(
+      `/api/admin/orders/export/pdf?date=${selectedDate}`,
+      {
+        responseType: "blob",
+      }
+    );
+
+    const file = new Blob([res.data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(file);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `orders-${selectedDate}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    toast.success("PDF téléchargé 📄", { id: "pdf" });
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Erreur export ❌", { id: "pdf" });
+  }
+};
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6">
@@ -120,9 +152,32 @@ export default function AdminOrders() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Suivi et assignation AliShop</p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
-          <span className="text-sm font-semibold text-gray-600">Total: {orders.length}</span>
-        </div>
+        
+        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+
+  {/* TOTAL */}
+  <span className="text-sm font-semibold text-gray-600">
+    Total: {orders.length}
+  </span>
+
+  {/* DATE */}
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(e) => setSelectedDate(e.target.value)}
+    className="border px-2 py-1 rounded text-sm"
+  />
+
+  {/* EXPORT */}
+  <button
+    onClick={exportPDF}
+    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-semibold"
+  >
+    📄 Export
+  </button>
+
+</div>
+        
       </div>
 
       <div className="grid gap-4">
@@ -207,6 +262,7 @@ export default function AdminOrders() {
           ))
         )}
       </div>
+     
     </div>
   );
 }
