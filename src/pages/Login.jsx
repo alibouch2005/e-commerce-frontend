@@ -30,7 +30,7 @@ export default function Login() {
       const user = res?.data?.user;
 
       setUser(user);
-
+  localStorage.setItem("user", JSON.stringify(user));
       toast.success("Connexion réussie 👋");
 
       // PRIORITÉ 1 : retourner là où user voulait aller
@@ -43,12 +43,13 @@ export default function Login() {
       if (user.role === "livreur") {
         navigate("/deliveries");
       } else if (user.role === "admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }
 
     } catch (err) {
+      console.log(err.response?.data);
       const message =
         err?.response?.data?.message || "Erreur de connexion";
 
