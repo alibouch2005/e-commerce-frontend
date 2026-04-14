@@ -128,13 +128,13 @@ export default function AdminOrderDetails() {
                 const unitPrice = Number(item.price || item.product?.price || 0);
                 const quantity = Number(item.quantity || 0);
                 const totalPrice = (unitPrice * quantity).toFixed(2);
-
+                 
                 return (
                   <div key={item.id} className="py-4 flex items-center justify-between group">
                     <div className="flex items-center gap-4">
                       <div className="relative">
                         <img
-                          src={item.product?.image ? `http://localhost:8000/storage/${item.product.image}` : "https://via.placeholder.com/64"}
+                          src={item.product?.image}
                           alt={item.product?.name}
                           className="w-16 h-16 object-cover rounded-lg border border-gray-100 shadow-sm"
                         />
