@@ -120,3 +120,10 @@ cd ecommerce-frontend
 
 npm install
 npm run dev
+
+---
+
+## ✍️ Auteur
+
+ALI BOUCHOUAR  
+2025 / 2026 
