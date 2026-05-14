@@ -15,6 +15,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Rôles et contexte
   const isLivreur = user?.role === "livreur";
   const isClient = user?.role === "client";
   const isAdmin = user?.role === "admin";
@@ -25,7 +26,7 @@ export default function Navbar() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
-    };
+    };// On écoute les clics sur tout le document pour fermer le dropdown si on clique en dehors
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);

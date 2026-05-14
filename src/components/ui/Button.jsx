@@ -1,5 +1,5 @@
 import clsx from "clsx";
-
+// cls pour combiner les classes conditionnellement
 export default function Button({
   children,
   variant = "primary",

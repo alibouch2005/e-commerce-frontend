@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
 
   }, []);
 
-  // 🚪 LOGOUT
+  // LOGOUT
   const logoutUser = async () => {
 
     try {

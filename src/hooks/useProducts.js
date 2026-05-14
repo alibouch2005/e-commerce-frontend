@@ -7,7 +7,8 @@ export default function useProducts(page, search, category) {
   const [lastPage,setLastPage] = useState(1);
   const [loading,setLoading] = useState(false);
   const [error,setError] = useState(null);
-
+  
+// useEffect pour charger les produits à chaque changement de page, recherche ou catégorie
   useEffect(()=>{
 
     setLoading(true);
@@ -28,6 +29,6 @@ export default function useProducts(page, search, category) {
 
   },[page,search,category]);
 
-  return { products, lastPage, loading, error };
+  return { products, lastPage, loading, error };// retourne les produits, la dernière page, le loading et l'erreur
 
 }

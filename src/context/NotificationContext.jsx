@@ -10,7 +10,7 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
 
-  const lastNotifRef = useRef(null); // 🔥 IMPORTANT
+  const lastNotifRef = useRef(null); //  IMPORTANT
 
   useEffect(() => {
     if (!user) return;
@@ -30,7 +30,7 @@ export const NotificationProvider = ({ children }) => {
 
       const newNotifs = res.data;
 
-      // 🔥 éviter spam
+      //  éviter spam
       if (newNotifs.length > 0) {
         const last = newNotifs[newNotifs.length - 1];
 

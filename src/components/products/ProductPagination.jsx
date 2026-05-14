@@ -1,6 +1,6 @@
 export default function ProductPagination({ page, lastPage, setPage }) {
-  if (lastPage <= 1) return null;
-
+  if (lastPage <= 1) return null; //c est pour ne pas afficher la pagination si il n y a qu une page
+  //on cree un tableau de la longueur du nombre de page et on le remplit avec les numeros de page
   const pages = Array.from({ length: lastPage }, (_, i) => i + 1);
 
   return (
@@ -10,12 +10,14 @@ export default function ProductPagination({ page, lastPage, setPage }) {
           key={p}
           onClick={() => {
             setPage(p);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            //c est pour faire defiler la page vers le haut lorsque l utilisateur clique sur un numero de page
+            window.scrollTo({ top: 0, behavior: "smooth" });
           }}
           className={`min-w-[44px] h-11 flex items-center justify-center rounded-xl font-bold transition-all
-            ${page === p 
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
-              : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"
+            ${
+              page === p
+                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
+                : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"
             }`}
         >
           {p}

@@ -33,7 +33,7 @@ function App() {
   const { user } = useContext(AuthContext);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter> {/* spa pour éviter les rechargements de page */}
       <Navbar key={window.location.pathname} />
       <Toaster position="top-right" />
 
@@ -55,7 +55,7 @@ function App() {
         {/* CART */}
         <Route path="/cart" element={<Cart />} />
 
-        {/* 🔒 USER */}
+        {/*  USER */}
         <Route
           path="/checkout"
           element={user ? <Checkout /> : <Navigate to="/login" />}
@@ -73,7 +73,7 @@ function App() {
           element={user ? <ChangePassword /> : <Navigate to="/login" />}
         />
 
-        {/* 🚚 LIVREUR */}
+        {/*  LIVREUR */}
         <Route
           path="/deliveries"
           element={
@@ -81,7 +81,7 @@ function App() {
           }
         />
 
-        {/* 🧑‍💼 ADMIN (CLEAN VERSION) */}
+        {/*  ADMIN (CLEAN VERSION) */}
         <Route
           path="/admin"
           element={
