@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../Api/axios";
+import toast from "react-hot-toast";
+import DeliveryMap from "../components/delivery/DeliveryMap";
 import { 
   ArrowLeft, 
   User, 
@@ -9,7 +11,8 @@ import {
   Package, 
   Tag, 
   Loader2,
-  Calendar
+  Calendar,
+  Download
 } from "lucide-react";
 
 export default function AdminOrderDetails() {
@@ -17,6 +20,7 @@ export default function AdminOrderDetails() {
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   // Dictionnaire de traduction pour les statuts
   const statusTranslations = {
@@ -24,7 +28,7 @@ export default function AdminOrderDetails() {
     preparing: { label: "En préparation", color: "bg-blue-100 text-blue-700" },
     shipping: { label: "En cours de livraison", color: "bg-purple-100 text-purple-700" },
     delivered: { label: "Livré", color: "bg-green-100 text-green-700" },
-    canceled: { label: "Annulé", color: "bg-red-100 text-red-700" },
+    cancelled: { label: "Annulé", color: "bg-red-100 text-red-700" },
   };
 
   useEffect(() => {
@@ -59,6 +63,28 @@ export default function AdminOrderDetails() {
     );
   }
 
+  const changeStatus = async (status) => {
+    setUpdating(true);
+    try { const { data } = await api.put(`/api/admin/orders/${id}/status`, { status }); setOrder(data.data || data); toast.success("Statut mis à jour"); }
+    catch (error) { toast.error(error.response?.data?.message || "Mise à jour impossible"); }
+    finally { setUpdating(false); }
+  };
+
+  const downloadReceipt = async () => {
+    try {
+      const response = await api.get(`/api/admin/orders/${id}/receipt`, { responseType: "blob" });
+      const file = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `receipt-order-${id}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Impossible de telecharger le recu");
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
       {/* HEADER */}
@@ -73,12 +99,20 @@ export default function AdminOrderDetails() {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate("/admin/orders")}
-          className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium"
-        >
-          <ArrowLeft size={18} /> Retour
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={downloadReceipt}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+          >
+            <Download size={18} /> Recu PDF
+          </button>
+          <button
+            onClick={() => navigate("/admin/orders")}
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium"
+          >
+            <ArrowLeft size={18} /> Retour
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -112,12 +146,17 @@ export default function AdminOrderDetails() {
                   {statusTranslations[order.status]?.label || order.status}
                 </span>
               </div>
+              <select disabled={updating} value={order.status} onChange={(e) => changeStatus(e.target.value)} className="w-full border rounded-lg p-2 font-medium">
+                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option>
+              </select>
             </div>
           </div>
         </div>
 
         {/* PRODUITS */}
         <div className="md:col-span-2 space-y-6">
+          {order.fulfillment_method === "delivery" && <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"><h2 className="font-bold mb-3">Carte de livraison</h2><DeliveryMap latitude={order.delivery_latitude} longitude={order.delivery_longitude} address={order.adresse_livraison} /></div>}
+          {order.fulfillment_method === "pickup" && <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl font-medium">Commande à retirer localement par le client.</div>}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h2 className="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
               <Tag size={18} className="text-indigo-600" /> Articles

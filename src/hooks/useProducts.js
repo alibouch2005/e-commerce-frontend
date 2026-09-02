@@ -1,34 +1,52 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { getProducts } from "../services/productService";
 
-export default function useProducts(page, search, category) {
+export default function useProducts(page, search, category, saleOnly = false, perPage = 12) {
+  const [products, setProducts] = useState([]);
+  const [lastPage, setLastPage] = useState(1);
+  const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [products,setProducts] = useState([]);
-  const [lastPage,setLastPage] = useState(1);
-  const [loading,setLoading] = useState(false);
-  const [error,setError] = useState(null);
-  
-// useEffect pour charger les produits à chaque changement de page, recherche ou catégorie
-  useEffect(()=>{
+  useEffect(() => {
+    let active = true;
 
-    setLoading(true);
-    setError(null);
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    getProducts({ page, search ,  category_id: category })
-      .then(res=>{
-        setProducts(res.data.data);
-        setLastPage(res.data.last_page);
-      })
-      .catch(err=>{
+        const res = await getProducts({
+          page,
+          search,
+          category_id: category,
+          on_sale: saleOnly ? 1 : undefined,
+          per_page: perPage,
+        });
+
+        if (!active) return;
+
+        setProducts(res.data.data ?? []);
+        const nextMeta = res.data.meta ?? res.data;
+        setMeta(nextMeta);
+        setLastPage(nextMeta?.last_page ?? res.data.last_page ?? 1);
+      } catch (err) {
+        if (!active) return;
         console.error(err);
         setError(err);
-      })
-      .finally(()=>{
-        setLoading(false);
-      });
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
 
-  },[page,search,category]);
+    void fetchProducts();
 
-  return { products, lastPage, loading, error };// retourne les produits, la dernière page, le loading et l'erreur
+    return () => {
+      active = false;
+    };
+  }, [page, search, category, saleOnly, perPage]);
 
+  return { products, lastPage, meta, loading, error };
 }

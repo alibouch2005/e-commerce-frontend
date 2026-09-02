@@ -1,62 +1,51 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { forgotPassword } from "../services/authService";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import toast from "react-hot-toast";
+import { useLanguage } from "../context/LanguageContext";
+import { showApiError } from "../utils/showApiError";
 
 export default function ForgotPassword() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    if (!email) {
-      return toast.error("Veuillez entrer votre email");
-    }
+    if (!email) return toast.error(t("enterEmail"));
 
     try {
       setLoading(true);
-
       await forgotPassword(email);
-
-      toast.success("Email de réinitialisation envoyé 📩");
-
-      setEmail(""); // reset champ
-
+      toast.success(t("resetEmailSent"));
+      setEmail("");
     } catch (err) {
-      console.log(err.response?.data);
-
-      toast.error(
-        err.response?.data?.message || "Erreur lors de l'envoi"
-      );
+      showApiError(err, t("messageSendError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white shadow-lg rounded-xl">
-
-      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-        Mot de passe oublié
+    <div className="mx-auto mt-20 max-w-md rounded-xl bg-white p-6 shadow-lg">
+      <h1 className="mb-6 text-center text-2xl font-bold text-gray-800">
+        {t("forgotPassword")}
       </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-
         <Input
           type="email"
-          placeholder="Votre email"
+          placeholder={t("yourEmail")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <Button type="submit" disabled={loading}>
-          {loading ? "Envoi..." : "Envoyer"}
+          {loading ? t("sending") : t("send")}
         </Button>
-
       </form>
-
     </div>
   );
 }

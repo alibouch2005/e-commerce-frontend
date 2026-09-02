@@ -1,0 +1,17 @@
+{
+  "name": "AliShop Casablanca",
+  "short_name": "AliShop",
+  "description": "Boutique e-commerce moderne avec livraison, retrait magasin et paiement securise.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

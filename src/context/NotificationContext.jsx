@@ -1,54 +1,43 @@
-import { createContext, useEffect, useState, useContext, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "../Api/axios";
-import toast from "react-hot-toast";
 import { AuthContext } from "./AuthContext";
 
-export const NotificationContext = createContext();
+// eslint-disable-next-line react-refresh/only-export-components
+export const NotificationContext = createContext({ notifications: [], unreadCount: 0 });
 
 export const NotificationProvider = ({ children }) => {
-
   const { user } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
 
-  const lastNotifRef = useRef(null); //  IMPORTANT
-
-  useEffect(() => {
-    if (!user) return;
-
-    fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 5000);
-
-    return () => clearInterval(interval);
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return setNotifications([]);
+    try {
+      const { data } = await api.get("/api/notifications");
+      setNotifications(data.data ?? []);
+    } catch (error) {
+      if (error.response?.status !== 401) console.error("Notification loading failed", error);
+    }
   }, [user]);
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await api.get("/api/notifications");
+  useEffect(() => {
+    const initialTimer = window.setTimeout(fetchNotifications, 0);
+    if (!user) return () => window.clearTimeout(initialTimer);
+    const timer = window.setInterval(fetchNotifications, 30000);
+    return () => { window.clearTimeout(initialTimer); window.clearInterval(timer); };
+  }, [fetchNotifications, user]);
 
-      const newNotifs = res.data;
+  const markAllRead = async () => {
+    await api.patch("/api/notifications/read-all");
+    setNotifications((items) => items.map((item) => ({ ...item, read_at: item.read_at ?? new Date().toISOString() })));
+  };
 
-      //  éviter spam
-      if (newNotifs.length > 0) {
-        const last = newNotifs[newNotifs.length - 1];
-
-        if (lastNotifRef.current !== last.message) {
-          toast.success(last.message);
-          lastNotifRef.current = last.message;
-        }
-      }
-
-      setNotifications(newNotifs);
-
-    } catch {
-      console.log("Erreur notifications");
-    }
+  const markRead = async (id) => {
+    await api.patch(`/api/notifications/${id}/read`);
+    setNotifications((items) => items.map((item) => item.id === id ? { ...item, read_at: item.read_at ?? new Date().toISOString() } : item));
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications }}>
+    <NotificationContext.Provider value={{ notifications, unreadCount: notifications.filter((item) => !item.read_at).length, refreshNotifications: fetchNotifications, markAllRead, markRead }}>
       {children}
     </NotificationContext.Provider>
   );

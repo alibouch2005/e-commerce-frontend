@@ -1,6 +1,7 @@
 export default function CartItem({ item }){
 
   const product = item.product;
+  const fallbackImage = "/product-placeholder.svg";
 
   return(
 
@@ -9,10 +10,15 @@ export default function CartItem({ item }){
       <div className="flex items-center gap-4">
 
         <img
-          src={product.image 
-            ? `http://localhost:8000${product.image}`
-            : "https://dummyimage.com/100x100/e5e7eb/6b7280&text=Produit"}
+          src={product.image || fallbackImage}
           className="w-20 h-20 object-cover rounded"
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = fallbackImage;
+          }}
         />
 
         <div>

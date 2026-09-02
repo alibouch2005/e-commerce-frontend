@@ -1,10 +1,13 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function AdminGuard({ children }) {
+  const { user, loading } = useContext(AuthContext);
+  const { t } = useLanguage();
 
-  const { user } = useContext(AuthContext);
+  if (loading) return <p>{t("loading")}</p>;
 
   if (!user) return <Navigate to="/login" />;// si pas connecté, redirige vers login
 

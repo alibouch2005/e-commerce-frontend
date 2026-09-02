@@ -1,154 +1,99 @@
-import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
-import { AuthContext } from "../context/AuthContext"; // 🔥 AJOUT
-import { updateQuantity, removeFromCart } from "../services/cartService";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { CartContext } from "../context/CartContext";
+import { useLanguage } from "../context/LanguageContext";
+import { showApiError } from "../utils/showApiError";
 
 export default function Cart() {
-  const { cart, loading, reloadCart } = useContext(CartContext);
-  const { user } = useContext(AuthContext); // 🔥 AJOUT
+  const { cart, loading, updateItemQuantity, removeItem } = useContext(CartContext);
+  const { t } = useLanguage();
   const navigate = useNavigate();
+  const [updatingId, setUpdatingId] = useState(null);
 
-  const subtotal = cart?.total || 0;
-  const shipping = subtotal > 0 ? 30 : 0;
-  const total = subtotal + shipping;
+  const subtotal = Number(cart?.total || 0);
+  const fallbackImage = "/product-placeholder.svg";
 
-  // 🔥 CHECKOUT HANDLER PRO
   const handleCheckout = () => {
-    if (!user) {
-      toast.error("Veuillez vous connecter 🔐");
-
-      navigate("/login", {
-        state: { from: "/checkout" }, // 🔥 retour auto après login
-      });
-
-      return;
-    }
-
     navigate("/checkout");
   };
 
-  // 🔄 LOADING
-  if (loading) {
-    return <p className="text-center mt-10">Chargement panier...</p>;
-  }
+  const changeQty = async (item, quantity) => {
+    if (quantity < 1) return;
+    setUpdatingId(item.id);
+    try {
+      await updateItemQuantity(item, quantity);
+    } catch (error) {
+      showApiError(error, t("quantityError"));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
-  // 🛒 PANIER VIDE
-  if (!cart || !cart.items || cart.items.length === 0) {
-    return (
-      <div className="text-center mt-20">
-        <h2 className="text-2xl font-semibold">Votre panier est vide 🛒</h2>
+  const handleRemoveItem = async (item) => {
+    setUpdatingId(item.id);
+    try {
+      await removeItem(item);
+      toast.success(t("productRemoved"));
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
-        <button
-          onClick={() => navigate("/products")}
-          className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg"
-        >
-          Voir produits
-        </button>
-      </div>
-    );
+  if (loading) return <p className="text-center mt-10">{t("loading")}</p>;
+  if (!cart?.items?.length) {
+    return <div className="text-center mt-20"><h2 className="text-2xl font-black">{t("emptyCart")}</h2><button onClick={() => navigate("/products")} className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg">{t("seeProducts")}</button></div>;
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Votre panier</h1>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* 🛍️ PRODUITS */}
-        <div className="md:col-span-2 space-y-4">
-          {cart.items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between bg-white shadow p-4 rounded-lg"
-            >
-              {/* Produit */}
-              <div className="flex items-center gap-4">
-                <img
-                  src={`http://localhost:8000${item.image}`} // 🔥 URL IMAGE
-                  className="w-16 h-16 object-cover rounded"
-                  alt={item.product?.name}
-                />
-
-                <div>
-                  <h3 className="font-semibold">{item.product.name}</h3>
-                  <p className="text-gray-500">{item.price} DH</p>
+    <div className="min-h-screen bg-[#f7f8fc] px-4 py-6 sm:px-6 sm:py-10">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="mb-6 text-3xl font-black sm:mb-8 sm:text-4xl">{t("cart")}</h1>
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="md:col-span-2 space-y-4">
+            {cart.items.map((item) => (
+              <div key={item.id} className={`flex flex-col justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition md:flex-row md:items-center ${updatingId === item.id ? "opacity-80" : ""}`}>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={item.product?.image || fallbackImage}
+                    className="w-20 h-20 object-cover rounded-2xl bg-gray-50"
+                    alt={item.product?.name}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = fallbackImage;
+                    }}
+                  />
+                  <div>
+                    <h3 className="font-black">{item.product.name}</h3>
+                    <div className="text-sm">
+                      {item.product?.is_on_sale && <span className="mr-2 text-gray-400 line-through">{item.product.price} DH</span>}
+                      <span className="font-bold text-indigo-600">{item.price} DH</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center rounded-xl border bg-white">
+                    <button disabled={updatingId === item.id || item.quantity <= 1} onClick={() => changeQty(item, item.quantity - 1)} className="p-3 transition hover:bg-gray-50 disabled:opacity-30"><Minus size={16} /></button>
+                    <span className="w-10 text-center font-bold">{item.quantity}</span>
+                    <button disabled={updatingId === item.id || (item.product?.stock && item.quantity >= item.product.stock)} onClick={() => changeQty(item, item.quantity + 1)} className="p-3 transition hover:bg-gray-50 disabled:opacity-30"><Plus size={16} /></button>
+                  </div>
+                  <div className="min-w-24 text-right font-black">{Number(item.total_price).toFixed(2)} DH</div>
+                  <button disabled={updatingId === item.id} onClick={() => handleRemoveItem(item)} className="rounded-xl bg-red-50 p-3 text-red-500 hover:bg-red-100"><Trash2 size={18} /></button>
                 </div>
               </div>
-
-              {/* Quantité */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    if (item.quantity > 1) {
-                      await updateQuantity(item.id, item.quantity - 1);
-                      reloadCart();
-                    }
-                  }}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                >
-                  -
-                </button>
-
-                <span className="font-semibold">{item.quantity}</span>
-
-                <button
-                  onClick={async () => {
-                    await updateQuantity(item.id, item.quantity + 1);
-                    reloadCart();
-                  }}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Total */}
-              <div className="font-bold">{item.total_price} DH</div>
-
-              {/* Supprimer */}
-              <button
-                onClick={async () => {
-                  await removeFromCart(item.id);
-                  reloadCart();
-                  toast.success("Produit supprimé 🗑️");
-                }}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Supprimer
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* 💳 RESUME */}
-        <div className="bg-white shadow rounded-lg p-6 h-fit sticky top-6">
-          <h2 className="text-xl font-bold mb-4">Résumé</h2>
-
-          <div className="flex justify-between mb-2">
-            <span>Sous-total</span>
-            <span>{subtotal.toFixed(2)} DH</span>
+            ))}
           </div>
-
-          <div className="flex justify-between mb-2">
-            <span>Livraison</span>
-            <span>{shipping} DH</span>
+          <div className="h-fit rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:sticky md:top-24 sm:p-6">
+            <h2 className="text-xl font-black mb-4">{t("summary")}</h2>
+            <div className="flex justify-between mb-2"><span>{t("subtotal")}</span><span>{subtotal.toFixed(2)} DH</span></div>
+            <div className="mb-2 rounded-xl bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">{t("deliveryCalculatedCheckout")}</div>
+            <hr className="my-4" />
+            <div className="flex justify-between font-black text-lg"><span>{t("total")}</span><span>{subtotal.toFixed(2)} DH</span></div>
+            <button onClick={handleCheckout} className="w-full mt-5 bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700">{t("placeOrder")}</button>
           </div>
-
-          <hr className="my-3" />
-
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>{total.toFixed(2)} DH</span>
-          </div>
-
-          {/* 🔥 CHECKOUT */}
-          <button
-            onClick={handleCheckout}
-            className="w-full mt-4 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
-          >
-            Passer la commande
-          </button>
         </div>
       </div>
     </div>

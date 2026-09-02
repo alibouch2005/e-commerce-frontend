@@ -1,11 +1,13 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
 
 const GuestGuard = () => {
   const { user, loading } = useContext(AuthContext);// récupère l'utilisateur et le loading du contexte
+  const { t } = useLanguage();
 
-  if (loading) return <p>Loading...</p>;// affiche un message de chargement pendant que le contexte charge l'utilisateur
+  if (loading) return <p>{t("loading")}</p>;// affiche un message de chargement pendant que le contexte charge l'utilisateur
 
   if (user) {
     return <Navigate to="/" replace />;// si connecté, redirige vers home

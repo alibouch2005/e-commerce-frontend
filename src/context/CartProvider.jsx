@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
 import { CartContext } from "./CartContext";
-import { getCart, addToCart } from "../services/cartService";
+import { addToCart, getCart, removeFromCart, updateQuantity } from "../services/cartService";
+import { trackEvent } from "../services/analyticsService";
+
+const normalizeCart = (cart) => ({
+  total: 0,
+  ...cart,
+  items: cart?.items || [],
+});
+
+const itemUnitPrice = (item) => Number(item.price ?? item.product?.current_price ?? item.product?.price ?? 0);
+
+const recalculateCart = (cart) => {
+  const next = normalizeCart(cart);
+  const items = next.items.map((item) => {
+    const totalPrice = itemUnitPrice(item) * Number(item.quantity || 0);
+    return { ...item, total_price: Number(totalPrice.toFixed(2)) };
+  });
+
+  const total = items.reduce((sum, item) => sum + Number(item.total_price || 0), 0);
+  return { ...next, items, total: Number(total.toFixed(2)) };
+};
 
 export default function CartProvider({ children }) {
 
@@ -19,8 +39,7 @@ export default function CartProvider({ children }) {
 
       const res = await getCart();
 
-      // important : récupérer data.data
-      setCart(res.data.data ?? { items: [] });
+      setCart(recalculateCart(res.data.data ?? { items: [] }));
 
     } catch (err) {
 
@@ -40,16 +59,52 @@ export default function CartProvider({ children }) {
     try {
 
       await addToCart(product_id, quantity);
+      trackEvent("add_to_cart", { product_id, metadata: { quantity } });
 
-      // recharger panier
       await loadCart();
 
     } catch (err) {
 
       console.error("Erreur ajout panier:", err);
+      throw err;
 
     }
 
+  };
+
+  const updateItemQuantity = async (item, quantity) => {
+    if (quantity < 1) return;
+    const previousCart = cart;
+
+    setCart((current) => recalculateCart({
+      ...current,
+      items: (current.items || []).map((currentItem) =>
+        currentItem.id === item.id ? { ...currentItem, quantity } : currentItem
+      ),
+    }));
+
+    try {
+      await updateQuantity(item.id, quantity);
+    } catch (err) {
+      setCart(previousCart);
+      throw err;
+    }
+  };
+
+  const removeItem = async (item) => {
+    const previousCart = cart;
+
+    setCart((current) => recalculateCart({
+      ...current,
+      items: (current.items || []).filter((currentItem) => currentItem.id !== item.id),
+    }));
+
+    try {
+      await removeFromCart(item.id);
+    } catch (err) {
+      setCart(previousCart);
+      throw err;
+    }
   };
 
   return (
@@ -58,6 +113,8 @@ export default function CartProvider({ children }) {
       value={{
         cart,
         addItem,
+        updateItemQuantity,
+        removeItem,
         loading,
         reloadCart: loadCart
       }}
