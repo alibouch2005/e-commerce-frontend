@@ -11,7 +11,22 @@ const statusColor = {
   preparing: "bg-blue-100 text-blue-700",
   shipping: "bg-indigo-100 text-indigo-700",
   delivered: "bg-emerald-100 text-emerald-700",
+  cancelled: "bg-red-100 text-red-700",
+  refunded: "bg-slate-100 text-slate-700",
 };
+
+const toNumber = (value) => Number(value || 0);
+const itemLineTotal = (item) => {
+  const explicitTotal = toNumber(item?.total_price);
+  if (explicitTotal > 0) return explicitTotal;
+  return toNumber(item?.price || item?.product?.current_price || item?.product?.price) * toNumber(item?.quantity || 1);
+};
+const displayTotal = (order) => Number(order?.computed_total ?? order?.total_price ?? 0).toFixed(2);
+const slotLabel = (slot) => ({
+  "08_12": "08:00 - 12:00",
+  "12_18": "12:00 - 18:00",
+  "18_21": "18:00 - 21:00",
+}[slot] || "Non precise");
 
 export default function Deliveries() {
   const { t } = useLanguage();
@@ -153,6 +168,7 @@ export default function Deliveries() {
                         <div>
                           <p className="text-xs font-black uppercase tracking-widest text-gray-400">{t("address")}</p>
                           <p className="mt-2 text-sm text-gray-700">{order.adresse_livraison}</p>
+                          <p className="mt-2 text-xs font-black text-indigo-600">{t("deliveryTimeSlot")}: {slotLabel(order.delivery_time_slot)}</p>
                         </div>
                       </div>
 
@@ -166,13 +182,13 @@ export default function Deliveries() {
                           {order.items?.map((item) => (
                             <div key={item.id} className="flex justify-between gap-4 p-3 text-sm">
                               <span className="min-w-0 text-gray-700">{item.product?.name} x{item.quantity}</span>
-                              <span className="shrink-0 font-bold">{item.price} DH</span>
+                              <span className="shrink-0 font-bold">{itemLineTotal(item).toFixed(2)} DH</span>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="text-xl font-black text-indigo-600">{t("total")}: {order.total_price} DH</div>
+                      <div className="text-xl font-black text-indigo-600">{t("total")}: {displayTotal(order)} DH</div>
                     </div>
 
                     <div className="space-y-4">

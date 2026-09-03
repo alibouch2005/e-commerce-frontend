@@ -9,6 +9,29 @@ const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const assetUrl = (path) => (!path ? "" : path.startsWith("http") ? path : `${apiUrl}${path}`);
 const STORE = { address: "Rue 177, 20202 Casablanca", latitude: 33.55244, longitude: -7.67712 };
 
+const toNumber = (value) => Number(value || 0);
+const itemLineTotal = (item) => {
+  const explicitTotal = toNumber(item?.total_price);
+  if (explicitTotal > 0) return explicitTotal;
+  return toNumber(item?.price || item?.product?.current_price || item?.product?.price) * toNumber(item?.quantity || 1);
+};
+const orderSubtotal = (order) => {
+  const apiSubtotal = toNumber(order?.items_subtotal);
+  if (apiSubtotal > 0) return apiSubtotal;
+  return (order?.items || []).reduce((sum, item) => sum + itemLineTotal(item), 0);
+};
+const orderDiscount = (order) => toNumber(order?.discount_amount);
+const orderDeliveryFee = (order) => toNumber(order?.delivery_fee);
+const orderGrandTotal = (order) => {
+  const apiComputedTotal = toNumber(order?.computed_total);
+  if (apiComputedTotal > 0) return apiComputedTotal;
+
+  const subtotal = orderSubtotal(order);
+  if (subtotal > 0) return Math.max(0, subtotal - orderDiscount(order)) + orderDeliveryFee(order);
+
+  return toNumber(order?.total_price);
+};
+
 function DeliveryTracking({ status }) {
   const { t } = useLanguage();
   const steps = [
@@ -84,6 +107,20 @@ export default function Orders() {
     }
   };
 
+  const cancelOrder = async (orderId) => {
+    const reason = window.prompt(`${t("cancelOrder")} — ${t("cancelOnlyPending15")}`);
+    if (reason === null) return;
+    try {
+      const { data } = await api.patch(`/api/orders/${orderId}/cancel`, { reason });
+      const updatedOrder = data.data || data;
+      setOrders((current) => current.map((order) => (order.id === orderId ? updatedOrder : order)));
+      setSelectedOrder(updatedOrder);
+      toast.success(t("orderCancelled"));
+    } catch (error) {
+      toast.error(error.response?.data?.message || t("checkoutError"));
+    }
+  };
+
   if (loading) return <OrdersSkeleton />;
 
   return (
@@ -113,7 +150,7 @@ export default function Orders() {
                   <p className="text-sm text-gray-500">{order.fulfillment_method === "pickup" ? t("storePickup") : t("delivery")} · {formatDate(order.created_at, { dateStyle: "medium" })}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-black text-indigo-600">{formatMoney(order.total_price)}</p>
+                  <p className="font-black text-indigo-600">{formatMoney(orderGrandTotal(order))}</p>
                   <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold">{t(order.status)}</span>
                 </div>
               </div>
@@ -128,6 +165,9 @@ export default function Orders() {
                 <div>
                   <h2 className="text-2xl font-black">{t("orderNumber", { id: selectedOrder.id })}</h2>
                   <p className="text-sm text-gray-500">{selectedOrder.fulfillment_method === "pickup" ? t("storePickup") : t("homeDelivery")}</p>
+                  {selectedOrder.delivery_time_slot && (
+                    <p className="mt-1 text-sm font-bold text-indigo-600">{t("deliveryTimeSlot")}: {t(`slot${selectedOrder.delivery_time_slot === "08_12" ? "Morning" : selectedOrder.delivery_time_slot === "18_21" ? "Evening" : "Afternoon"}`)}</p>
+                  )}
                 </div>
                 <button onClick={() => setSelectedOrder(null)} className="rounded-full bg-gray-100 px-3 py-1">{t("close")}</button>
               </div>
@@ -135,19 +175,38 @@ export default function Orders() {
               <div className="mt-6 space-y-3">
                 {selectedOrder.items?.map((item) => (
                   <div key={item.id} className="flex justify-between gap-4 border-b pb-2">
-                    <span className="min-w-0">{item.product.name} x{item.quantity}</span>
-                    <b className="shrink-0">{formatMoney(item.total_price || item.price)}</b>
+                    <span className="min-w-0">{item.product?.name || item.product_name || t("product")} x{item.quantity}</span>
+                    <b className="shrink-0">{formatMoney(itemLineTotal(item))}</b>
                   </div>
                 ))}
               </div>
               <div className="mt-4 space-y-2 rounded-2xl bg-gray-50 p-4 text-sm">
+                <div className="flex justify-between"><span>{t("subtotal")}</span><b>{formatMoney(orderSubtotal(selectedOrder))}</b></div>
+                {orderDiscount(selectedOrder) > 0 && (
+                  <div className="flex justify-between text-emerald-700"><span>{t("coupon")}</span><b>-{formatMoney(orderDiscount(selectedOrder))}</b></div>
+                )}
                 <div className="flex justify-between"><span>{t("deliveryFee")}</span><b>{formatMoney(selectedOrder.delivery_fee)}</b></div>
                 {selectedOrder.delivery_distance_km && (
                   <div className="flex justify-between"><span>{t("deliveryDistance")}</span><b>{Number(selectedOrder.delivery_distance_km).toFixed(2)} km</b></div>
                 )}
-                <div className="flex justify-between text-xl font-black text-indigo-600"><span>{t("total")}</span><span>{formatMoney(selectedOrder.total_price)}</span></div>
+                <div className="flex justify-between text-xl font-black text-indigo-600"><span>{t("total")}</span><span>{formatMoney(orderGrandTotal(selectedOrder))}</span></div>
               </div>
+              {selectedOrder.cancellation_reason && (
+                <div className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+                  <p className="font-black">{t("cancelled")}</p>
+                  <p className="mt-1">{selectedOrder.cancellation_reason}</p>
+                </div>
+              )}
+              {selectedOrder.refund_reason && (
+                <div className="mt-4 rounded-2xl bg-slate-100 p-4 text-sm text-slate-700">
+                  <p className="font-black">{t("refunded")}</p>
+                  <p className="mt-1">{selectedOrder.refund_reason}</p>
+                </div>
+              )}
               <button onClick={() => downloadReceipt(selectedOrder.id)} className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-700">{t("downloadReceipt")}</button>
+              {selectedOrder.can_client_cancel && (
+                <button onClick={() => cancelOrder(selectedOrder.id)} className="mt-3 w-full rounded-xl bg-red-50 px-4 py-3 font-bold text-red-600 hover:bg-red-100">{t("cancelOrder")}</button>
+              )}
 
               {selectedOrder.fulfillment_method === "pickup" ? (
                 <div className="mt-6 rounded-2xl bg-indigo-50 p-4 text-indigo-800">

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../Api/axios";
 import toast from "react-hot-toast";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Cell,
   Legend,
@@ -108,6 +111,8 @@ export default function AdminDashboard() {
     { name: "Livraison", value: stats?.status?.shipping || 0 },
     { name: "Livrée", value: stats?.status?.delivered || 0 },
   ];
+  const monthlyRevenue = stats?.revenue_trends?.monthly || [];
+  const yearlyRevenue = stats?.revenue_trends?.yearly || [];
 
   return (
     <div className="min-h-screen space-y-8 bg-gray-50 p-4 sm:p-6 lg:space-y-10">
@@ -118,10 +123,42 @@ export default function AdminDashboard() {
         <KpiCard icon={<CheckCircle />} color="purple" label="Livrées" value={stats?.delivered_orders || 0} />
       </div>
 
+      <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 font-black text-gray-950"><AlertTriangle className="text-amber-500" /> Problèmes à traiter</h2>
+            <p className="text-sm text-gray-500">Vue rapide pour gérer ce qui bloque la boutique aujourd'hui.</p>
+          </div>
+          <Link to="/admin/orders" className="w-fit rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-white hover:bg-amber-600">Voir commandes</Link>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <AttentionCard label="Commandes en attente" value={stats?.admin_attention?.pending_orders || 0} to="/admin/orders" />
+          <AttentionCard label="Support urgent" value={stats?.admin_attention?.urgent_support || 0} to="/admin/support" />
+          <AttentionCard label="Rupture stock" value={stats?.admin_attention?.out_of_stock || 0} to="/admin/products" />
+          <AttentionCard label="Stock faible" value={stats?.admin_attention?.low_stock || 0} to="/admin/products" />
+          <AttentionCard label="Remboursements" value={stats?.admin_attention?.refunds || 0} to="/admin/orders" />
+        </div>
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <MoneyBreakdown title="Revenus produits" value={formatMoney(stats?.revenue_breakdown?.delivered_products)} color="emerald" />
         <MoneyBreakdown title="Frais livraison encaissés" value={formatMoney(stats?.revenue_breakdown?.delivery_fees)} color="sky" />
         <MoneyBreakdown title="Revenus en cours" value={formatMoney(stats?.revenue_breakdown?.pending_revenue)} color="amber" />
+      </div>
+
+      <div className="grid gap-8 xl:grid-cols-2">
+        <RevenueTrendChart
+          title="Revenus par mois"
+          subtitle="Commandes livrées sur les 12 derniers mois"
+          data={monthlyRevenue}
+          formatMoney={formatMoney}
+        />
+        <RevenueTrendChart
+          title="Revenus par année"
+          subtitle="Vue annuelle des revenus encaissés"
+          data={yearlyRevenue}
+          formatMoney={formatMoney}
+        />
       </div>
 
       <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
@@ -204,7 +241,7 @@ export default function AdminDashboard() {
                 ) : orders.map((order) => (
                   <tr key={order.id} className="transition-colors hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-indigo-600">#{order.id}</td>
-                    <td className="px-6 py-4 font-bold text-gray-700">{formatMoney(order.total_price)}</td>
+                    <td className="px-6 py-4 font-bold text-gray-700">{formatMoney(order.computed_total ?? order.total_price)}</td>
                     <td className="px-6 py-4">
                       <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-black uppercase text-gray-600">{order.status}</span>
                     </td>
@@ -216,7 +253,7 @@ export default function AdminDashboard() {
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="mb-6 flex items-center gap-2 font-bold text-red-500"><AlertTriangle size={20} /> Stock faible {"<"} 5</h2>
+          <h2 className="mb-6 flex items-center gap-2 font-bold text-red-500"><AlertTriangle size={20} /> Stock faible {"<"} 10</h2>
           <div className="space-y-3">
             {lowStock.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10">
@@ -254,7 +291,7 @@ export default function AdminDashboard() {
           <h2 className="mb-4 font-bold">Santé du stock</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl bg-red-50 p-5 text-red-700"><p className="text-sm">Rupture</p><b className="text-3xl">{stats?.stock_summary?.out_of_stock || 0}</b></div>
-            <div className="rounded-xl bg-amber-50 p-5 text-amber-700"><p className="text-sm">Critique (1–4)</p><b className="text-3xl">{stats?.stock_summary?.critical || 0}</b></div>
+            <div className="rounded-xl bg-amber-50 p-5 text-amber-700"><p className="text-sm">Critique (1-9)</p><b className="text-3xl">{stats?.stock_summary?.critical || 0}</b></div>
           </div>
         </section>
       </div>
@@ -290,10 +327,10 @@ export default function AdminDashboard() {
             <h2 className="flex items-center gap-2 font-black text-gray-950"><TrendingUp className="text-indigo-600" /> Recherche marché terrain — Casablanca</h2>
             <p className="text-sm text-gray-500">Liste tendances e-commerce Maroc uniquement, avec score dynamique selon la période.</p>
           </div>
-          <span className="w-fit rounded-full bg-indigo-50 px-4 py-2 text-sm font-black text-indigo-700">Wini product</span>
+          <Link to="/admin/wini-products" className="w-fit rounded-full bg-indigo-600 px-4 py-2 text-sm font-black text-white hover:bg-indigo-700">Ouvrir Wini product</Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(stats?.market_suggestions || []).map((item) => (
+          {(stats?.market_suggestions || []).slice(0, 3).map((item) => (
             <article key={`${item.name}-${item.source}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -383,6 +420,74 @@ function MoneyBreakdown({ title, value, color }) {
       <p className="text-sm font-bold">{title}</p>
       <b className="mt-1 block break-words text-2xl">{value}</b>
     </div>
+  );
+}
+
+function AttentionCard({ label, value, to }) {
+  const hasIssue = Number(value || 0) > 0;
+
+  return (
+    <Link
+      to={to}
+      className={`rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:shadow-md ${
+        hasIssue ? "border-amber-100 bg-amber-50 text-amber-800" : "border-emerald-100 bg-emerald-50 text-emerald-800"
+      }`}
+    >
+      <p className="text-xs font-black uppercase tracking-widest">{label}</p>
+      <b className="mt-2 block text-3xl font-black">{value}</b>
+      <span className="mt-1 block text-xs font-bold">{hasIssue ? "A traiter" : "OK"}</span>
+    </Link>
+  );
+}
+
+function RevenueTrendChart({ title, subtitle, data, formatMoney }) {
+  const total = data.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const orders = data.reduce((sum, item) => sum + Number(item.orders_count || 0), 0);
+
+  return (
+    <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="font-black text-gray-950">{title}</h2>
+          <p className="text-sm text-gray-500">{subtitle}</p>
+        </div>
+        <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right text-emerald-700">
+          <p className="text-xs font-black uppercase tracking-widest">Total</p>
+          <b className="block text-lg">{formatMoney(total)}</b>
+          <span className="text-xs font-bold">{orders} commande(s)</span>
+        </div>
+      </div>
+
+      {data.length ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 11 }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#9ca3af", fontSize: 11 }} width={70} />
+            <Tooltip
+              formatter={(value, name) => {
+                const labels = {
+                  total: "Revenu total",
+                  products_revenue: "Produits",
+                  delivery_fees: "Livraison",
+                };
+
+                return [formatMoney(value), labels[name] || name];
+              }}
+              labelFormatter={(label) => `Période : ${label}`}
+              contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 16px rgb(0 0 0 / 0.12)" }}
+            />
+            <Legend />
+            <Bar dataKey="products_revenue" name="Produits" stackId="revenue" fill="#10b981" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="delivery_fees" name="Livraison" stackId="revenue" fill="#38bdf8" radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="flex h-[300px] items-center justify-center rounded-2xl bg-gray-50 text-sm font-bold text-gray-400">
+          Aucun revenu livré pour cette période.
+        </div>
+      )}
+    </section>
   );
 }
 

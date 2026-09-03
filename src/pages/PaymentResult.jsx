@@ -23,6 +23,11 @@ export default function PaymentResult({ success = false }) {
             ? t("paymentSuccessMessage", { order: orderText })
             : t("paymentFailureMessage")}
         </p>
+        {!success && (
+          <p className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+            {t("paymentFailureCashOption")}
+          </p>
+        )}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link to="/orders" className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white hover:bg-indigo-700">

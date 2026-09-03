@@ -8,11 +8,12 @@ import {
   MessageCircle,
   Package,
   Tag,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onNavigate }) {
   const { user } = useContext(AuthContext);
   const { t } = useLanguage();
 
@@ -22,6 +23,10 @@ export default function AdminSidebar() {
         ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 font-bold"
         : "text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
     }`;
+
+  const handleNavigate = () => {
+    if (onNavigate) onNavigate();
+  };
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-gray-100 bg-white">
@@ -39,39 +44,44 @@ export default function AdminSidebar() {
       <nav className="mt-2 flex-1 space-y-2 p-4">
         <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t("mainMenu")}</p>
 
-        <NavLink to="/admin/dashboard" className={navStyle}>
+        <NavLink to="/admin/dashboard" className={navStyle} onClick={handleNavigate}>
           <LayoutDashboard size={20} />
           <span>{t("dashboard")}</span>
         </NavLink>
 
-        <NavLink to="/admin/categories" className={navStyle}>
+        <NavLink to="/admin/categories" className={navStyle} onClick={handleNavigate}>
           <Layers size={20} />
           <span>{t("categories")}</span>
         </NavLink>
 
-        <NavLink to="/admin/products" className={navStyle}>
+        <NavLink to="/admin/products" className={navStyle} onClick={handleNavigate}>
           <Package size={20} />
           <span>{t("products")}</span>
         </NavLink>
 
+        <NavLink to="/admin/wini-products" className={navStyle} onClick={handleNavigate}>
+          <TrendingUp size={20} />
+          <span>Wini product</span>
+        </NavLink>
+
         {user?.role === "admin" && (
-          <NavLink to="/admin/orders" className={navStyle}>
+          <NavLink to="/admin/orders" className={navStyle} onClick={handleNavigate}>
             <ClipboardList size={20} />
             <span>{t("orders")}</span>
           </NavLink>
         )}
 
-        <NavLink to="/admin/users" className={navStyle}>
+        <NavLink to="/admin/users" className={navStyle} onClick={handleNavigate}>
           <Users size={20} />
           <span>{t("users")}</span>
         </NavLink>
 
-        <NavLink to="/admin/coupons" className={navStyle}>
+        <NavLink to="/admin/coupons" className={navStyle} onClick={handleNavigate}>
           <Tag size={20} />
           <span>{t("promos")}</span>
         </NavLink>
 
-        <NavLink to="/admin/support" className={navStyle}>
+        <NavLink to="/admin/support" className={navStyle} onClick={handleNavigate}>
           <MessageCircle size={20} />
           <span>{t("support")}</span>
         </NavLink>

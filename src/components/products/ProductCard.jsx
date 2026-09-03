@@ -81,8 +81,8 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
           <div>
             {product.is_on_sale && <p className="text-sm text-gray-400 line-through">{product.price} DH</p>}
             <p className="text-xl font-black text-gray-950 sm:text-2xl">{product.current_price ?? product.price} <span className="text-sm text-indigo-600">DH</span></p>
-            <p className={`text-xs font-bold ${isOutOfStock ? "text-red-500" : product.stock < 5 ? "text-amber-500" : "text-emerald-500"}`}>
-              {isOutOfStock ? t("outOfStock") : product.stock < 5 ? t("lowStockCount", { count: product.stock }) : t("inStock")}
+            <p className={`text-xs font-bold ${isOutOfStock ? "text-indigo-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-500"}`}>
+              {isOutOfStock ? t("soonAvailable") : product.stock < 10 ? t("lowStockCount", { count: product.stock }) : t("inStock")}
             </p>
           </div>
           <button disabled={busy || isOutOfStock} onClick={addToCart} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-2xl bg-indigo-600 p-3 text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:translate-y-0 disabled:bg-gray-300 disabled:shadow-none sm:p-4" title={t("addToCart")}>

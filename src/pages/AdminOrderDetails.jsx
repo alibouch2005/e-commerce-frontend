@@ -15,6 +15,34 @@ import {
   Download
 } from "lucide-react";
 
+const toNumber = (value) => Number(value || 0);
+const itemLineTotal = (item) => {
+  const explicitTotal = toNumber(item?.total_price);
+  if (explicitTotal > 0) return explicitTotal;
+  return toNumber(item?.price || item?.product?.current_price || item?.product?.price) * toNumber(item?.quantity || 1);
+};
+const orderSubtotal = (order) => {
+  const apiSubtotal = toNumber(order?.items_subtotal);
+  if (apiSubtotal > 0) return apiSubtotal;
+  return (order?.items || []).reduce((sum, item) => sum + itemLineTotal(item), 0);
+};
+const orderDiscount = (order) => toNumber(order?.discount_amount);
+const orderDeliveryFee = (order) => toNumber(order?.delivery_fee);
+const orderGrandTotal = (order) => {
+  const apiComputedTotal = toNumber(order?.computed_total);
+  if (apiComputedTotal > 0) return apiComputedTotal;
+
+  const subtotal = orderSubtotal(order);
+  if (subtotal > 0) return Math.max(0, subtotal - orderDiscount(order)) + orderDeliveryFee(order);
+
+  return toNumber(order?.total_price);
+};
+const slotLabel = (slot) => ({
+  "08_12": "08:00 - 12:00",
+  "12_18": "12:00 - 18:00",
+  "18_21": "18:00 - 21:00",
+}[slot] || "Non precise");
+
 export default function AdminOrderDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -29,6 +57,7 @@ export default function AdminOrderDetails() {
     shipping: { label: "En cours de livraison", color: "bg-purple-100 text-purple-700" },
     delivered: { label: "Livré", color: "bg-green-100 text-green-700" },
     cancelled: { label: "Annulé", color: "bg-red-100 text-red-700" },
+    refunded: { label: "Remboursee", color: "bg-slate-100 text-slate-700" },
   };
 
   useEffect(() => {
@@ -65,7 +94,15 @@ export default function AdminOrderDetails() {
 
   const changeStatus = async (status) => {
     setUpdating(true);
-    try { const { data } = await api.put(`/api/admin/orders/${id}/status`, { status }); setOrder(data.data || data); toast.success("Statut mis à jour"); }
+    try {
+      let reason = "";
+      if (["cancelled", "refunded"].includes(status)) {
+        reason = window.prompt(status === "refunded" ? "Raison du remboursement ?" : "Raison de l'annulation ?") || "";
+      }
+      const { data } = await api.put(`/api/admin/orders/${id}/status`, { status, reason });
+      setOrder(data.data || data);
+      toast.success("Statut mis a jour");
+    }
     catch (error) { toast.error(error.response?.data?.message || "Mise à jour impossible"); }
     finally { setUpdating(false); }
   };
@@ -141,13 +178,31 @@ export default function AdminOrderDetails() {
                   {order.adresse_livraison}
                 </p>
               </div>
+              {order.fulfillment_method === "delivery" && (
+                <div>
+                  <p className="text-xs text-gray-400 uppercase font-bold">Disponibilite client</p>
+                  <p className="font-medium text-gray-900">{slotLabel(order.delivery_time_slot)}</p>
+                </div>
+              )}
+              {order.cancellation_reason && (
+                <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                  <p className="font-black">Raison annulation</p>
+                  <p>{order.cancellation_reason}</p>
+                </div>
+              )}
+              {order.refund_reason && (
+                <div className="rounded-xl bg-slate-100 p-3 text-sm text-slate-700">
+                  <p className="font-black">Raison remboursement</p>
+                  <p>{order.refund_reason}</p>
+                </div>
+              )}
               <div className="pt-2">
                 <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${statusTranslations[order.status]?.color || "bg-gray-100"}`}>
                   {statusTranslations[order.status]?.label || order.status}
                 </span>
               </div>
               <select disabled={updating} value={order.status} onChange={(e) => changeStatus(e.target.value)} className="w-full border rounded-lg p-2 font-medium">
-                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option>
+                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option><option value="refunded">Remboursee</option>
               </select>
             </div>
           </div>
@@ -205,10 +260,15 @@ export default function AdminOrderDetails() {
           </div>
 
           {/* TOTAL FINAL */}
-          <div className="bg-indigo-600 p-6 rounded-xl shadow-lg text-white flex justify-between items-center">
-            <span className="text-lg font-medium opacity-90">Total de la commande</span>
+          <div className="bg-indigo-600 p-6 rounded-xl shadow-lg text-white flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+            <div className="space-y-1 text-sm opacity-90">
+              <p>Sous-total produits : {orderSubtotal(order).toFixed(2)} DH</p>
+              {orderDiscount(order) > 0 && <p>Remise : -{orderDiscount(order).toFixed(2)} DH</p>}
+              <p>Livraison : {orderDeliveryFee(order).toFixed(2)} DH</p>
+            </div>
             <div className="text-right">
-              <p className="text-3xl font-black">{Number(order.total_price).toFixed(2)} DH</p>
+              <span className="text-lg font-medium opacity-90">Total de la commande</span>
+              <p className="text-3xl font-black">{orderGrandTotal(order).toFixed(2)} DH</p>
               <p className="text-xs opacity-75">TVA incluse / Paiement à la livraison</p>
             </div>
           </div>

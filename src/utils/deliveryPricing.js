@@ -5,9 +5,9 @@ export const STORE_LOCATION = {
 };
 
 const PRICING = {
-  baseFee: 10,
+  baseFee: 5,
   pricePerKm: 4,
-  minDeliveryFee: 15,
+  minDeliveryFee: 5,
   fallbackDeliveryFee: 30,
 };
 

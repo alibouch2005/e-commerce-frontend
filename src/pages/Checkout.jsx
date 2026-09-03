@@ -13,6 +13,12 @@ import { mergeGuestCart } from "../services/cartService";
 import { getApiErrorMessages, showApiError } from "../utils/showApiError";
 import { getDeliveryQuote, STORE_LOCATION } from "../utils/deliveryPricing";
 
+const deliverySlots = [
+  { value: "08_12", labelKey: "slotMorning", helpKey: "slotMorningHelp" },
+  { value: "12_18", labelKey: "slotAfternoon", helpKey: "slotAfternoonHelp" },
+  { value: "18_21", labelKey: "slotEvening", helpKey: "slotEveningHelp" },
+];
+
 export default function Checkout() {
   const { cart, reloadCart } = useContext(CartContext);
   const { user, setUser } = useContext(AuthContext);
@@ -27,6 +33,7 @@ export default function Checkout() {
     coupon_code: "",
     delivery_latitude: null,
     delivery_longitude: null,
+    delivery_time_slot: "12_18",
   });
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({
@@ -50,6 +57,7 @@ export default function Checkout() {
   const [serverDeliveryQuote, setServerDeliveryQuote] = useState(null);
   const deliveryQuote = serverDeliveryQuote || localDeliveryQuote;
   const estimatedTotal = subtotal + deliveryQuote.fee;
+  const requiresCardPayment = estimatedTotal >= 5000;
 
   useEffect(() => {
     trackEvent("checkout_started", { metadata: { items: cart?.items?.length || 0 } });
@@ -91,6 +99,12 @@ export default function Checkout() {
       window.clearTimeout(timer);
     };
   }, [form.fulfillment_method, form.delivery_latitude, form.delivery_longitude, subtotal, productFreeDelivery]);
+
+  useEffect(() => {
+    if (requiresCardPayment && form.payment_method !== "card") {
+      setForm((current) => ({ ...current, payment_method: "card" }));
+    }
+  }, [form.payment_method, requiresCardPayment]);
 
   const changeFulfillmentMethod = (fulfillment_method) => {
     setForm((current) => ({
@@ -224,6 +238,18 @@ export default function Checkout() {
       return toast.error(message);
     }
 
+    if (form.fulfillment_method === "delivery" && !/casa|casablanca/i.test(form.adresse_livraison || "") && !form.delivery_latitude) {
+      const message = t("casaOnlyDelivery");
+      setApiErrors([message]);
+      return toast.error(message);
+    }
+
+    if (requiresCardPayment && form.payment_method !== "card") {
+      const message = t("cardRequiredLargeOrder");
+      setApiErrors([message]);
+      return toast.error(message);
+    }
+
     if (!form.phone) {
       const message = `${t("phone")}: ${t("phoneRequired")}`;
       setApiErrors([message]);
@@ -240,6 +266,7 @@ export default function Checkout() {
       if (!authenticated) return;
 
       const response = await api.post("/api/checkout", form);
+      (response.data?.warnings || []).forEach((message) => toast(message, { icon: "⚠️" }));
       trackEvent("purchase", {
         order_id: response.data?.data?.id,
         metadata: { total: response.data?.data?.total_price },
@@ -357,8 +384,29 @@ export default function Checkout() {
               <button type="button" onClick={useCurrentLocation} disabled={locating} className="w-full rounded-xl border border-indigo-200 px-4 py-3 font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-60">
                 {locating ? t("loading") : form.delivery_latitude ? t("savedLocation") : t("useMyLocation")}
               </button>
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+                <p className="font-black text-indigo-950">{t("deliveryTimeSlot")}</p>
+                <p className="mt-1 text-sm text-indigo-700">{t("deliveryTimeSlotHelp")}</p>
+                <div className="mt-4 grid gap-3">
+                  {deliverySlots.map((slot) => (
+                    <button
+                      key={slot.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, delivery_time_slot: slot.value })}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        form.delivery_time_slot === slot.value
+                          ? "border-indigo-600 bg-white shadow-sm"
+                          : "border-indigo-100 bg-white/70 hover:bg-white"
+                      }`}
+                    >
+                      <span className="block font-black text-gray-950">{t(slot.labelKey)}</span>
+                      <span className="mt-1 block text-sm text-gray-500">{t(slot.helpKey)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-                <p className="font-black">{t("deliveryFee")}: {deliveryQuote.fee.toFixed(2)} DH</p>
+                <p className="font-black">{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}: {deliveryQuote.fee.toFixed(2)} DH</p>
                 <p className="mt-1">
                   {deliveryQuote.estimated
                     ? t("deliveryFeeEstimated")
@@ -391,9 +439,14 @@ export default function Checkout() {
             value={form.payment_method}
             onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
           >
-            <option value="cash_on_delivery">{t("cashPayment")}</option>
+            <option value="cash_on_delivery" disabled={requiresCardPayment}>{t("cashPayment")}</option>
             <option value="card">{t("cardPayment")}</option>
           </select>
+          {requiresCardPayment && (
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-blue-800">
+              {t("cardRequiredLargeOrder")}
+            </div>
+          )}
           {form.payment_method === "card" && (
             <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
               <div className="flex items-center gap-2 font-bold">
@@ -430,7 +483,7 @@ export default function Checkout() {
           <hr className="my-3" />
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span>{t("subtotal")}</span><span>{subtotal.toFixed(2)} DH</span></div>
-            <div className="flex justify-between"><span>{t("deliveryFee")}</span><span>{deliveryQuote.fee.toFixed(2)} DH</span></div>
+            <div className="flex justify-between"><span>{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}</span><span>{deliveryQuote.fee.toFixed(2)} DH</span></div>
           </div>
           <div className="mt-4 font-bold text-right text-lg">{t("total")} : {estimatedTotal.toFixed(2)} DH</div>
         </div>

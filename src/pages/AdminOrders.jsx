@@ -14,6 +14,8 @@ import {
   Calendar,
 } from "lucide-react";
 
+const displayTotal = (order) => Number(order?.computed_total ?? order?.total_price ?? order?.total ?? 0).toFixed(2);
+
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [livreurs, setLivreurs] = useState([]);
@@ -49,6 +51,11 @@ export default function AdminOrders() {
       label: "Annulé",
       color: "bg-red-100 text-red-700 border-red-200",
       icon: <AlertCircle size={14} />,
+    },
+    refunded: {
+      label: "Remboursee",
+      color: "bg-slate-100 text-slate-700 border-slate-200",
+      icon: <CheckCircle size={14} />,
     },
   };
 
@@ -203,7 +210,7 @@ export default function AdminOrders() {
 
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div className="text-indigo-600 font-bold text-base">
-                    {order.total_price ?? order.total ?? 0} DH
+                    {displayTotal(order)} DH
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-400">
                     <Calendar size={14} />
