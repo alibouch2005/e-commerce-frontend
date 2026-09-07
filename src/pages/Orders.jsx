@@ -1,13 +1,36 @@
 import { useCallback, useEffect, useState } from "react";
-import api from "../Api/axios";
 import toast from "react-hot-toast";
+import {
+  AlertCircle,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Download,
+  MapPin,
+  Package,
+  ShoppingBag,
+  Truck,
+  X,
+} from "lucide-react";
+import api from "../Api/axios";
 import OrdersSkeleton from "../components/orders/OrdersSkeleton";
 import DeliveryMap from "../components/delivery/DeliveryMap";
 import { useLanguage } from "../context/LanguageContext";
+import { showApiError } from "../utils/showApiError";
 
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const assetUrl = (path) => (!path ? "" : path.startsWith("http") ? path : `${apiUrl}${path}`);
 const STORE = { address: "Rue 177, 20202 Casablanca", latitude: 33.55244, longitude: -7.67712 };
+
+const statusStyles = {
+  pending: { icon: Clock, color: "bg-indigo-50 text-indigo-700", dot: "bg-indigo-500" },
+  preparing: { icon: Package, color: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+  shipping: { icon: Truck, color: "bg-violet-50 text-violet-700", dot: "bg-violet-500" },
+  delivered: { icon: CheckCircle2, color: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  cancelled: { icon: AlertCircle, color: "bg-red-50 text-red-700", dot: "bg-red-500" },
+  refunded: { icon: CheckCircle2, color: "bg-slate-100 text-slate-700", dot: "bg-slate-500" },
+};
 
 const toNumber = (value) => Number(value || 0);
 const itemLineTotal = (item) => {
@@ -31,9 +54,13 @@ const orderGrandTotal = (order) => {
 
   return toNumber(order?.total_price);
 };
+const slotLabel = (slot) => ({
+  "08_12": "08:00 - 12:00",
+  "12_18": "12:00 - 18:00",
+  "18_21": "18:00 - 21:00",
+}[slot] || "Non précisé");
 
-function DeliveryTracking({ status }) {
-  const { t } = useLanguage();
+function DeliveryTracking({ status, t }) {
   const steps = [
     { key: "pending", label: t("received") },
     { key: "preparing", label: t("preparing") },
@@ -43,15 +70,15 @@ function DeliveryTracking({ status }) {
   const currentIndex = Math.max(0, steps.findIndex((step) => step.key === status));
 
   return (
-    <div className="mt-6">
-      <h3 className="mb-3 font-bold">{t("deliveryTracking")}</h3>
-      <div className="flex items-center justify-between">
+    <div className="mt-6 rounded-2xl bg-gray-50 p-4">
+      <h3 className="mb-3 font-black text-gray-950">{t("deliveryTracking")}</h3>
+      <div className="flex items-start justify-between">
         {steps.map((step, index) => (
           <div key={step.key} className="flex-1 text-center">
-            <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-white ${index <= currentIndex ? "bg-indigo-600" : "bg-gray-300"}`}>
+            <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-black text-white ${index <= currentIndex ? "bg-indigo-600" : "bg-gray-300"}`}>
               {index < currentIndex ? "✓" : index + 1}
             </div>
-            <p className="mt-2 text-xs">{step.label}</p>
+            <p className="mt-2 text-[11px] font-bold text-gray-500 sm:text-xs">{step.label}</p>
           </div>
         ))}
       </div>
@@ -67,7 +94,13 @@ export default function Orders() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const formatMoney = (value) => new Intl.NumberFormat("fr-MA", { style: "currency", currency: "MAD", maximumFractionDigits: 2 }).format(Number(value || 0));
+  const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
+    style: "currency",
+    currency: "MAD",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0));
+  const orderTitle = (order) => `Commande ${order?.id ?? ""}`;
 
   const loadOrders = useCallback(async (active = { current: true }) => {
     setLoading(true);
@@ -78,8 +111,8 @@ export default function Orders() {
       if (status) data = data.filter((order) => order.status === status);
       setOrders(data);
       setMeta(res.data.meta || {});
-    } catch {
-      if (active.current) toast.error(t("loadOrdersError"));
+    } catch (error) {
+      if (active.current) showApiError(error, t("loadOrdersError"));
     } finally {
       if (active.current) setLoading(false);
     }
@@ -102,8 +135,8 @@ export default function Orders() {
       link.download = `receipt-order-${orderId}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
-    } catch {
-      toast.error(t("receiptError"));
+    } catch (error) {
+      showApiError(error, t("receiptError"));
     }
   };
 
@@ -117,7 +150,7 @@ export default function Orders() {
       setSelectedOrder(updatedOrder);
       toast.success(t("orderCancelled"));
     } catch (error) {
-      toast.error(error.response?.data?.message || t("checkoutError"));
+      showApiError(error, t("checkoutError"));
     }
   };
 
@@ -131,66 +164,89 @@ export default function Orders() {
             <p className="text-xs font-black uppercase tracking-widest text-indigo-600">{t("orderTracking")}</p>
             <h1 className="text-3xl font-black text-gray-950 sm:text-4xl">{t("orders")}</h1>
           </div>
-          <select value={status} className="rounded-xl border bg-white p-3 text-base" onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <select value={status} className="rounded-2xl border border-gray-100 bg-white p-3 text-base font-bold shadow-sm" onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
             <option value="">{t("all")}</option>
             <option value="pending">{t("pending")}</option>
             <option value="preparing">{t("preparing")}</option>
             <option value="shipping">{t("shipping")}</option>
             <option value="delivered">{t("delivered")}</option>
+            <option value="cancelled">{t("cancelled")}</option>
           </select>
         </div>
 
         <div className="space-y-4">
-          {orders.length === 0 && <div className="rounded-2xl bg-white p-8 text-gray-500">{t("noOrders")}</div>}
-          {orders.map((order) => (
-            <button key={order.id} onClick={() => setSelectedOrder(order)} className="w-full rounded-2xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:shadow-md sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-                <div>
-                  <b>{t("orderNumber", { id: order.id })}</b>
-                  <p className="text-sm text-gray-500">{order.fulfillment_method === "pickup" ? t("storePickup") : t("delivery")} · {formatDate(order.created_at, { dateStyle: "medium" })}</p>
+          {orders.length === 0 && <div className="rounded-3xl bg-white p-8 text-gray-500 shadow-sm">{t("noOrders")}</div>}
+          {orders.map((order) => {
+            const config = statusStyles[order.status] || statusStyles.pending;
+            const Icon = order.fulfillment_method === "pickup" ? ShoppingBag : config.icon;
+
+            return (
+              <button key={order.id} onClick={() => setSelectedOrder(order)} className="group w-full overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-xl sm:p-5">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                    <Icon size={24} />
+                    <span className={`absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white ${config.dot}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <b className="truncate text-lg text-gray-950">{orderTitle(order)}</b>
+                      <ChevronRight className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-indigo-500" size={20} />
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-gray-500">
+                      <span className="inline-flex items-center gap-1"><CalendarDays size={14} /> {formatDate(order.created_at, { dateStyle: "medium" })}</span>
+                      <span className="inline-flex items-center gap-1"><MapPin size={14} /> {order.fulfillment_method === "pickup" ? t("storePickup") : t("delivery")}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${config.color}`}>{t(order.status)}</span>
+                      <p className="text-lg font-black text-indigo-600">{formatMoney(orderGrandTotal(order))}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-black text-indigo-600">{formatMoney(orderGrandTotal(order))}</p>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold">{t(order.status)}</span>
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
         {selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-3xl sm:p-6">
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl sm:rounded-3xl sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-black">{t("orderNumber", { id: selectedOrder.id })}</h2>
+                  <h2 className="text-2xl font-black">{orderTitle(selectedOrder)}</h2>
                   <p className="text-sm text-gray-500">{selectedOrder.fulfillment_method === "pickup" ? t("storePickup") : t("homeDelivery")}</p>
                   {selectedOrder.delivery_time_slot && (
-                    <p className="mt-1 text-sm font-bold text-indigo-600">{t("deliveryTimeSlot")}: {t(`slot${selectedOrder.delivery_time_slot === "08_12" ? "Morning" : selectedOrder.delivery_time_slot === "18_21" ? "Evening" : "Afternoon"}`)}</p>
+                    <p className="mt-1 text-sm font-bold text-indigo-600">{t("deliveryTimeSlot")}: {slotLabel(selectedOrder.delivery_time_slot)}</p>
                   )}
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="rounded-full bg-gray-100 px-3 py-1">{t("close")}</button>
+                <button onClick={() => setSelectedOrder(null)} className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200">
+                  <X size={18} />
+                </button>
               </div>
 
               <div className="mt-6 space-y-3">
                 {selectedOrder.items?.map((item) => (
                   <div key={item.id} className="flex justify-between gap-4 border-b pb-2">
-                    <span className="min-w-0">{item.product?.name || item.product_name || t("product")} x{item.quantity}</span>
+                    <span className="min-w-0">
+                      <span className="block">{item.product?.name || item.product_name || t("product")} x{item.quantity}</span>
+                      <OrderOptionLine options={item.selected_options} />
+                    </span>
                     <b className="shrink-0">{formatMoney(itemLineTotal(item))}</b>
                   </div>
                 ))}
               </div>
+
               <div className="mt-4 space-y-2 rounded-2xl bg-gray-50 p-4 text-sm">
                 <div className="flex justify-between"><span>{t("subtotal")}</span><b>{formatMoney(orderSubtotal(selectedOrder))}</b></div>
                 {orderDiscount(selectedOrder) > 0 && (
                   <div className="flex justify-between text-emerald-700"><span>{t("coupon")}</span><b>-{formatMoney(orderDiscount(selectedOrder))}</b></div>
                 )}
-                <div className="flex justify-between"><span>{t("deliveryFee")}</span><b>{formatMoney(selectedOrder.delivery_fee)}</b></div>
+                <div className="flex justify-between"><span>{t("deliveryFee")}</span><b>{formatMoney(orderDeliveryFee(selectedOrder))}</b></div>
                 {selectedOrder.delivery_distance_km && (
                   <div className="flex justify-between"><span>{t("deliveryDistance")}</span><b>{Number(selectedOrder.delivery_distance_km).toFixed(2)} km</b></div>
                 )}
                 <div className="flex justify-between text-xl font-black text-indigo-600"><span>{t("total")}</span><span>{formatMoney(orderGrandTotal(selectedOrder))}</span></div>
               </div>
+
               {selectedOrder.cancellation_reason && (
                 <div className="mt-4 rounded-2xl bg-red-50 p-4 text-sm text-red-700">
                   <p className="font-black">{t("cancelled")}</p>
@@ -203,7 +259,10 @@ export default function Orders() {
                   <p className="mt-1">{selectedOrder.refund_reason}</p>
                 </div>
               )}
-              <button onClick={() => downloadReceipt(selectedOrder.id)} className="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-700">{t("downloadReceipt")}</button>
+
+              <button onClick={() => downloadReceipt(selectedOrder.id)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-700">
+                <Download size={18} /> {t("downloadReceipt")}
+              </button>
               {selectedOrder.can_client_cancel && (
                 <button onClick={() => cancelOrder(selectedOrder.id)} className="mt-3 w-full rounded-xl bg-red-50 px-4 py-3 font-bold text-red-600 hover:bg-red-100">{t("cancelOrder")}</button>
               )}
@@ -215,7 +274,7 @@ export default function Orders() {
                   <DeliveryMap latitude={STORE.latitude} longitude={STORE.longitude} address={STORE.address} />
                 </div>
               ) : (
-                <DeliveryTracking status={selectedOrder.status} />
+                <DeliveryTracking status={selectedOrder.status} t={t} />
               )}
 
               {selectedOrder.delivery?.proof_image && (
@@ -237,4 +296,24 @@ export default function Orders() {
       </div>
     </div>
   );
+}
+
+function OrderOptionLine({ options }) {
+  const entries = Object.entries(options || {}).filter(([, value]) => value);
+  if (!entries.length) return null;
+
+  return (
+    <span className="mt-1 block text-xs font-semibold text-indigo-600">
+      {entries.map(([key, value]) => `${variantLabel(key)}: ${value}`).join(" · ")}
+    </span>
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille",
+    weight: "Poids",
+    custom: "Option",
+  }[key] || key;
 }

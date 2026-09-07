@@ -16,18 +16,28 @@ export default function useProducts(page, search, category, saleOnly = false, pe
         setLoading(true);
         setError(null);
 
-        const res = await getProducts({
+        const params = {
           page,
           search,
           category_id: category,
           on_sale: saleOnly ? 1 : undefined,
           per_page: perPage,
-        });
+        };
+
+        let res = await getProducts(params);
 
         if (!active) return;
 
+        let nextMeta = res.data.meta ?? res.data;
+        const resolvedLastPage = Math.max(Number(nextMeta?.last_page ?? res.data.last_page ?? 1), 1);
+
+        if (Number(page) > resolvedLastPage) {
+          res = await getProducts({ ...params, page: resolvedLastPage });
+          if (!active) return;
+          nextMeta = res.data.meta ?? res.data;
+        }
+
         setProducts(res.data.data ?? []);
-        const nextMeta = res.data.meta ?? res.data;
         setMeta(nextMeta);
         setLastPage(nextMeta?.last_page ?? res.data.last_page ?? 1);
       } catch (err) {

@@ -476,7 +476,10 @@ export default function Checkout() {
           <h2 className="font-bold mb-4">{t("summary")}</h2>
           {cart.items.map((item) => (
             <div key={item.id} className="mb-3 flex justify-between gap-4 text-sm">
-              <span className="min-w-0">{item.product.name} x{item.quantity}</span>
+              <span className="min-w-0">
+                <span className="block">{item.product.name} x{item.quantity}</span>
+                <OptionLine options={item.selected_options} />
+              </span>
               <span className="shrink-0 font-bold">{item.total_price} DH</span>
             </div>
           ))}
@@ -490,4 +493,24 @@ export default function Checkout() {
       </div>
     </div>
   );
+}
+
+function OptionLine({ options }) {
+  const entries = Object.entries(options || {}).filter(([, value]) => value);
+  if (!entries.length) return null;
+
+  return (
+    <span className="mt-1 block text-xs font-semibold text-indigo-600">
+      {entries.map(([key, value]) => `${variantLabel(key)}: ${value}`).join(" · ")}
+    </span>
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille",
+    weight: "Poids",
+    custom: "Option",
+  }[key] || key;
 }

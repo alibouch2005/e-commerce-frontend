@@ -49,17 +49,27 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#eef2ff,transparent_34%),#f6f7fb] px-4 py-10 sm:px-6 dark:bg-gray-950">
-      <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl shadow-indigo-100/50 md:grid-cols-[0.95fr_1.05fr] dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
-        <aside className="hidden bg-gray-950 p-8 text-white md:flex md:flex-col md:justify-between">
-          <div>
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_bottom_right,#ede9fe,transparent_34%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-10 sm:px-6 dark:bg-[radial-gradient(circle_at_top_left,#1e1b4b,transparent_32%),radial-gradient(circle_at_bottom_right,#0f766e,transparent_30%),#020617]">
+      <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-2xl shadow-indigo-100/60 backdrop-blur md:grid-cols-[0.95fr_1.05fr] dark:border-gray-800/80 dark:bg-gray-900/95 dark:shadow-none">
+        <aside className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-8 text-white md:flex md:flex-col md:justify-between">
+          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/20 blur-2xl" />
+          <div className="absolute bottom-14 left-8 h-36 w-36 rounded-full bg-cyan-300/30 blur-2xl" />
+          <div className="absolute bottom-0 right-0 h-52 w-52 translate-x-16 translate-y-16 rounded-full bg-fuchsia-300/25 blur-3xl" />
+
+          <div className="relative">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/20 shadow-lg backdrop-blur">
               <ShoppingBag size={24} />
             </div>
             <h2 className="mt-8 text-4xl font-black leading-tight">AliShop</h2>
-            <p className="mt-4 text-sm leading-6 text-gray-300">{t("loginSubtitle")}</p>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-indigo-50">{t("loginSubtitle")}</p>
+            <div className="mt-8 grid grid-cols-2 gap-3 text-xs font-black">
+              <span className="rounded-2xl border border-white/20 bg-white/15 px-4 py-3 backdrop-blur">Panier synchronise</span>
+              <span className="rounded-2xl border border-white/20 bg-white/15 px-4 py-3 backdrop-blur">Commande rapide</span>
+              <span className="rounded-2xl border border-white/20 bg-white/15 px-4 py-3 backdrop-blur">Support client</span>
+              <span className="rounded-2xl border border-white/20 bg-white/15 px-4 py-3 backdrop-blur">Paiement securise</span>
+            </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-bold text-gray-100">
+          <div className="relative rounded-2xl border border-white/25 bg-white/18 p-4 text-sm font-bold text-white shadow-xl backdrop-blur">
             {t("loginTrustText")}
           </div>
         </aside>

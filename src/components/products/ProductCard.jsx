@@ -21,6 +21,12 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
 
   const addToCart = async () => {
     if (isOutOfStock) return toast.error(t("outOfStock"));
+    if (product.has_variants) {
+      toast("Choisissez les options du produit");
+      navigate(`/products/${product.id}`);
+      return;
+    }
+
     setBusy(true);
     try {
       await addItem(product.id, 1);
@@ -76,6 +82,11 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
         <Link to={`/products/${product.id}`} className="mt-2">
           <h3 className="font-black text-gray-950 text-lg leading-tight line-clamp-2 hover:text-indigo-600">{product.name}</h3>
         </Link>
+        {(product.short_description || product.description) && (
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
+            {product.short_description || product.description}
+          </p>
+        )}
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div>

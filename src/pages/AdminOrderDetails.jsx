@@ -246,6 +246,7 @@ export default function AdminOrderDetails() {
                         <p className="text-xs text-gray-400 mt-1 uppercase font-medium">
                           Prix Unitaire: {unitPrice} DH
                         </p>
+                        <AdminOrderOptionLine options={item.selected_options} />
                       </div>
                     </div>
                     <div className="text-right">
@@ -276,4 +277,24 @@ export default function AdminOrderDetails() {
       </div>
     </div>
   );
+}
+
+function AdminOrderOptionLine({ options }) {
+  const entries = Object.entries(options || {}).filter(([, value]) => value);
+  if (!entries.length) return null;
+
+  return (
+    <p className="mt-2 text-xs font-black text-indigo-600">
+      {entries.map(([key, value]) => `${variantLabel(key)}: ${value}`).join(" · ")}
+    </p>
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille",
+    weight: "Poids",
+    custom: "Option",
+  }[key] || key;
 }

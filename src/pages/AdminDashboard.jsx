@@ -72,7 +72,7 @@ export default function AdminDashboard() {
 
         if (resOrders.status === "fulfilled") {
           const ordersData = resOrders.value.data.data || resOrders.value.data;
-          setOrders(Array.isArray(ordersData) ? ordersData.slice(0, 5) : []);
+          setOrders(Array.isArray(ordersData) ? ordersData : []);
         }
       } catch (err) {
         console.error("Erreur de chargement des données admin", err);
@@ -226,9 +226,9 @@ export default function AdminDashboard() {
           <div className="border-b border-gray-50 p-5 sm:p-6">
             <h2 className="font-bold text-gray-800">Commandes récentes</h2>
           </div>
-          <div className="overflow-x-auto">
+          <div className="max-h-[420px] overflow-auto">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+              <thead className="sticky top-0 z-10 bg-gray-50 text-xs font-bold uppercase text-gray-400">
                 <tr>
                   <th className="px-6 py-4">ID</th>
                   <th className="px-6 py-4">Total</th>
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-6 flex items-center gap-2 font-bold text-red-500"><AlertTriangle size={20} /> Stock faible {"<"} 10</h2>
-          <div className="space-y-3">
+          <div className="max-h-[350px] space-y-3 overflow-y-auto pr-1">
             {lowStock.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10">
                 <CheckCircle className="mb-2 text-emerald-400" size={30} />
@@ -276,15 +276,17 @@ export default function AdminDashboard() {
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-4 font-bold">Clients les plus actifs</h2>
-          {stats?.top_customers?.length ? stats.top_customers.map((client) => (
-            <div key={client.id} className="flex justify-between gap-4 border-b py-3 last:border-0">
-              <span className="min-w-0">
-                <b className="block truncate">{client.name}</b>
-                <small className="block text-gray-400">{client.orders_count} commandes</small>
-              </span>
-              <b className="shrink-0">{formatMoney(client.total_spent)}</b>
-            </div>
-          )) : <p className="text-gray-400">Aucune commande livrée.</p>}
+          <div className="max-h-[330px] overflow-y-auto pr-1">
+            {stats?.top_customers?.length ? stats.top_customers.map((client) => (
+              <div key={client.id} className="flex justify-between gap-4 border-b py-3 last:border-0">
+                <span className="min-w-0">
+                  <b className="block truncate">{client.name}</b>
+                  <small className="block text-gray-400">{client.orders_count} commandes</small>
+                </span>
+                <b className="shrink-0">{formatMoney(client.total_spent)}</b>
+              </div>
+            )) : <p className="text-gray-400">Aucune commande livrée.</p>}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
@@ -304,7 +306,7 @@ export default function AdminDashboard() {
           </div>
           <span className="w-fit rounded-full bg-amber-50 px-4 py-2 text-sm font-black text-amber-700">Demandes clients uniquement</span>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid max-h-[520px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {stats?.requested_products?.length ? stats.requested_products.map((item) => (
             <article key={item.id} className="overflow-hidden rounded-2xl border border-amber-100 bg-amber-50">
               {item.requested_product_image && (
@@ -329,8 +331,8 @@ export default function AdminDashboard() {
           </div>
           <Link to="/admin/wini-products" className="w-fit rounded-full bg-indigo-600 px-4 py-2 text-sm font-black text-white hover:bg-indigo-700">Ouvrir Wini product</Link>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(stats?.market_suggestions || []).slice(0, 3).map((item) => (
+        <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+          {(stats?.market_suggestions || []).map((item) => (
             <article key={`${item.name}-${item.source}`} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -360,7 +362,7 @@ export default function AdminDashboard() {
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-4 font-bold">Tunnel de conversion réel</h2>
-          <div className="space-y-3">
+          <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
             {(analytics?.funnel || []).map((step) => (
               <div key={step.name}>
                 <div className="mb-1 flex justify-between text-sm"><span>{step.name}</span><b>{step.value}</b></div>
@@ -374,7 +376,7 @@ export default function AdminDashboard() {
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-4 font-bold">Produits les plus consultés</h2>
-          <div className="space-y-3">
+          <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
             {analytics?.top_products?.length ? analytics.top_products.map((product) => (
               <div key={product.id} className="flex justify-between gap-4 border-b border-gray-100 py-2 last:border-0">
                 <span className="min-w-0 truncate font-medium">{product.name}</span>

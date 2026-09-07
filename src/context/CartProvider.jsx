@@ -54,12 +54,12 @@ export default function CartProvider({ children }) {
   };
 
   // Ajouter produit
-  const addItem = async (product_id, quantity = 1) => {
+  const addItem = async (product_id, quantity = 1, selectedOptions = {}) => {
 
     try {
 
-      await addToCart(product_id, quantity);
-      trackEvent("add_to_cart", { product_id, metadata: { quantity } });
+      await addToCart(product_id, quantity, selectedOptions);
+      trackEvent("add_to_cart", { product_id, metadata: { quantity, selected_options: selectedOptions } });
 
       await loadCart();
 

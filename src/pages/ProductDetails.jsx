@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Flame, Heart, Minus, Plus, ShoppingBag, Star, Video, Zap } from "lucide-react";
 import api from "../Api/axios";
 import { getProduct } from "../services/productService";
 import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
@@ -14,24 +14,31 @@ import { showApiError } from "../utils/showApiError";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addItem } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { t } = useLanguage();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [activeImage, setActiveImage] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedOptions, setSelectedOptions] = useState({});
 
   useEffect(() => {
     setProduct(null);
     getProduct(id).then(({ data }) => {
       const nextProduct = data.data ?? data;
+      const defaults = defaultSelectedOptions(nextProduct);
       setProduct(nextProduct);
-      setActiveImage(nextProduct.image);
+      setActiveImage(nextProduct.variant_media?.color?.[defaults.color] || nextProduct.image);
+      setQuantity(1);
+      setSelectedOptions(defaults);
       trackEvent("product_view", { product_id: Number(id) });
       if (nextProduct.category?.id) {
         api.get("/api/products", { params: { category_id: nextProduct.category.id, exclude: nextProduct.id, per_page: 4 } })
@@ -45,10 +52,15 @@ export default function ProductDetails() {
   }, [id]);
 
   useEffect(() => {
-    if (user?.role !== "client") return;
+    if (user?.role !== "client") {
+      setFavoriteProducts([]);
+      return;
+    }
+
     api.get("/api/user/favorites").then(({ data }) => {
       const favorites = data?.data || data || [];
       setIsFavorite(favorites.some((item) => item.id === Number(id)));
+      setFavoriteProducts(favorites.filter((item) => item.id !== Number(id)).slice(0, 4));
     }).catch(() => setIsFavorite(false));
   }, [id, user]);
 
@@ -58,13 +70,23 @@ export default function ProductDetails() {
   const fallbackImage = "/product-placeholder.svg";
   const gallery = [product.image, ...(product.images || []).map((image) => image.url)].filter(Boolean);
   const mainImage = activeImage || product.image || fallbackImage;
+  const maxQuantity = Math.max(1, Number(product.stock || 1));
+  const variantGroups = Object.entries(product.variant_options || {}).filter(([, values]) => Array.isArray(values) && values.length > 0);
+  const hasVariantChoices = product.has_variants && variantGroups.length > 0;
+  const variantMedia = product.variant_media || {};
+  const selectedUnitPrice = getVariantPrice(product, selectedOptions);
+  const baseUnitPrice = Number(product.current_price ?? product.price ?? 0);
+  const hasSelectedPrice = Math.abs(selectedUnitPrice - baseUnitPrice) > 0.009;
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (goCheckout = false) => {
     if (isOutOfStock) return toast.error(t("productUnavailable"));
     setBusy(true);
     try {
-      await addItem(product.id, 1);
+      await addItem(product.id, quantity, hasVariantChoices ? selectedOptions : {});
       toast.success(t("productAddedCart"));
+      if (goCheckout) navigate("/checkout");
+    } catch (error) {
+      showApiError(error, "Impossible d'ajouter ce produit au panier");
     } finally {
       setBusy(false);
     }
@@ -97,6 +119,15 @@ export default function ProductDetails() {
   return (
     <div className="min-h-screen bg-[#f7f8fc]">
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10 lg:space-y-14">
+        <button
+          type="button"
+          onClick={() => navigate("/products")}
+          className="inline-flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:-translate-x-0.5 hover:border-indigo-100 hover:text-indigo-600"
+        >
+          <ArrowLeft size={18} />
+          Retour aux produits
+        </button>
+
         <section className="grid gap-8 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 md:p-10 lg:grid-cols-2 lg:gap-10">
           <div>
             <div className="relative flex aspect-square max-h-[460px] items-center justify-center rounded-2xl bg-gray-50 p-4 sm:p-8">
@@ -134,35 +165,127 @@ export default function ProductDetails() {
                 ))}
               </div>
             )}
+            {product.video && (
+              <div className="mt-5 overflow-hidden rounded-3xl border border-violet-100 bg-violet-50 p-3">
+                <p className="mb-3 flex items-center gap-2 text-sm font-black text-violet-700">
+                  <Video size={18} />
+                  Vidéo du produit
+                </p>
+                <video src={product.video} className="max-h-[360px] w-full rounded-2xl bg-black object-contain" controls preload="metadata" />
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col">
             <p className="text-xs font-black uppercase tracking-widest text-indigo-600">{product.category?.name || t("product")}</p>
             <h1 className="mt-3 text-3xl font-black leading-tight text-gray-950 sm:text-4xl md:text-5xl">{product.name}</h1>
-            <p className="mt-5 leading-relaxed text-gray-600">{product.description || t("descriptionEmpty")}</p>
+            <p className="mt-5 leading-relaxed text-gray-600">{product.short_description || product.description || t("descriptionEmpty")}</p>
             <div className="mt-8">
               {product.is_on_sale && <span className="mr-3 text-xl text-gray-400 line-through">{product.price} DH</span>}
-              <span className="text-4xl font-black text-gray-950 sm:text-5xl">{product.current_price ?? product.price}</span>
+              <span className="text-4xl font-black text-gray-950 sm:text-5xl">{formatPrice(selectedUnitPrice)}</span>
               <span className="ml-2 font-bold text-indigo-600">DH</span>
+              {hasSelectedPrice && <p className="mt-2 text-sm font-bold text-indigo-600">Prix adapte a l'option choisie.</p>}
             </div>
-            <p className={`mt-4 text-sm font-bold ${isOutOfStock ? "text-red-500" : product.stock < 5 ? "text-amber-500" : "text-emerald-600"}`}>
-              {isOutOfStock ? t("unavailable") : product.stock < 5 ? t("lowStockCount", { count: product.stock }) : t("inStockCount", { count: product.stock })}
+            <p className={`mt-4 text-sm font-bold ${isOutOfStock ? "text-red-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-600"}`}>
+              {isOutOfStock ? t("unavailable") : product.stock < 10 ? t("lowStockCount", { count: product.stock }) : t("inStockCount", { count: product.stock })}
             </p>
             {product.free_delivery && (
               <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
                 {t("freeDeliveryProduct")} — {t("freeDeliveryProductHint")}
               </p>
             )}
-            <div className="mt-8 flex gap-3">
-              <button onClick={handleAddToCart} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-4 font-black text-white hover:bg-indigo-700 disabled:bg-gray-300 sm:px-6">
+            {hasVariantChoices && (
+              <div className="mt-7 space-y-5 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-4">
+                <div>
+                  <h2 className="font-black text-gray-950">Choisissez vos options</h2>
+                  <p className="text-sm text-gray-600">Couleur, taille, poids, capacité ou pack selon ce produit.</p>
+                </div>
+                {variantGroups.map(([key, values]) => (
+                  <VariantOptionGroup
+                    key={key}
+                    optionKey={key}
+                    values={values}
+                    selectedValue={selectedOptions[key]}
+                    productImage={mainImage}
+                    variantMedia={variantMedia}
+                    variantPrices={product.variant_prices || {}}
+                    onChange={(value) => {
+                      setSelectedOptions((current) => ({ ...current, [key]: value }));
+                      if (key === "color" && variantMedia.color?.[value]) setActiveImage(variantMedia.color[value]);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <div className="flex items-center rounded-2xl border border-gray-200 bg-white p-1">
+                <button type="button" disabled={quantity <= 1 || busy} onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="rounded-xl p-3 text-gray-600 hover:bg-gray-50 disabled:opacity-30">
+                  <Minus size={18} />
+                </button>
+                <span className="w-12 text-center text-lg font-black">{quantity}</span>
+                <button type="button" disabled={quantity >= maxQuantity || busy || isOutOfStock} onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))} className="rounded-xl p-3 text-gray-600 hover:bg-gray-50 disabled:opacity-30">
+                  <Plus size={18} />
+                </button>
+              </div>
+              {!isOutOfStock && <p className="text-sm text-gray-500">Vous pouvez commander jusqu'à {product.stock} unité(s).</p>}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button onClick={() => handleAddToCart(false)} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-4 font-black text-white hover:bg-indigo-700 disabled:bg-gray-300 sm:px-6">
                 <ShoppingBag /> {t("addToCart")}
+              </button>
+              <button onClick={() => handleAddToCart(true)} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-4 font-black text-white hover:bg-black disabled:bg-gray-300 sm:px-6">
+                <Zap size={20} /> Commander maintenant
               </button>
               <button onClick={toggleFavorite} className={`rounded-2xl border px-5 ${isFavorite ? "border-red-200 bg-red-50 text-red-600" : "border-gray-200 text-gray-500 hover:text-red-500"}`}>
                 <Heart fill={isFavorite ? "currentColor" : "none"} />
               </button>
             </div>
+
+            <div className="mt-7 grid gap-3 text-sm sm:grid-cols-3">
+              {["Paiement sécurisé", "Retrait ou livraison", "Support après commande"].map((item) => (
+                <div key={item} className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 font-bold text-gray-700">
+                  <CheckCircle2 size={18} className="text-emerald-500" /> {item}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+
+        <section className="grid gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 md:col-span-2 md:p-8">
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">Description longue</p>
+            <h2 className="text-2xl font-black text-gray-950">Tous les détails avant d'acheter</h2>
+            <p className="mt-4 whitespace-pre-line leading-8 text-gray-600">
+              {product.long_description || product.description || "Aucune description détaillée pour le moment. Ajoutez plus d'informations dans l'administration: matière, dimensions, contenu du pack, garantie, conservation ou compatibilité selon le produit."}
+            </p>
+          </div>
+          <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8">
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">Guide rapide</p>
+            <ul className="space-y-3 text-sm text-gray-600">
+              <li>• Vérifiez les options avant d'ajouter au panier.</li>
+              <li>• Les promotions affichent l'ancien prix barré.</li>
+              <li>• Livraison gratuite si le produit ou votre fidélité est éligible.</li>
+            </ul>
+          </div>
+        </section>
+
+        {favoriteProducts.length > 0 && (
+          <section>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">Votre sélection</p>
+            <h2 className="mb-6 text-3xl font-black text-gray-950">{t("yourFavorites")}</h2>
+            <ProductGrid products={favoriteProducts} favoriteByDefault />
+          </section>
+        )}
+
+        {related.length > 0 && (
+          <section>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">{t("sameCategory")}</p>
+            <h2 className="mb-6 text-3xl font-black text-gray-950">{t("similarProducts")}</h2>
+            <ProductGrid products={related} />
+          </section>
+        )}
 
         <section className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8">
           <h2 className="mb-5 text-2xl font-black">{t("customerReviews")}</h2>
@@ -188,14 +311,165 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {related.length > 0 && (
-          <section>
-            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">{t("sameCategory")}</p>
-            <h2 className="mb-6 text-3xl font-black text-gray-950">{t("similarProducts")}</h2>
-            <ProductGrid products={related} />
-          </section>
-        )}
       </div>
     </div>
   );
+}
+
+function ColorPreview({ value }) {
+  const normalized = String(value || "").trim().toLowerCase();
+  const colorMap = {
+    noir: "#111827",
+    black: "#111827",
+    blanc: "#ffffff",
+    white: "#ffffff",
+    rouge: "#ef4444",
+    red: "#ef4444",
+    bleu: "#2563eb",
+    blue: "#2563eb",
+    vert: "#16a34a",
+    green: "#16a34a",
+    jaune: "#facc15",
+    yellow: "#facc15",
+    gris: "#9ca3af",
+    gray: "#9ca3af",
+    rose: "#fb7185",
+    pink: "#fb7185",
+    marron: "#92400e",
+    brown: "#92400e",
+  };
+  const background = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(normalized) ? normalized : colorMap[normalized];
+
+  if (!background) return null;
+
+  return <span className="h-4 w-4 rounded-full border border-black/10" style={{ background }} />;
+}
+
+function VariantOptionGroup({ optionKey, values, selectedValue, productImage, variantMedia = {}, variantPrices = {}, onChange }) {
+  const isVisualChoice = ["color", "custom"].includes(optionKey);
+
+  return (
+    <fieldset className="space-y-3">
+      <legend className="flex flex-wrap items-center gap-2 text-sm font-black text-gray-950">
+        <span>{variantLabel(optionKey)}: {selectedValue || "Choisir"}</span>
+        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+          Disponible
+        </span>
+      </legend>
+
+      {isVisualChoice ? (
+        <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-6">
+          {values.map((value, index) => {
+            const active = selectedValue === value;
+            const optionImage = optionKey === "color" ? (variantMedia.color?.[value] || productImage) : productImage;
+            const optionPrice = variantPrices?.[optionKey]?.[value];
+
+            return (
+              <label
+                key={value}
+                title={`${variantLabel(optionKey)}: ${value}`}
+                className={`group relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 bg-white p-2 transition hover:-translate-y-0.5 hover:border-gray-900 ${active ? "border-gray-950 shadow-lg shadow-gray-200" : "border-gray-200 hover:shadow-md"}`}
+              >
+                <input
+                  type="radio"
+                  name={`variant-${optionKey}`}
+                  checked={active}
+                  onChange={() => onChange(value)}
+                  className="sr-only"
+                />
+                {index < 2 && <Flame className="absolute -top-2 right-2 text-red-500" size={16} aria-label="Option populaire" />}
+                <span className="flex aspect-square w-full items-center justify-center rounded-xl bg-gray-50 p-1">
+                  <img src={optionImage} alt="" className="max-h-full max-w-full object-contain transition group-hover:scale-105" />
+                </span>
+                <span className="flex max-w-full items-center gap-1 truncate text-[11px] font-black text-gray-800">
+                  {optionKey === "color" && <ColorPreview value={value} />}
+                  <span className="truncate">{value}</span>
+                </span>
+                {optionPrice && <span className="text-[10px] font-black text-indigo-600">{formatPrice(optionPrice)} DH</span>}
+                {active && (
+                  <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-950 text-white">
+                    <CheckCircle2 size={14} />
+                  </span>
+                )}
+              </label>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {values.map((value) => {
+            const active = selectedValue === value;
+            const optionPrice = variantPrices?.[optionKey]?.[value];
+
+            return (
+              <label
+                key={value}
+                className={`cursor-pointer border-2 px-5 py-3 text-sm font-black transition ${active ? "border-gray-950 bg-white text-gray-950 shadow-md" : "border-gray-200 bg-white text-gray-700 hover:border-gray-900"}`}
+              >
+                <input
+                  type="radio"
+                  name={`variant-${optionKey}`}
+                  checked={active}
+                  onChange={() => onChange(value)}
+                  className="sr-only"
+                />
+                <span>{value}</span>
+                {optionPrice && <span className="ml-2 text-xs text-indigo-600">{formatPrice(optionPrice)} DH</span>}
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+function getVariantPrice(product, selectedOptions = {}) {
+  const variantPrices = product?.variant_prices || {};
+  const entries = Object.entries(selectedOptions || {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
+
+  if (entries.length > 1 && variantPrices?._combinations) {
+    const combinationKey = entries
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([group, value]) => `${group}=${value}`)
+      .join("|");
+    const price = variantPrices._combinations[combinationKey];
+
+    if (price !== undefined && price !== null && price !== "" && Number.isFinite(Number(price))) {
+      return Number(price);
+    }
+  }
+
+  for (const [group, value] of Object.entries(selectedOptions || {})) {
+    const price = variantPrices?.[group]?.[value];
+    if (price !== undefined && price !== null && price !== "" && Number.isFinite(Number(price))) {
+      return Number(price);
+    }
+  }
+
+  return Number(product?.current_price ?? product?.price ?? 0);
+}
+
+function formatPrice(value) {
+  return Number(value || 0).toLocaleString("fr-MA", {
+    minimumFractionDigits: Number(value) % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function defaultSelectedOptions(product) {
+  return Object.fromEntries(
+    Object.entries(product.variant_options || {})
+      .filter(([, values]) => Array.isArray(values) && values.length > 0)
+      .map(([key, values]) => [key, values[0]])
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille / format",
+    weight: "Poids / volume",
+    custom: "Option",
+  }[key] || key;
 }

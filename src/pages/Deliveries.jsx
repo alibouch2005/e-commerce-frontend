@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Camera, CheckCircle2, Handshake, Navigation, PackageCheck, Phone, Truck } from "lucide-react";
+import { CalendarClock, Camera, CheckCircle2, ChevronLeft, ChevronRight, Handshake, MapPin, Navigation, PackageCheck, Phone, Truck } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../Api/axios";
 import DeliveryMap from "../components/delivery/DeliveryMap";
@@ -33,19 +33,22 @@ export default function Deliveries() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [meta, setMeta] = useState({});
+  const [page, setPage] = useState(1);
   const [proofs, setProofs] = useState({});
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await api.get("/api/livreur/orders");
+      const res = await api.get("/api/livreur/orders", { params: { page } });
       const ordersData = res.data.data || res.data;
       setOrders(Array.isArray(ordersData) ? ordersData : []);
+      setMeta(res.data.meta || {});
     } catch {
       toast.error(t("deliveryLoadError"));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [page, t]);
 
   useEffect(() => {
     void fetchOrders();
@@ -115,8 +118,8 @@ export default function Deliveries() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] px-4 py-6 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 rounded-2xl bg-gray-950 p-5 text-white sm:p-7">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-5 text-white shadow-xl sm:p-7">
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-200">
             <Truck size={16} /> {t("deliverySpace")}
           </p>
@@ -125,7 +128,7 @@ export default function Deliveries() {
               <h1 className="text-3xl font-black sm:text-4xl">{t("myDeliveries")}</h1>
               <p className="mt-2 text-sm text-gray-300">{t("activeDeliveries", { count: activeCount })}</p>
             </div>
-            <button onClick={fetchOrders} className="rounded-xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/20">
+            <button onClick={fetchOrders} className="rounded-xl bg-white/15 px-4 py-3 text-sm font-bold backdrop-blur hover:bg-white/25">
               {t("refresh")}
             </button>
           </div>
@@ -145,11 +148,19 @@ export default function Deliveries() {
                 : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.adresse_livraison || "")}`;
 
               return (
-                <article key={order.id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                    <div>
+                <article key={order.id} className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
+                  <div className="flex flex-col gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                    <div className="flex gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                        <Truck size={22} />
+                      </div>
+                      <div>
                       <p className="text-xs font-black uppercase tracking-widest text-indigo-600">{t("orderNumber", { id: order.id })}</p>
                       <h2 className="mt-1 text-xl font-black text-gray-950">{order.user?.name || t("client")}</h2>
+                      <p className="mt-1 text-xs font-bold text-gray-500">
+                        <CalendarClock className="mr-1 inline" size={14} /> {slotLabel(order.delivery_time_slot)}
+                      </p>
+                      </div>
                     </div>
                     <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${isAvailable ? "bg-amber-100 text-amber-700" : statusColor[order.status] || "bg-gray-100 text-gray-700"}`}>
                       {isAvailable ? t("available") : t(order.status) || order.status}
@@ -167,7 +178,7 @@ export default function Deliveries() {
                         </div>
                         <div>
                           <p className="text-xs font-black uppercase tracking-widest text-gray-400">{t("address")}</p>
-                          <p className="mt-2 text-sm text-gray-700">{order.adresse_livraison}</p>
+                          <p className="mt-2 flex gap-2 text-sm text-gray-700"><MapPin size={16} className="mt-0.5 shrink-0 text-indigo-500" /> {order.adresse_livraison}</p>
                           <p className="mt-2 text-xs font-black text-indigo-600">{t("deliveryTimeSlot")}: {slotLabel(order.delivery_time_slot)}</p>
                         </div>
                       </div>
@@ -181,7 +192,10 @@ export default function Deliveries() {
                         <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100">
                           {order.items?.map((item) => (
                             <div key={item.id} className="flex justify-between gap-4 p-3 text-sm">
-                              <span className="min-w-0 text-gray-700">{item.product?.name} x{item.quantity}</span>
+                              <span className="min-w-0 text-gray-700">
+                                <span className="block">{item.product?.name} x{item.quantity}</span>
+                                <DeliveryOptionLine options={item.selected_options} />
+                              </span>
                               <span className="shrink-0 font-bold">{itemLineTotal(item).toFixed(2)} DH</span>
                             </div>
                           ))}
@@ -257,7 +271,40 @@ export default function Deliveries() {
             })}
           </div>
         )}
+        {Number(meta.last_page || 1) > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+            <button disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-xl border border-gray-200 p-3 disabled:opacity-30">
+              <ChevronLeft size={18} />
+            </button>
+            <span className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700">
+              Page {meta.current_page || page} / {meta.last_page || 1}
+            </span>
+            <button disabled={page >= Number(meta.last_page || 1)} onClick={() => setPage((value) => value + 1)} className="rounded-xl border border-gray-200 p-3 disabled:opacity-30">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function DeliveryOptionLine({ options }) {
+  const entries = Object.entries(options || {}).filter(([, value]) => value);
+  if (!entries.length) return null;
+
+  return (
+    <span className="mt-1 block text-xs font-semibold text-indigo-600">
+      {entries.map(([key, value]) => `${variantLabel(key)}: ${value}`).join(" · ")}
+    </span>
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille",
+    weight: "Poids",
+    custom: "Option",
+  }[key] || key;
 }

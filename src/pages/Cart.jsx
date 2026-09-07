@@ -68,6 +68,7 @@ export default function Cart() {
                   />
                   <div>
                     <h3 className="font-black">{item.product.name}</h3>
+                    <OptionPills options={item.selected_options} />
                     <div className="text-sm">
                       {item.product?.is_on_sale && <span className="mr-2 text-gray-400 line-through">{item.product.price} DH</span>}
                       <span className="font-bold text-indigo-600">{item.price} DH</span>
@@ -98,4 +99,28 @@ export default function Cart() {
       </div>
     </div>
   );
+}
+
+function OptionPills({ options }) {
+  const entries = Object.entries(options || {}).filter(([, value]) => value);
+  if (!entries.length) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {entries.map(([key, value]) => (
+        <span key={key} className="rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-black text-indigo-700">
+          {variantLabel(key)}: {value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function variantLabel(key) {
+  return {
+    color: "Couleur",
+    size: "Taille",
+    weight: "Poids",
+    custom: "Option",
+  }[key] || key;
 }

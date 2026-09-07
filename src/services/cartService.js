@@ -3,10 +3,11 @@ import api from "../Api/axios";
 export const getCart = () => {
   return api.get("/api/cart");
 };
-export const addToCart = (product_id, quantity = 1) => {
+export const addToCart = (product_id, quantity = 1, selected_options = {}) => {
   return api.post("/api/cart/add", {
     product_id,
-    quantity
+    quantity,
+    selected_options
   });
 };
 export const updateQuantity = (id, quantity) => {
