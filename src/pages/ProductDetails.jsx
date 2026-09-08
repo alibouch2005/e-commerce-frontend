@@ -125,7 +125,7 @@ export default function ProductDetails() {
           className="inline-flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:-translate-x-0.5 hover:border-indigo-100 hover:text-indigo-600"
         >
           <ArrowLeft size={18} />
-          Retour aux produits
+          {t("backToProducts")}
         </button>
 
         <section className="grid gap-8 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 md:p-10 lg:grid-cols-2 lg:gap-10">
@@ -169,7 +169,7 @@ export default function ProductDetails() {
               <div className="mt-5 overflow-hidden rounded-3xl border border-violet-100 bg-violet-50 p-3">
                 <p className="mb-3 flex items-center gap-2 text-sm font-black text-violet-700">
                   <Video size={18} />
-                  Vidéo du produit
+                  {t("productVideo")}
                 </p>
                 <video src={product.video} className="max-h-[360px] w-full rounded-2xl bg-black object-contain" controls preload="metadata" />
               </div>
@@ -184,7 +184,7 @@ export default function ProductDetails() {
               {product.is_on_sale && <span className="mr-3 text-xl text-gray-400 line-through">{product.price} DH</span>}
               <span className="text-4xl font-black text-gray-950 sm:text-5xl">{formatPrice(selectedUnitPrice)}</span>
               <span className="ml-2 font-bold text-indigo-600">DH</span>
-              {hasSelectedPrice && <p className="mt-2 text-sm font-bold text-indigo-600">Prix adapte a l'option choisie.</p>}
+              {hasSelectedPrice && <p className="mt-2 text-sm font-bold text-indigo-600">{t("optionPriceAdapted")}</p>}
             </div>
             <p className={`mt-4 text-sm font-bold ${isOutOfStock ? "text-red-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-600"}`}>
               {isOutOfStock ? t("unavailable") : product.stock < 10 ? t("lowStockCount", { count: product.stock }) : t("inStockCount", { count: product.stock })}
@@ -197,8 +197,8 @@ export default function ProductDetails() {
             {hasVariantChoices && (
               <div className="mt-7 space-y-5 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-4">
                 <div>
-                  <h2 className="font-black text-gray-950">Choisissez vos options</h2>
-                  <p className="text-sm text-gray-600">Couleur, taille, poids, capacité ou pack selon ce produit.</p>
+                  <h2 className="font-black text-gray-950">{t("chooseOptions")}</h2>
+                  <p className="text-sm text-gray-600">{t("variantHelp")}</p>
                 </div>
                 {variantGroups.map(([key, values]) => (
                   <VariantOptionGroup
@@ -228,7 +228,7 @@ export default function ProductDetails() {
                   <Plus size={18} />
                 </button>
               </div>
-              {!isOutOfStock && <p className="text-sm text-gray-500">Vous pouvez commander jusqu'à {product.stock} unité(s).</p>}
+              {!isOutOfStock && <p className="text-sm text-gray-500">{t("maxOrderQuantity", { count: product.stock })}</p>}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -236,7 +236,7 @@ export default function ProductDetails() {
                 <ShoppingBag /> {t("addToCart")}
               </button>
               <button onClick={() => handleAddToCart(true)} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-4 font-black text-white hover:bg-black disabled:bg-gray-300 sm:px-6">
-                <Zap size={20} /> Commander maintenant
+                <Zap size={20} /> {t("orderNow")}
               </button>
               <button onClick={toggleFavorite} className={`rounded-2xl border px-5 ${isFavorite ? "border-red-200 bg-red-50 text-red-600" : "border-gray-200 text-gray-500 hover:text-red-500"}`}>
                 <Heart fill={isFavorite ? "currentColor" : "none"} />
@@ -244,29 +244,43 @@ export default function ProductDetails() {
             </div>
 
             <div className="mt-7 grid gap-3 text-sm sm:grid-cols-3">
-              {["Paiement sécurisé", "Retrait ou livraison", "Support après commande"].map((item) => (
+              {[t("securePayment"), t("pickupOrDelivery"), t("afterOrderSupport")].map((item) => (
                 <div key={item} className="flex items-center gap-2 rounded-2xl bg-gray-50 px-4 py-3 font-bold text-gray-700">
                   <CheckCircle2 size={18} className="text-emerald-500" /> {item}
                 </div>
               ))}
+            </div>
+
+            <div className="mt-7 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-5">
+              <h3 className="font-black text-gray-950">{t("purchaseInfo")}</h3>
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                <InfoTile label={t("category")} value={product.category?.name || t("product")} />
+                <InfoTile label={t("availability")} value={isOutOfStock ? t("soonAvailable") : t("inStockCount", { count: product.stock })} />
+                <InfoTile label={t("delivery")} value={product.free_delivery ? t("freeDeliveryProduct") : t("deliveryPickup")} />
+              </div>
+              {hasVariantChoices && (
+                <p className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-indigo-700">
+                  {t("selectedOptions")}: {Object.entries(selectedOptions).filter(([, value]) => value).map(([key, value]) => `${variantLabel(key)} ${value}`).join(" · ")}
+                </p>
+              )}
             </div>
           </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-3">
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:col-span-2 md:p-8">
-            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">Description longue</p>
-            <h2 className="text-2xl font-black text-gray-950">Tous les détails avant d'acheter</h2>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">{t("longDescription")}</p>
+            <h2 className="text-2xl font-black text-gray-950">{t("detailsBeforeBuying")}</h2>
             <p className="mt-4 whitespace-pre-line leading-8 text-gray-600">
-              {product.long_description || product.description || "Aucune description détaillée pour le moment. Ajoutez plus d'informations dans l'administration: matière, dimensions, contenu du pack, garantie, conservation ou compatibilité selon le produit."}
+              {product.long_description || product.description || t("longDescriptionFallback")}
             </p>
           </div>
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8">
-            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">Guide rapide</p>
+            <p className="mb-2 text-xs font-black uppercase tracking-widest text-indigo-600">{t("quickGuide")}</p>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li>• Vérifiez les options avant d'ajouter au panier.</li>
-              <li>• Les promotions affichent l'ancien prix barré.</li>
-              <li>• Livraison gratuite si le produit ou votre fidélité est éligible.</li>
+              <li>• {t("quickGuideOptions")}</li>
+              <li>• {t("quickGuidePromos")}</li>
+              <li>• {t("quickGuideDelivery")}</li>
             </ul>
           </div>
         </section>
@@ -343,6 +357,15 @@ function ColorPreview({ value }) {
   if (!background) return null;
 
   return <span className="h-4 w-4 rounded-full border border-black/10" style={{ background }} />;
+}
+
+function InfoTile({ label, value }) {
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">{label}</p>
+      <p className="mt-1 font-black text-gray-950">{value}</p>
+    </div>
+  );
 }
 
 function VariantOptionGroup({ optionKey, values, selectedValue, productImage, variantMedia = {}, variantPrices = {}, onChange }) {

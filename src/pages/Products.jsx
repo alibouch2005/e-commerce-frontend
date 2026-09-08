@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { BadgePercent, PackageSearch, SlidersHorizontal, Sparkles } from "lucide-react";
 import useProducts from "../hooks/useProducts";
@@ -11,50 +11,49 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPageState] = useState(Math.max(Number(searchParams.get("page") || 1), 1));
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(searchParams.get("category_id") || null);
-  const [saleOnly, setSaleOnly] = useState(searchParams.get("sale") === "1");
-  const [perPage, setPerPageState] = useState([12, 24, 48].includes(Number(searchParams.get("per_page"))) ? Number(searchParams.get("per_page")) : 12);
   const { t } = useLanguage();
-  const { products, lastPage, meta, loading } = useProducts(page, search, category, saleOnly, perPage);
+  const page = Math.max(Number(searchParams.get("page") || 1), 1);
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category_id") || null;
+  const saleOnly = searchParams.get("sale") === "1";
+  const perPage = [12, 24, 48].includes(Number(searchParams.get("per_page"))) ? Number(searchParams.get("per_page")) : 12;
 
-  const syncQuery = (updates) => {
-    const next = new URLSearchParams(searchParams);
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null || value === undefined || value === "" || value === false) {
-        next.delete(key);
-      } else {
-        next.set(key, String(value));
-      }
-    });
-    setSearchParams(next, { replace: true });
-  };
+  const syncQuery = useCallback((updates) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === "" || value === false) {
+          next.delete(key);
+        } else {
+          next.set(key, String(value));
+        }
+      });
 
-  const setPage = (nextPage) => {
-    const resolvedPage = typeof nextPage === "function" ? nextPage(page) : nextPage;
-    const safePage = Math.max(Number(resolvedPage || 1), 1);
-    setPageState(safePage);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const handleResolvedPage = useCallback((resolvedPage) => {
+    syncQuery({ page: resolvedPage > 1 ? resolvedPage : null });
+  }, [syncQuery]);
+  const { products, lastPage, meta, loading } = useProducts(page, search, category, saleOnly, perPage, handleResolvedPage);
+
+  const setPage = useCallback((nextPage) => {
+    const safePage = Math.max(Number(nextPage || 1), 1);
     syncQuery({ page: safePage > 1 ? safePage : null });
-  };
+  }, [syncQuery]);
 
-  const setPerPage = (nextPerPage) => {
-    setPerPageState(nextPerPage);
-    setPageState(1);
+  const setPerPage = useCallback((nextPerPage) => {
     syncQuery({ per_page: nextPerPage, page: null });
-  };
+  }, [syncQuery]);
 
-  const handleSearchChange = (nextValue) => {
-    setSearch(nextValue);
-    setPageState(1);
+  const handleSearchChange = useCallback((nextValue) => {
     syncQuery({ search: nextValue, page: null });
-  };
+  }, [syncQuery]);
 
-  const handleCategoryChange = (nextValue) => {
-    setCategory(nextValue);
-    setPageState(1);
+  const handleCategoryChange = useCallback((nextValue) => {
     syncQuery({ category_id: nextValue, page: null });
-  };
+  }, [syncQuery]);
 
   return (
     <div className="min-h-screen bg-[#F6F7FB] pb-16 sm:pb-20">
@@ -78,10 +77,10 @@ export default function Products() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:flex">
-              <button onClick={() => { setSaleOnly(true); setPageState(1); syncQuery({ sale: 1, page: null }); }} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${saleOnly ? "bg-amber-500" : "bg-white/10 hover:bg-white/20"}`}>
+              <button onClick={() => syncQuery({ sale: 1, page: null })} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${saleOnly ? "bg-amber-500" : "bg-white/10 hover:bg-white/20"}`}>
                 <BadgePercent size={17} /> {t("promos")}
               </button>
-              <button onClick={() => { setSaleOnly(false); setPageState(1); syncQuery({ sale: null, page: null }); }} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${!saleOnly ? "bg-indigo-600" : "bg-white/10 hover:bg-white/20"}`}>
+              <button onClick={() => syncQuery({ sale: null, page: null })} className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white ${!saleOnly ? "bg-indigo-600" : "bg-white/10 hover:bg-white/20"}`}>
                 <Sparkles size={17} /> {t("newProducts")}
               </button>
             </div>
@@ -104,7 +103,7 @@ export default function Products() {
           <ProductSearch setSearch={handleSearchChange} initialValue={search} />
           <CategoryFilter category={category} setCategory={handleCategoryChange} />
           {saleOnly && (
-            <button onClick={() => { setSaleOnly(false); setPageState(1); syncQuery({ sale: null, page: null }); }} className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:bg-amber-100">
+            <button onClick={() => syncQuery({ sale: null, page: null })} className="rounded-xl bg-amber-50 px-4 py-2 text-sm font-bold text-amber-700 hover:bg-amber-100">
               {t("removePromoFilter")}
             </button>
           )}

@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { getProducts } from "../services/productService";
 
-export default function useProducts(page, search, category, saleOnly = false, perPage = 12) {
+export default function useProducts(page, search, category, saleOnly = false, perPage = 12, onPageResolved) {
   const [products, setProducts] = useState([]);
   const [lastPage, setLastPage] = useState(1);
   const [meta, setMeta] = useState(null);
@@ -35,11 +35,12 @@ export default function useProducts(page, search, category, saleOnly = false, pe
           res = await getProducts({ ...params, page: resolvedLastPage });
           if (!active) return;
           nextMeta = res.data.meta ?? res.data;
+          onPageResolved?.(resolvedLastPage);
         }
 
         setProducts(res.data.data ?? []);
         setMeta(nextMeta);
-        setLastPage(nextMeta?.last_page ?? res.data.last_page ?? 1);
+        setLastPage(Number(nextMeta?.last_page ?? res.data.last_page ?? 1));
       } catch (err) {
         if (!active) return;
         console.error(err);
@@ -56,7 +57,7 @@ export default function useProducts(page, search, category, saleOnly = false, pe
     return () => {
       active = false;
     };
-  }, [page, search, category, saleOnly, perPage]);
+  }, [page, search, category, saleOnly, perPage, onPageResolved]);
 
   return { products, lastPage, meta, loading, error };
 }

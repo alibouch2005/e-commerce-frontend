@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useLanguage } from "../../context/LanguageContext";
 
 export default function ProductSearch({ setSearch, initialValue = "" }) {
   const [value, setValue] = useState(initialValue);
+  const didMount = useRef(false);
   const { t } = useLanguage();
 
   useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
+
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return undefined;
+    }
+
     const timer = setTimeout(() => {
       setSearch(value);
     }, 500);

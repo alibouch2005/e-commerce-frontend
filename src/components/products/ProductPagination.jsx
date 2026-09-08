@@ -4,87 +4,80 @@ export default function ProductPagination({ page, lastPage, setPage, meta, perPa
 
   if (safeLastPage <= 1) return null;
 
-  const pages = Array.from({ length: safeLastPage }, (_, i) => i + 1)
-    .filter((p) => p === 1 || p === safeLastPage || Math.abs(p - safePage) <= 2);
+  const pages = Array.from({ length: safeLastPage }, (_, index) => index + 1)
+    .filter((item) => item === 1 || item === safeLastPage || Math.abs(item - safePage) <= 2);
 
   const goToPage = (nextPage) => {
-    setPage(Math.min(Math.max(Number(nextPage || 1), 1), safeLastPage));
+    const resolvedPage = Math.min(Math.max(Number(nextPage || 1), 1), safeLastPage);
+    if (resolvedPage === safePage) return;
+
+    setPage(resolvedPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <nav className="flex w-full max-w-4xl flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <nav className="flex w-full max-w-5xl flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="text-center text-sm font-bold text-gray-500 sm:text-left">
         {t("productsRange", { from: meta?.from || 0, to: meta?.to || 0, total: meta?.total || 0 })}
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
         <select
           value={perPage}
           onChange={(event) => {
             setPerPage(Number(event.target.value));
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-600"
+          className="h-11 shrink-0 rounded-xl border border-gray-200 bg-white px-3 text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {[12, 24, 48].map((value) => (
             <option key={value} value={value}>{t("perPage", { count: value })}</option>
           ))}
         </select>
 
-        <button
-          disabled={safePage === 1}
-          onClick={() => goToPage(1)}
-          className="h-11 shrink-0 rounded-xl px-3 text-sm font-bold text-gray-500 disabled:opacity-30"
-        >
-          «
-        </button>
+        <PaginationButton disabled={safePage === 1} onClick={() => goToPage(1)} label="«" ariaLabel={t("firstPage")} />
+        <PaginationButton disabled={safePage === 1} onClick={() => goToPage(safePage - 1)} label={t("previous")} />
 
-        <button
-          disabled={safePage === 1}
-          onClick={() => goToPage(safePage - 1)}
-          className="h-11 shrink-0 rounded-xl px-3 text-sm font-bold text-gray-500 disabled:opacity-30"
-        >
-          {t("previous")}
-        </button>
-
-        {pages.map((p, index) => {
+        {pages.map((item, index) => {
           const previous = pages[index - 1];
-          const showDots = previous && p - previous > 1;
+          const showDots = previous && item - previous > 1;
 
           return (
-            <span key={p} className="flex items-center gap-1">
+            <span key={item} className="flex shrink-0 items-center gap-1">
               {showDots && <span className="px-1 text-gray-300">...</span>}
               <button
-                onClick={() => goToPage(p)}
-                className={`flex h-11 min-w-[44px] shrink-0 items-center justify-center rounded-xl font-bold transition-all ${
-                  safePage === p
+                type="button"
+                onClick={() => goToPage(item)}
+                aria-current={safePage === item ? "page" : undefined}
+                className={`flex h-11 min-w-[44px] items-center justify-center rounded-xl font-black transition-all ${
+                  safePage === item
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
                     : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"
                 }`}
               >
-                {p}
+                {item}
               </button>
             </span>
           );
         })}
 
-        <button
-          disabled={safePage === safeLastPage}
-          onClick={() => goToPage(safePage + 1)}
-          className="h-11 shrink-0 rounded-xl px-3 text-sm font-bold text-gray-500 disabled:opacity-30"
-        >
-          {t("next")}
-        </button>
-
-        <button
-          disabled={safePage === safeLastPage}
-          onClick={() => goToPage(safeLastPage)}
-          className="h-11 shrink-0 rounded-xl px-3 text-sm font-bold text-gray-500 disabled:opacity-30"
-        >
-          »
-        </button>
+        <PaginationButton disabled={safePage === safeLastPage} onClick={() => goToPage(safePage + 1)} label={t("next")} />
+        <PaginationButton disabled={safePage === safeLastPage} onClick={() => goToPage(safeLastPage)} label="»" ariaLabel={t("lastPage")} />
       </div>
     </nav>
+  );
+}
+
+function PaginationButton({ disabled, onClick, label, ariaLabel }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="h-11 shrink-0 rounded-xl px-3 text-sm font-black text-gray-500 transition hover:bg-gray-50 hover:text-indigo-600 disabled:pointer-events-none disabled:opacity-30"
+    >
+      {label}
+    </button>
   );
 }
