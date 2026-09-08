@@ -12,7 +12,8 @@ import { useLanguage } from "../context/LanguageContext";
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useLanguage();
-  const page = Math.max(Number(searchParams.get("page") || 1), 1);
+  const requestedPage = Number(searchParams.get("page") || 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category_id") || null;
   const saleOnly = searchParams.get("sale") === "1";
@@ -36,7 +37,7 @@ export default function Products() {
   const handleResolvedPage = useCallback((resolvedPage) => {
     syncQuery({ page: resolvedPage > 1 ? resolvedPage : null });
   }, [syncQuery]);
-  const { products, lastPage, meta, loading } = useProducts(page, search, category, saleOnly, perPage, handleResolvedPage);
+  const { products, lastPage, meta, loading, error, retry } = useProducts(page, search, category, saleOnly, perPage, handleResolvedPage);
 
   const setPage = useCallback((nextPage) => {
     const safePage = Math.max(Number(nextPage || 1), 1);
@@ -109,7 +110,12 @@ export default function Products() {
           )}
         </div>
 
-        {loading ? (
+        {error ? (
+          <div role="alert" className="rounded-2xl border border-rose-200 bg-white p-6 text-center">
+            <p className="font-semibold text-gray-900">{t("catalogLoadError")}</p>
+            <button type="button" onClick={retry} className="mt-4 rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white">{t("retry")}</button>
+          </div>
+        ) : loading ? (
           <ProductSkeletonGrid />
         ) : (
           <>

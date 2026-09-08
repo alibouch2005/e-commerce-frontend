@@ -6,6 +6,7 @@ import { AuthContext } from "../context/AuthContext";
 import ProductGrid from "../components/products/ProductGrid";
 import ProductSkeletonGrid from "../components/products/ProductSkeletonGrid";
 import { useLanguage } from "../context/LanguageContext";
+import ShoppingGuide from "../components/ShoppingGuide";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -18,19 +19,22 @@ export default function Home() {
   const [heroImage, setHeroImage] = useState("/store-hero-pro.png");
   const [heroReady, setHeroReady] = useState(true);
   const [quickSearch, setQuickSearch] = useState("");
+  const [error, setError] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(false);
     try {
       const requests = [
         api.get("/api/products?per_page=8"),
         api.get("/api/products?on_sale=1&per_page=8"),
       ];
       if (user?.role === "client") requests.push(api.get("/api/user/favorites"));
-      const [newRes, saleRes, favoriteRes] = await Promise.all(requests);
-      setNewProducts(newRes.data.data || []);
-      setSaleProducts(saleRes.data.data || []);
-      setFavoriteProducts(favoriteRes?.data?.data || favoriteRes?.data || []);
+      const [newRes, saleRes, favoriteRes] = await Promise.allSettled(requests);
+      setNewProducts(newRes.value?.data?.data || []);
+      setSaleProducts(saleRes.value?.data?.data || []);
+      setFavoriteProducts(favoriteRes?.value?.data?.data || []);
+      setError(newRes.status === 'rejected' || saleRes.status === 'rejected');
     } finally {
       setLoading(false);
     }
@@ -59,6 +63,8 @@ export default function Home() {
               setHeroImage("");
             }}
             alt="AliShop"
+            fetchPriority="high"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
@@ -84,6 +90,7 @@ export default function Home() {
                   value={quickSearch}
                   onChange={(event) => setQuickSearch(event.target.value)}
                   placeholder={t("searchHero")}
+                  aria-label={t("searchProducts")}
                   className="min-h-12 w-full bg-transparent text-base text-gray-950 outline-none"
                 />
               </div>
@@ -117,13 +124,18 @@ export default function Home() {
           <FeatureCard icon={<ShieldCheck className="text-amber-600" />} title={t("cmiSecure")} text={`${t("cashPayment")} / ${t("cardPayment")}`} />
         </div>
 
+        {error && <div role="alert" className="rounded-2xl border border-rose-200 bg-white p-5 text-gray-900">
+          <p>{t('catalogLoadError')}</p>
+          <button type="button" onClick={fetchData} className="mt-3 rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white">{t('retry')}</button>
+        </div>}
         {loading ? <ProductSkeletonGrid /> : (
           <>
             <ProductSection title={t("latestProducts")} subtitle={t("latestProductsSubtitle")} products={newProducts} icon={<Sparkles size={18} />} t={t} />
-            <ProductSection title={t("promoProducts")} subtitle={t("promoProductsSubtitle")} products={saleProducts} icon={<BadgePercent size={18} />} empty={t("noActivePromos")} t={t} />
-            {user?.role === "client" && <ProductSection title={t("yourFavorites")} subtitle={t("yourFavoritesSubtitle")} products={favoriteProducts.slice(0, 8)} icon={<Heart size={18} />} empty={t("noFavoriteHome")} favoriteByDefault t={t} />}
+            <ProductSection title={t("promoProducts")} subtitle={t("promoProductsSubtitle")} products={saleProducts} icon={<BadgePercent size={18} />} empty={t("noActivePromos")} t={t} to="/products?sale=1" />
+            {user?.role === "client" && <ProductSection title={t("yourFavorites")} subtitle={t("yourFavoritesSubtitle")} products={favoriteProducts.slice(0, 8)} icon={<Heart size={18} />} empty={t("noFavoriteHome")} favoriteByDefault t={t} to="/favorites" />}
           </>
         )}
+        <ShoppingGuide />
       </div>
     </div>
   );
@@ -150,7 +162,7 @@ function FeatureCard({ icon, title, text }) {
   );
 }
 
-function ProductSection({ title, subtitle, products, icon, t, empty, favoriteByDefault = false }) {
+function ProductSection({ title, subtitle, products, icon, t, empty, favoriteByDefault = false, to = '/products' }) {
   return (
     <section>
       <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
@@ -158,7 +170,7 @@ function ProductSection({ title, subtitle, products, icon, t, empty, favoriteByD
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600">{icon}{title}</p>
           <h2 className="mt-1 text-2xl font-black text-gray-950 sm:text-3xl">{subtitle}</h2>
         </div>
-        <Link to="/products" className="hidden text-sm font-bold text-indigo-600 hover:text-indigo-800 md:inline-flex">{t("viewAll")}</Link>
+        <Link to={to} className="shrink-0 rounded-lg px-2 py-3 text-sm font-bold text-indigo-600 hover:text-indigo-800">{t("viewAll")}</Link>
       </div>
       {products.length ? <ProductGrid products={products} favoriteByDefault={favoriteByDefault} /> : <div className="rounded-2xl border border-gray-100 bg-white p-8 text-gray-400">{empty || t("noProductAvailable")}</div>}
     </section>

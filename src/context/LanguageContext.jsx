@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import storefront from "../locales/storefront";
 
 const dictionaries = {
   fr: {
@@ -1008,7 +1009,7 @@ export function LanguageProvider({ children }) {
     dir,
     languages: languageNames,
     setLocale: (nextLocale) => setLocaleState(dictionaries[nextLocale] ? nextLocale : "fr"),
-    t: (key, params) => interpolate(dictionaries[locale]?.[key] || dictionaries.fr[key] || key, params),
+    t: (key, params) => interpolate(storefront[locale]?.[key] || dictionaries[locale]?.[key] || storefront.fr[key] || dictionaries.fr[key] || key, params),
     formatDate: (date, options) => new Intl.DateTimeFormat(dateLocales[locale], options || { dateStyle: "medium", timeStyle: "short" }).format(new Date(date)),
   }), [locale, dir]);
 

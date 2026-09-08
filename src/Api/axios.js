@@ -14,6 +14,17 @@ const api = axios.create({
   withXSRFToken: true,
 });
 
+let csrfRequest;
+api.interceptors.request.use(async (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  if (!['get', 'head', 'options'].includes(method) && !document.cookie.split(';').some((cookie) => cookie.trim().startsWith('XSRF-TOKEN='))) {
+    // Share initialization across concurrent guest cart/support/analytics requests.
+    csrfRequest ??= api.get('/sanctum/csrf-cookie').finally(() => { csrfRequest = undefined; });
+    await csrfRequest;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {

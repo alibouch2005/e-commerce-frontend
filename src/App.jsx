@@ -4,30 +4,33 @@ import { Toaster } from "react-hot-toast";
 import { AuthContext } from "./context/AuthContext";
 
 import Home from "./pages/Home";
-import Login from "./pages/Login";
 import Products from "./pages/Products";
-import Register from "./pages/Register";
 import Navbar from "./components/layout/Navbar";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import ChangePassword from "./pages/ChangePassword";
-import Profile from "./pages/Profile";
-import Orders from "./pages/Orders";
-import Checkout from "./pages/Checkout";
-import Favorites from "./pages/Favorites";
-import Support from "./pages/Support";
-import PaymentResult from "./pages/PaymentResult";
 import GuestGuard from "./guards/GuestRoute";
 import AdminGuard from "./guards/AdminGuard";
 import AdminLayout from "./components/layout/AdminLayout";
 import Footer from "./components/layout/Footer";
-import AdminOrderDetails from "./pages/AdminOrderDetails";
 import AnalyticsTracker from "./components/analytics/AnalyticsTracker";
 import CookieConsentBanner from "./components/analytics/CookieConsentBanner";
+import NotFound from "./pages/NotFound";
+import PageMetadata from "./components/PageMetadata";
+import { useLanguage } from "./context/LanguageContext";
 
 const Deliveries = lazy(() => import("./pages/Deliveries"));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Cart = lazy(() => import('./pages/Cart'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const Support = lazy(() => import('./pages/Support'));
+const PaymentResult = lazy(() => import('./pages/PaymentResult'));
+const AdminOrderDetails = lazy(() => import('./pages/AdminOrderDetails'));
 const AdminOrders = lazy(() => import("./pages/AdminOrders"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCategories = lazy(() => import("./pages/AdminCategories"));
@@ -46,6 +49,7 @@ function App() {
 }
 
 function AppContent() {
+  const { t } = useLanguage();
   const { user } = useContext(AuthContext);
   const location = useLocation();
   const showFooter = ["/", "/products", "/support"].some((path) => (
@@ -55,6 +59,8 @@ function AppContent() {
   return (
     <>
       <AnalyticsTracker />
+      <PageMetadata />
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:p-4 focus:text-indigo-700">{t('skipToContent')}</a>
       <Navbar key={location.pathname} />
       <Toaster
         position="top-right"
@@ -66,7 +72,8 @@ function AppContent() {
       />
       <CookieConsentBanner />
 
-      <Suspense fallback={<div className="flex min-h-[40vh] items-center justify-center text-gray-500">Chargement...</div>}>
+      <main id="main-content" tabIndex={-1}>
+      <Suspense fallback={<div role="status" className="flex min-h-[40vh] items-center justify-center text-gray-500">{t('loading')}</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
@@ -109,8 +116,10 @@ function AppContent() {
             <Route path="support" element={<AdminSupport />} />
             <Route path="wini-products" element={<AdminWiniProducts />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </main>
 
       {showFooter && <Footer />}
     </>

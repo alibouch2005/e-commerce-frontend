@@ -71,7 +71,7 @@ export default function Navbar() {
           {isAdmin && <span className="text-xs bg-red-100 px-2 py-0.5 rounded-md text-red-600">ADMIN</span>}
         </Link>
 
-        <div className="hidden md:flex items-center gap-7 font-semibold text-gray-600 dark:text-gray-300">
+        <div className="hidden lg:flex items-center gap-7 font-semibold text-gray-600 dark:text-gray-300">
           {(isClient || !user) && (
             <>
               <Link to="/" className="flex items-center gap-2 hover:text-indigo-600"><Home size={16} /> {t("home")}</Link>
@@ -124,10 +124,10 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative hidden sm:block" ref={dropdownRef}>
                 <button onClick={() => setOpen(!open)} className="flex h-10 items-center gap-2 rounded-2xl border border-gray-100 bg-white p-1.5 pr-1.5 transition hover:-translate-y-0.5 hover:bg-indigo-50 sm:h-11 sm:pr-3 dark:border-gray-800 dark:bg-gray-900">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-xs font-black text-white">{user.name.charAt(0).toUpperCase()}</div>
-                  <span className="text-sm font-bold text-gray-700 hidden sm:inline">{user.name}</span>
+                  <span className="hidden max-w-28 truncate text-sm font-bold text-gray-700 sm:inline">{user.name}</span>
                   <ChevronDown size={14} className={`hidden text-gray-400 transition-transform sm:block ${open ? "rotate-180" : ""}`} />
                 </button>
                 {open && (
@@ -153,8 +153,10 @@ export default function Navbar() {
             ref={mobileToggleRef}
             type="button"
             onClick={() => setMobileOpen((value) => !value)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-700 shadow-sm md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-700 shadow-sm lg:hidden"
             aria-label="Menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -162,7 +164,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div ref={mobileMenuRef} className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+        <div id="mobile-navigation" ref={mobileMenuRef} className="lg:hidden border-t border-gray-100 bg-white px-4 pb-4 shadow-lg dark:border-gray-800 dark:bg-gray-950">
           <div className="grid gap-2 py-3 font-semibold text-gray-700 dark:text-gray-200">
             {(isClient || !user) && (
               <>
@@ -181,9 +183,9 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="border-t border-gray-100 pt-3">
-                <Link onClick={closeMobile} to="/profile" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50"><User size={18} /> Mon profil</Link>
-                {isClient && <Link onClick={closeMobile} to="/orders" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50"><Package size={18} /> Mes commandes</Link>}
-                <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold text-red-500 hover:bg-red-50"><LogOut size={18} /> Deconnexion</button>
+                <Link onClick={closeMobile} to="/profile" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50"><User size={18} /> {t('profile')}</Link>
+                {isClient && <Link onClick={closeMobile} to="/orders" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50"><Package size={18} /> {t('orders')}</Link>}
+                <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-bold text-red-500 hover:bg-red-50"><LogOut size={18} /> {t('logout')}</button>
               </div>
             )}
           </div>

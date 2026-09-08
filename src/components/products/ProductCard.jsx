@@ -22,7 +22,7 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
   const addToCart = async () => {
     if (isOutOfStock) return toast.error(t("outOfStock"));
     if (product.has_variants) {
-      toast("Choisissez les options du produit");
+      toast(t('chooseOptions'));
       navigate(`/products/${product.id}`);
       return;
     }

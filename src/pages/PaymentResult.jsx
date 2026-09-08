@@ -1,12 +1,29 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, XCircle, ShoppingBag } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { useEffect, useState } from 'react';
+import api from '../Api/axios';
 
-export default function PaymentResult({ success = false }) {
+export default function PaymentResult() {
   const { t } = useLanguage();
   const [params] = useSearchParams();
   const orderId = params.get("order");
+  const [result, setResult] = useState(null);
+  const validOrderId = /^\d+$/.test(orderId || '');
+  const checking = validOrderId && result?.id !== orderId;
+  const verifiedOrder = result?.id === orderId ? result.order : null;
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!validOrderId) return;
+    api.get(`/api/orders/${orderId}`, { signal: controller.signal, timeout: 15000 })
+      .then(({ data }) => { if (!controller.signal.aborted) setResult({ id: orderId, order: data.data }); })
+      .catch(() => { if (!controller.signal.aborted) setResult({ id: orderId, order: null }); });
+    return () => controller.abort();
+  }, [orderId, validOrderId]);
+  const success = verifiedOrder?.payment_status === 'paid';
   const orderText = orderId ? t("forOrder", { id: orderId }) : "";
+
+  if (checking) return <div role="status" className="p-16 text-center">{t('loading')}</div>;
 
   return (
     <div className="min-h-[70vh] bg-[#f7f8fc] px-6 py-16">
@@ -25,7 +42,7 @@ export default function PaymentResult({ success = false }) {
         </p>
         {!success && (
           <p className="mt-3 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-800">
-            {t("paymentFailureCashOption")}
+            <Link to="/support" className="underline">{t("needHelp")}</Link>
           </p>
         )}
 

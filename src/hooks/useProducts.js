@@ -7,9 +7,11 @@ export default function useProducts(page, search, category, saleOnly = false, pe
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     const fetchProducts = async () => {
       try {
@@ -24,7 +26,7 @@ export default function useProducts(page, search, category, saleOnly = false, pe
           per_page: perPage,
         };
 
-        let res = await getProducts(params);
+        let res = await getProducts(params, controller.signal);
 
         if (!active) return;
 
@@ -32,7 +34,7 @@ export default function useProducts(page, search, category, saleOnly = false, pe
         const resolvedLastPage = Math.max(Number(nextMeta?.last_page ?? res.data.last_page ?? 1), 1);
 
         if (Number(page) > resolvedLastPage) {
-          res = await getProducts({ ...params, page: resolvedLastPage });
+          res = await getProducts({ ...params, page: resolvedLastPage }, controller.signal);
           if (!active) return;
           nextMeta = res.data.meta ?? res.data;
           onPageResolved?.(resolvedLastPage);
@@ -56,8 +58,9 @@ export default function useProducts(page, search, category, saleOnly = false, pe
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [page, search, category, saleOnly, perPage, onPageResolved]);
+  }, [page, search, category, saleOnly, perPage, onPageResolved, attempt]);
 
-  return { products, lastPage, meta, loading, error };
+  return { products, lastPage, meta, loading, error, retry: () => setAttempt((value) => value + 1) };
 }

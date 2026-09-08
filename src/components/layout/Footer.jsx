@@ -24,7 +24,7 @@ export default function Footer() {
         <div>
           <h3 className="mb-3 font-bold text-white">{t("store")}</h3>
           <p className="flex gap-2 text-sm text-gray-400"><MapPin size={16} className="shrink-0" /> Rue 177, 20202 Casablanca</p>
-          <p className="mt-2 flex gap-2 text-sm text-gray-400"><MessageCircle size={16} className="shrink-0" /> contact@alishop.ma</p>
+          <Link to="/support" className="mt-2 flex gap-2 text-sm text-gray-400 hover:text-white"><MessageCircle size={16} className="shrink-0" /> {t('needHelp')}</Link>
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-gray-500">© {new Date().getFullYear()} AliShop. {t("rightsReserved")}</div>

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { ArrowLeft, CheckCircle2, Flame, Heart, Minus, Plus, ShoppingBag, Star, Video, Zap } from "lucide-react";
 import api from "../Api/axios";
 import { getProduct } from "../services/productService";
+import PageMetadata from '../components/PageMetadata';
 import ProductDetailsSkeleton from "../components/products/ProductDetailsSkeleton";
 import ProductGrid from "../components/products/ProductGrid";
 import { CartContext } from "../context/CartContext";
@@ -19,6 +20,7 @@ export default function ProductDetails() {
   const { user } = useContext(AuthContext);
   const { t } = useLanguage();
   const [product, setProduct] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [related, setRelated] = useState([]);
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -31,8 +33,12 @@ export default function ProductDetails() {
   const [selectedOptions, setSelectedOptions] = useState({});
 
   useEffect(() => {
+    const controller = new AbortController();
     setProduct(null);
-    getProduct(id).then(({ data }) => {
+    setRelated([]);
+    setLoadFailed(false);
+    getProduct(id, controller.signal).then(({ data }) => {
+      if (controller.signal.aborted) return;
       const nextProduct = data.data ?? data;
       const defaults = defaultSelectedOptions(nextProduct);
       setProduct(nextProduct);
@@ -42,9 +48,11 @@ export default function ProductDetails() {
       trackEvent("product_view", { product_id: Number(id) });
       if (nextProduct.category?.id) {
         api.get("/api/products", { params: { category_id: nextProduct.category.id, exclude: nextProduct.id, per_page: 4 } })
-          .then((res) => setRelated(res.data.data || []));
+          .then((res) => { if (!controller.signal.aborted) setRelated(res.data.data || []); })
+          .catch(() => {});
       }
-    }).catch(() => toast.error(t("productNotFound")));
+    }).catch(() => { if (!controller.signal.aborted) setLoadFailed(true); });
+    return () => controller.abort();
   }, [id, t]);
 
   useEffect(() => {
@@ -64,6 +72,10 @@ export default function ProductDetails() {
     }).catch(() => setIsFavorite(false));
   }, [id, user]);
 
+  if (loadFailed) return <div role="alert" className="mx-auto max-w-xl p-10 text-center">
+    <h1 className="text-2xl font-bold">{t('productNotFound')}</h1>
+    <button type="button" onClick={() => navigate('/products')} className="mt-5 rounded-xl bg-indigo-600 px-5 py-3 text-white">{t('backToProducts')}</button>
+  </div>;
   if (!product) return <ProductDetailsSkeleton />;
 
   const isOutOfStock = product.stock <= 0;
@@ -118,6 +130,7 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen bg-[#f7f8fc]">
+      <PageMetadata product={product} />
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10 lg:space-y-14">
         <button
           type="button"

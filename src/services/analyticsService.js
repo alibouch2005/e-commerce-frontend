@@ -19,14 +19,15 @@ const getSessionId = () => {
 };
 
 export const trackEvent = async (event, payload = {}) => {
-  if (!hasAnalyticsConsent()) return;
-
   try {
+    if (!hasAnalyticsConsent()) return;
+    const path = new URL(payload.path || window.location.pathname, window.location.origin).pathname;
+    if (/^\/(admin|reset-password|forgot-password|login|register|profile|change-password|payment)(\/|$)/.test(path)) return;
     await api.post("/api/analytics/events", {
       session_id: getSessionId(),
       event,
-      path: window.location.pathname,
       ...payload,
+      path,
     });
   } catch {
     // Analytics should never block the user journey.
