@@ -1,5 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import storefront from "../locales/storefront";
+import cash from "../locales/cash";
+import payment from "../locales/payment";
+import premium from "../locales/premium";
 
 const dictionaries = {
   fr: {
@@ -123,6 +126,10 @@ const dictionaries = {
     perPage: "{count} par page",
     removePromoFilter: "Retirer le filtre promotions",
     emptyCart: "Votre panier est vide",
+    emptyCartDescription: "Explorez notre catalogue et ajoutez les produits qui vous plaisent. Votre sélection restera disponible pendant vos achats.",
+    cartBenefitChoice: "Produits et offres sélectionnés",
+    cartLoadError: "Impossible de charger votre panier",
+    cartLoadErrorHelp: "Vérifiez votre connexion puis réessayez. Aucun article enregistré ne sera supprimé.",
     quantityError: "Quantite impossible",
     productRemoved: "Produit supprime",
     seeProducts: "Voir produits",
@@ -262,7 +269,6 @@ const dictionaries = {
     paymentFailureCashOption: "Si le paiement carte echoue encore, vous pouvez refaire la commande avec paiement a la livraison si le total est inferieur a 5000 DH.",
     cancelOrder: "Annuler la commande",
     orderCancelled: "Commande annulee",
-    cancelOnlyPending15: "Annulation possible seulement avant preparation et pendant les 15 premieres minutes.",
     refunded: "Remboursee",
     forOrder: " pour la commande #{id}",
     viewOrders: "Voir mes commandes",
@@ -449,6 +455,10 @@ const dictionaries = {
     perPage: "{count} per page",
     removePromoFilter: "Remove deals filter",
     emptyCart: "Your cart is empty",
+    emptyCartDescription: "Explore our catalog and add the products you love. Your selection stays available while you shop.",
+    cartBenefitChoice: "Curated products and deals",
+    cartLoadError: "Unable to load your cart",
+    cartLoadErrorHelp: "Check your connection and try again. No saved item will be removed.",
     quantityError: "Quantity update unavailable",
     productRemoved: "Product removed",
     seeProducts: "View products",
@@ -588,7 +598,6 @@ const dictionaries = {
     paymentFailureCashOption: "If card payment fails again, you can reorder with cash on delivery when the total is under 5000 DH.",
     cancelOrder: "Cancel order",
     orderCancelled: "Order cancelled",
-    cancelOnlyPending15: "Cancellation is possible only before preparation and during the first 15 minutes.",
     refunded: "Refunded",
     forOrder: " for order #{id}",
     viewOrders: "View my orders",
@@ -774,6 +783,10 @@ const dictionaries = {
     perPage: "{count} في الصفحة",
     removePromoFilter: "إزالة فلتر العروض",
     emptyCart: "سلتك فارغة",
+    emptyCartDescription: "تصفح متجرنا وأضف المنتجات التي تعجبك. ستبقى اختياراتك محفوظة أثناء التسوق.",
+    cartBenefitChoice: "منتجات وعروض مختارة",
+    cartLoadError: "تعذر تحميل سلة التسوق",
+    cartLoadErrorHelp: "تحقق من اتصالك ثم أعد المحاولة. لن يتم حذف أي منتج محفوظ.",
     quantityError: "تعذر تغيير الكمية",
     productRemoved: "تم حذف المنتج",
     seeProducts: "عرض المنتجات",
@@ -1009,7 +1022,7 @@ export function LanguageProvider({ children }) {
     dir,
     languages: languageNames,
     setLocale: (nextLocale) => setLocaleState(dictionaries[nextLocale] ? nextLocale : "fr"),
-    t: (key, params) => interpolate(storefront[locale]?.[key] || dictionaries[locale]?.[key] || storefront.fr[key] || dictionaries.fr[key] || key, params),
+    t: (key, params) => interpolate(premium[locale]?.[key] || payment[locale]?.[key] || cash[locale]?.[key] || storefront[locale]?.[key] || dictionaries[locale]?.[key] || premium.fr[key] || payment.fr[key] || cash.fr[key] || storefront.fr[key] || dictionaries.fr[key] || key, params),
     formatDate: (date, options) => new Intl.DateTimeFormat(dateLocales[locale], options || { dateStyle: "medium", timeStyle: "short" }).format(new Date(date)),
   }), [locale, dir]);
 

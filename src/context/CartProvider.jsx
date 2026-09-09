@@ -26,6 +26,7 @@ export default function CartProvider({ children }) {
 
   const [cart, setCart] = useState({ items: [] });
   const [loading, setLoading] = useState(true);
+  const [cartError, setCartError] = useState(false);
 
   useEffect(() => {
     loadCart();
@@ -36,6 +37,8 @@ export default function CartProvider({ children }) {
   const loadCart = async () => {
 
     try {
+      setLoading(true);
+      setCartError(false);
 
       const res = await getCart();
 
@@ -44,6 +47,7 @@ export default function CartProvider({ children }) {
     } catch (err) {
 
       console.error("Erreur chargement panier:", err);
+      setCartError(true);
 
     } finally {
 
@@ -116,6 +120,7 @@ export default function CartProvider({ children }) {
         updateItemQuantity,
         removeItem,
         loading,
+        cartError,
         reloadCart: loadCart
       }}
     >

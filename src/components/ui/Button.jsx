@@ -15,7 +15,7 @@ export default function Button({
     "inline-flex items-center justify-center gap-2 rounded-xl font-black shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 active:scale-[0.98]";
 
   const variants = {
-    primary: "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-200 disabled:bg-gray-300",
+    primary: "bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-16px_rgba(79,70,229,.75)] focus-visible:ring-indigo-200 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-300",
     secondary: "bg-gray-100 text-gray-800 hover:bg-gray-200 focus-visible:ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700",
     outline: "border border-gray-200 bg-white text-gray-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus-visible:ring-indigo-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100",
     danger: "bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-200 disabled:bg-gray-300",

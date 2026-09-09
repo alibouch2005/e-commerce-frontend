@@ -6,12 +6,13 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { trackEvent } from "../services/analyticsService";
 import DeliveryMap from "../components/delivery/DeliveryMap";
-import { CreditCard, LogIn, ShieldCheck, UserPlus } from "lucide-react";
+import { CreditCard, LogIn, UserPlus } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { login, register } from "../services/authService";
 import { mergeGuestCart } from "../services/cartService";
 import { getApiErrorMessages, showApiError } from "../utils/showApiError";
 import { getDeliveryQuote, STORE_LOCATION } from "../utils/deliveryPricing";
+import SecureCardPayment from "../components/checkout/SecureCardPayment";
 
 const deliverySlots = [
   { value: "08_12", labelKey: "slotMorning", helpKey: "slotMorningHelp" },
@@ -56,6 +57,11 @@ export default function Checkout() {
   });
   const [serverDeliveryQuote, setServerDeliveryQuote] = useState(null);
   const deliveryQuote = serverDeliveryQuote || localDeliveryQuote;
+  const freeDeliveryMessage = deliveryQuote.freeDeliveryReason === "loyalty_5th_order"
+    ? t("deliveryFreeLoyalty")
+    : deliveryQuote.freeDeliveryReason === "product"
+      ? t("deliveryFreeProduct")
+      : t("deliveryFreeGlobal");
   const estimatedTotal = subtotal + deliveryQuote.fee;
   const requiresCardPayment = estimatedTotal >= 5000;
 
@@ -294,8 +300,8 @@ export default function Checkout() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
-      <h1 className="mb-6 text-3xl font-black text-gray-950">{t("checkout")}</h1>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+      <div className="relative mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-900 p-6 text-white shadow-[0_24px_70px_-28px_rgba(79,70,229,.8)] sm:p-8"><div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-fuchsia-400/20 blur-3xl" /><p className="relative text-xs font-black uppercase tracking-[.18em] text-indigo-200">AliShop secure checkout</p><h1 className="relative mt-2 text-3xl font-black sm:text-4xl">{t("checkout")}</h1></div>
       {apiErrors.length > 0 && (
         <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-800">
           <p className="font-black">{t("errorTitle")}</p>
@@ -305,8 +311,8 @@ export default function Checkout() {
         </div>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8">
+        <form onSubmit={handleSubmit} className="premium-surface space-y-4 rounded-3xl p-4 sm:p-6">
           {!user && (
             <div className="space-y-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
               <div>
@@ -411,7 +417,7 @@ export default function Checkout() {
                   {deliveryQuote.estimated
                     ? t("deliveryFeeEstimated")
                     : deliveryQuote.freeDelivery
-                      ? t("freeDeliveryApplied")
+                      ? freeDeliveryMessage
                       : t("deliveryDistancePrice", { distance: deliveryQuote.distanceKm, fee: deliveryQuote.fee.toFixed(2) })}
                 </p>
               </div>
@@ -434,30 +440,26 @@ export default function Checkout() {
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
 
-          <select
-            className="w-full rounded-xl border border-gray-200 p-3 text-base focus:ring-2 focus:ring-indigo-500"
-            value={form.payment_method}
-            onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-          >
-            <option value="cash_on_delivery" disabled={requiresCardPayment}>{t("cashPayment")}</option>
-            <option value="card">{t("cardPayment")}</option>
-          </select>
+          <fieldset>
+            <legend className="mb-3 text-sm font-black text-gray-950">{t('choosePayment')}</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${form.payment_method === 'cash_on_delivery' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 bg-white'} ${requiresCardPayment ? 'cursor-not-allowed opacity-50' : ''}`}>
+                <input type="radio" name="payment_method_choice" value="cash_on_delivery" checked={form.payment_method === 'cash_on_delivery'} disabled={requiresCardPayment} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
+                <span><strong className="block text-sm text-gray-950">{t('cashPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{t('cashPaymentHelp')}</small></span>
+              </label>
+              <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${form.payment_method === 'card' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 bg-white'}`}>
+                <input type="radio" name="payment_method_choice" value="card" checked={form.payment_method === 'card'} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
+                <span><strong className="flex items-center gap-2 text-sm text-gray-950"><CreditCard size={17} />{t('cardPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{t('cardPaymentHelp')}</small></span>
+              </label>
+            </div>
+          </fieldset>
           {requiresCardPayment && (
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-blue-800">
               {t("cardRequiredLargeOrder")}
             </div>
           )}
           {form.payment_method === "card" && (
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800">
-              <div className="flex items-center gap-2 font-bold">
-                <CreditCard size={18} />
-                {t("cmiSecure")}
-              </div>
-              <p className="mt-2 flex items-start gap-2">
-                <ShieldCheck size={17} className="mt-0.5 shrink-0" />
-                {t("cmiRedirect")}
-              </p>
-            </div>
+            <SecureCardPayment amount={estimatedTotal} />
           )}
 
           <input
@@ -467,12 +469,12 @@ export default function Checkout() {
             onChange={(e) => setForm({ ...form, coupon_code: e.target.value.toUpperCase() })}
           />
 
-          <button className="w-full rounded-xl bg-green-600 px-6 py-4 font-bold text-white transition hover:bg-green-700 disabled:bg-gray-400" disabled={loading || retrySeconds > 0}>
-            {retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : t("confirmOrder")}
+          <button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-400" disabled={loading || retrySeconds > 0}>
+            {retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : form.payment_method === "card" ? t("continueToCmi") : t("confirmOrder")}
           </button>
         </form>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+        <div className="premium-surface h-fit rounded-3xl p-4 sm:sticky sm:top-24 sm:p-6">
           <h2 className="font-bold mb-4">{t("summary")}</h2>
           {cart.items.map((item) => (
             <div key={item.id} className="mb-3 flex justify-between gap-4 text-sm">

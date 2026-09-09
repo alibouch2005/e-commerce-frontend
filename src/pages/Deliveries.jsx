@@ -3,6 +3,7 @@ import { CalendarClock, Camera, CheckCircle2, ChevronLeft, ChevronRight, Handsha
 import toast from "react-hot-toast";
 import api from "../Api/axios";
 import DeliveryMap from "../components/delivery/DeliveryMap";
+import CashLedger from "../components/delivery/CashLedger";
 import { useLanguage } from "../context/LanguageContext";
 import { showApiError } from "../utils/showApiError";
 
@@ -36,6 +37,7 @@ export default function Deliveries() {
   const [meta, setMeta] = useState({});
   const [page, setPage] = useState(1);
   const [proofs, setProofs] = useState({});
+  const [cashRevision, setCashRevision] = useState(0);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -69,11 +71,15 @@ export default function Deliveries() {
     updateProof(orderId, "preview", URL.createObjectURL(file));
   };
 
-  const handleUpdateStatus = async (id) => {
+  const handleUpdateStatus = async (order) => {
+    const id = order.id;
     const proof = proofs[id] || {};
 
     if (!proof.recipient_name || !proof.proof_image) {
       return toast.error(t("proofRequired"));
+    }
+    if (order.payment_method === 'cash_on_delivery' && !window.confirm(t('cashCollectConfirm', { amount: displayTotal(order) }))) {
+      return;
     }
 
     try {
@@ -87,6 +93,7 @@ export default function Deliveries() {
       await api.post(`/api/livreur/orders/${id}/status?_method=PUT`, payload);
       toast.success(t("deliveryConfirmed"));
       await fetchOrders();
+      setCashRevision((value) => value + 1);
     } catch (err) {
       showApiError(err, t("updateError"));
     } finally {
@@ -133,6 +140,8 @@ export default function Deliveries() {
             </button>
           </div>
         </div>
+
+        <CashLedger revision={cashRevision} />
 
         {orders.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
@@ -202,7 +211,10 @@ export default function Deliveries() {
                         </div>
                       </div>
 
-                      <div className="text-xl font-black text-indigo-600">{t("total")}: {displayTotal(order)} DH</div>
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+                        <div><p className="text-xs font-bold uppercase tracking-wider text-indigo-500">{order.payment_method === 'card' ? t('cashOnline') : t('cashCash')}</p><p className="mt-1 text-xl font-black text-indigo-700">{t("total")}: {displayTotal(order)} DH</p></div>
+                        {order.payment_method === 'cash_on_delivery' && <span className="rounded-full bg-amber-100 px-3 py-2 text-xs font-black text-amber-800">{t('cashPending')}</span>}
+                      </div>
                     </div>
 
                     <div className="space-y-4">
@@ -252,7 +264,7 @@ export default function Deliveries() {
                             className="w-full rounded-xl border border-gray-200 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-indigo-500"
                           />
                           <button
-                            onClick={() => handleUpdateStatus(order.id)}
+                            onClick={() => handleUpdateStatus(order)}
                             disabled={updating === order.id}
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-4 font-black text-white hover:bg-emerald-700 disabled:bg-gray-300"
                           >

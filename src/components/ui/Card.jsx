@@ -9,12 +9,12 @@ export default function Card({
 }) {
 
   const baseStyle =
-    "rounded-lg border bg-white transition";
+    "rounded-2xl border bg-white/95 transition-all duration-300 dark:bg-gray-900/95";
 
   const variants = {
-    default: "border-gray-200",
-    outline: "border-gray-300",
-    elevated: "border-transparent"
+    default: "border-gray-200/80 dark:border-gray-800",
+    outline: "border-gray-300 dark:border-gray-700",
+    elevated: "border-white/70 dark:border-gray-800"
   };
 
   const paddings = {
@@ -26,8 +26,8 @@ export default function Card({
   const shadows = {
     none: "",
     sm: "shadow-sm",
-    md: "shadow-md",
-    lg: "shadow-lg"
+    md: "shadow-[0_12px_35px_-24px_rgba(15,23,42,.45)]",
+    lg: "shadow-[0_22px_60px_-30px_rgba(15,23,42,.55)]"
   };
 
   return (

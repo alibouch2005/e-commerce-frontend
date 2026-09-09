@@ -27,13 +27,27 @@ export const NotificationProvider = ({ children }) => {
   }, [fetchNotifications, user]);
 
   const markAllRead = async () => {
-    await api.patch("/api/notifications/read-all");
-    setNotifications((items) => items.map((item) => ({ ...item, read_at: item.read_at ?? new Date().toISOString() })));
+    const previous = notifications;
+    const readAt = new Date().toISOString();
+    setNotifications((items) => items.map((item) => ({ ...item, read_at: item.read_at ?? readAt })));
+    try {
+      await api.patch("/api/notifications/read-all");
+    } catch (error) {
+      setNotifications(previous);
+      throw error;
+    }
   };
 
   const markRead = async (id) => {
-    await api.patch(`/api/notifications/${id}/read`);
-    setNotifications((items) => items.map((item) => item.id === id ? { ...item, read_at: item.read_at ?? new Date().toISOString() } : item));
+    const previous = notifications;
+    const readAt = new Date().toISOString();
+    setNotifications((items) => items.map((item) => item.id === id ? { ...item, read_at: item.read_at ?? readAt } : item));
+    try {
+      await api.patch(`/api/notifications/${id}/read`);
+    } catch (error) {
+      setNotifications(previous);
+      throw error;
+    }
   };
 
   return (

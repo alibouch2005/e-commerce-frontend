@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
   AlertCircle,
@@ -94,6 +94,7 @@ export default function Orders() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const closeModalRef = useRef(null);
   const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
     style: "currency",
     currency: "MAD",
@@ -126,6 +127,24 @@ export default function Orders() {
     };
   }, [loadOrders]);
 
+  useEffect(() => {
+    if (!selectedOrder) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setSelectedOrder(null);
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    window.requestAnimationFrame(() => closeModalRef.current?.focus());
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selectedOrder]);
+
   const downloadReceipt = async (orderId) => {
     try {
       const response = await api.get(`/api/orders/${orderId}/receipt`, { responseType: "blob" });
@@ -141,7 +160,7 @@ export default function Orders() {
   };
 
   const cancelOrder = async (orderId) => {
-    const reason = window.prompt(`${t("cancelOrder")} — ${t("cancelOnlyPending15")}`);
+    const reason = window.prompt(`${t("cancelOrder")} — ${t("cancelOnlyPending60")}`);
     if (reason === null) return;
     try {
       const { data } = await api.patch(`/api/orders/${orderId}/cancel`, { reason });
@@ -208,17 +227,27 @@ export default function Orders() {
         </div>
 
         {selectedOrder && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-4 shadow-2xl sm:rounded-3xl sm:p-6">
+          <div
+            className="premium-popover fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setSelectedOrder(null);
+            }}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="order-dialog-title"
+              className="max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-white/70 bg-white p-4 shadow-[0_32px_100px_rgba(15,23,42,.35)] sm:max-h-[calc(100dvh-2.5rem)] sm:p-6 dark:border-gray-700 dark:bg-gray-900"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-black">{orderTitle(selectedOrder)}</h2>
+                  <h2 id="order-dialog-title" className="text-2xl font-black">{orderTitle(selectedOrder)}</h2>
                   <p className="text-sm text-gray-500">{selectedOrder.fulfillment_method === "pickup" ? t("storePickup") : t("homeDelivery")}</p>
                   {selectedOrder.delivery_time_slot && (
                     <p className="mt-1 text-sm font-bold text-indigo-600">{t("deliveryTimeSlot")}: {slotLabel(selectedOrder.delivery_time_slot)}</p>
                   )}
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200">
+                <button ref={closeModalRef} onClick={() => setSelectedOrder(null)} aria-label={t("close")} className="rounded-full bg-gray-100 p-2 text-gray-600 transition hover:rotate-90 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200">
                   <X size={18} />
                 </button>
               </div>

@@ -5,6 +5,7 @@ import AdminSidebar from "../Admin/AdminSidebar";
 import AdminDropdown from "../Admin/AdminDropdown";
 
 const pageTitles = [
+  { match: "/admin/courier-cash", title: "Caisse des livreurs" },
   { match: "/admin/wini-products", title: "Wini product" },
   { match: "/admin/categories", title: "Catégories" },
   { match: "/admin/products", title: "Produits" },
@@ -23,7 +24,7 @@ export default function AdminLayout() {
   ), [location.pathname]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100">
+    <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_15%_5%,rgba(99,102,241,.12),transparent_28rem),#f7f8fc] dark:bg-gray-950">
       <div className="hidden shrink-0 lg:block">
         <AdminSidebar />
       </div>
@@ -49,7 +50,7 @@ export default function AdminLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/70 bg-white/80 px-4 py-3 shadow-[0_10px_35px_rgba(15,23,42,.06)] backdrop-blur-xl sm:px-6 dark:border-gray-800 dark:bg-gray-950/85">
           <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -73,7 +74,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

@@ -35,6 +35,25 @@ test.beforeEach(async ({ page }) => {
 
 const noOverflow = async (page) => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
+test('empty cart is stable, responsive and guides the customer back to products', async ({ page }) => {
+  const errors = [];
+  const consoleErrors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+
+  await page.goto('/cart');
+  await page.waitForTimeout(500);
+  expect(errors).toEqual([]);
+  expect(consoleErrors.filter((message) => /ReferenceError|Application error/i.test(message))).toEqual([]);
+  await expect(page.getByRole('heading', { name: 'Votre panier est vide' })).toBeVisible();
+  await expect(page.getByText('Paiement securise')).toBeVisible();
+  await noOverflow(page);
+  await page.getByRole('button', { name: 'Voir produits' }).click();
+  await expect(page).toHaveURL(/\/products$/);
+});
+
 test('pagination, refresh, search and page size stay synchronized', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

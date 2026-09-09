@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../Api/axios";
-import toast from "react-hot-toast";
 import {
   Bar,
   BarChart,
@@ -38,8 +37,6 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
   const [lowStock, setLowStock] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-  const [deliverySettings, setDeliverySettings] = useState({ free_delivery_enabled: false, free_delivery_minimum: 0 });
-  const [savingDelivery, setSavingDelivery] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
@@ -51,12 +48,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [resStats, resSales, resOrders, resAnalytics, resSettings] = await Promise.allSettled([
+        const [resStats, resSales, resOrders, resAnalytics] = await Promise.allSettled([
           api.get("/api/admin/stats"),
           api.get("/api/admin/sales-by-day"),
           api.get("/api/admin/orders"),
           api.get("/api/admin/analytics"),
-          api.get("/api/admin/settings"),
         ]);
 
         if (resStats.status === "fulfilled") {
@@ -66,10 +62,6 @@ export default function AdminDashboard() {
 
         if (resSales.status === "fulfilled") setSales(resSales.value.data);
         if (resAnalytics.status === "fulfilled") setAnalytics(resAnalytics.value.data);
-        if (resSettings.status === "fulfilled") {
-          setDeliverySettings(resSettings.value.data.delivery || { free_delivery_enabled: false, free_delivery_minimum: 0 });
-        }
-
         if (resOrders.status === "fulfilled") {
           const ordersData = resOrders.value.data.data || resOrders.value.data;
           setOrders(Array.isArray(ordersData) ? ordersData : []);
@@ -83,19 +75,6 @@ export default function AdminDashboard() {
 
     void fetchData();
   }, []);
-
-  const saveDeliverySettings = async () => {
-    setSavingDelivery(true);
-    try {
-      const { data } = await api.put("/api/admin/settings/delivery", deliverySettings);
-      setDeliverySettings(data.delivery);
-      toast.success("Réglage livraison enregistré");
-    } catch {
-      toast.error("Impossible d'enregistrer la livraison");
-    } finally {
-      setSavingDelivery(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -160,38 +139,6 @@ export default function AdminDashboard() {
           formatMoney={formatMoney}
         />
       </div>
-
-      <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="font-black text-gray-950">Réglage livraison globale</h2>
-            <p className="text-sm text-gray-500">Option globale par minimum panier. Pour une livraison gratuite par produit, utilisez Admin &gt; Produits.</p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-[auto_180px_auto] sm:items-center">
-            <label className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700">
-              <input
-                type="checkbox"
-                checked={deliverySettings.free_delivery_enabled}
-                onChange={(event) => setDeliverySettings((current) => ({ ...current, free_delivery_enabled: event.target.checked }))}
-                className="h-5 w-5 accent-indigo-600"
-              />
-              Livraison gratuite
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={deliverySettings.free_delivery_minimum}
-              onChange={(event) => setDeliverySettings((current) => ({ ...current, free_delivery_minimum: event.target.value }))}
-              placeholder="Minimum DH"
-              className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <button onClick={saveDeliverySettings} disabled={savingDelivery} className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-black text-white hover:bg-indigo-700 disabled:bg-gray-300">
-              {savingDelivery ? "..." : "Enregistrer"}
-            </button>
-          </div>
-        </div>
-      </section>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">

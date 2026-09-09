@@ -6,6 +6,7 @@ import {
   Layers,
   LayoutDashboard,
   MessageCircle,
+  Banknote,
   Package,
   Tag,
   TrendingUp,
@@ -41,7 +42,7 @@ export default function AdminSidebar({ onNavigate }) {
         </Link>
       </div>
 
-      <nav className="mt-2 flex-1 space-y-2 p-4">
+      <nav className="mt-2 flex-1 space-y-2 overflow-y-auto p-4">
         <p className="mb-4 px-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t("mainMenu")}</p>
 
         <NavLink to="/admin/dashboard" className={navStyle} onClick={handleNavigate}>
@@ -70,6 +71,11 @@ export default function AdminSidebar({ onNavigate }) {
             <span>{t("orders")}</span>
           </NavLink>
         )}
+
+        <NavLink to="/admin/courier-cash" className={navStyle} onClick={handleNavigate}>
+          <Banknote size={20} />
+          <span>{t("cashTitle")}</span>
+        </NavLink>
 
         <NavLink to="/admin/users" className={navStyle} onClick={handleNavigate}>
           <Users size={20} />

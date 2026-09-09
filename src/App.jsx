@@ -39,6 +39,7 @@ const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminWiniProducts = lazy(() => import("./pages/AdminWiniProducts"));
+const AdminCourierCash = lazy(() => import("./pages/AdminCourierCash"));
 
 function App() {
   return (
@@ -115,6 +116,7 @@ function AppContent() {
             <Route path="coupons" element={<AdminCoupons />} />
             <Route path="support" element={<AdminSupport />} />
             <Route path="wini-products" element={<AdminWiniProducts />} />
+            <Route path="courier-cash" element={<AdminCourierCash />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

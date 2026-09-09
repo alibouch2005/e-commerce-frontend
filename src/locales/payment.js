@@ -1,0 +1,33 @@
+export default {
+  fr: {
+    choosePayment: 'Choisissez votre moyen de paiement',
+    cashPaymentHelp: 'Payez au livreur lorsque vous recevez votre commande.',
+    cardPaymentHelp: 'Finalisez le paiement sur la plateforme bancaire sécurisée CMI.',
+    secureCheckout: 'Paiement bancaire sécurisé', secureCheckoutTitle: 'Réglez votre commande en toute confiance',
+    secureCheckoutText: 'Après confirmation, vous quittez temporairement AliShop pour saisir vos informations directement sur la page sécurisée CMI.',
+    cardHolder: 'Titulaire', cardExpiry: 'Expire', cardProtected: 'CARTE PROTÉGÉE', yourName: 'VOTRE NOM',
+    cardNeverStored: 'AliShop ne voit et ne conserve jamais votre numéro de carte ni votre CVV.',
+    secureThreeDs: 'Authentification 3D Secure', secureCmi: 'Traitement bancaire par CMI', secureReturn: 'Retour automatique vers AliShop',
+    paymentStepOrder: '1. Confirmez la commande', paymentStepBank: '2. Payez sur CMI', paymentStepResult: '3. Recevez le résultat',
+    continueToCmi: 'Confirmer et continuer vers CMI', acceptedCards: 'Cartes locales et internationales acceptées selon votre contrat CMI.',
+  },
+  en: {
+    choosePayment: 'Choose your payment method', cashPaymentHelp: 'Pay the courier when your order arrives.',
+    cardPaymentHelp: 'Complete payment on the secure CMI banking platform.', secureCheckout: 'Secure bank payment',
+    secureCheckoutTitle: 'Pay for your order with confidence', secureCheckoutText: 'After confirmation, you temporarily leave AliShop to enter your details directly on the secure CMI page.',
+    cardHolder: 'Card holder', cardExpiry: 'Expires', cardProtected: 'PROTECTED CARD', yourName: 'YOUR NAME',
+    cardNeverStored: 'AliShop never sees or stores your card number or CVV.', secureThreeDs: '3D Secure authentication',
+    secureCmi: 'Bank processing by CMI', secureReturn: 'Automatic return to AliShop', paymentStepOrder: '1. Confirm the order',
+    paymentStepBank: '2. Pay on CMI', paymentStepResult: '3. Receive the result', continueToCmi: 'Confirm and continue to CMI',
+    acceptedCards: 'Local and international cards are accepted according to your CMI agreement.',
+  },
+  ar: {
+    choosePayment: 'اختر طريقة الدفع', cashPaymentHelp: 'ادفع للمندوب عند استلام طلبك.', cardPaymentHelp: 'أكمل الدفع على منصة CMI البنكية الآمنة.',
+    secureCheckout: 'دفع بنكي آمن', secureCheckoutTitle: 'ادفع ثمن طلبك بكل ثقة', secureCheckoutText: 'بعد التأكيد ستغادر AliShop مؤقتاً لإدخال معلوماتك مباشرة في صفحة CMI الآمنة.',
+    cardHolder: 'صاحب البطاقة', cardExpiry: 'الصلاحية', cardProtected: 'بطاقة محمية', yourName: 'اسمك',
+    cardNeverStored: 'لا يرى AliShop رقم بطاقتك أو رمز CVV ولا يحتفظ بهما أبداً.', secureThreeDs: 'مصادقة 3D Secure',
+    secureCmi: 'معالجة بنكية عبر CMI', secureReturn: 'عودة تلقائية إلى AliShop', paymentStepOrder: '1. أكد الطلب',
+    paymentStepBank: '2. ادفع عبر CMI', paymentStepResult: '3. توصل بالنتيجة', continueToCmi: 'التأكيد والمتابعة إلى CMI',
+    acceptedCards: 'تُقبل البطاقات المحلية والدولية حسب عقد CMI الخاص بكم.',
+  },
+};

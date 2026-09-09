@@ -30,46 +30,52 @@ export default function Profile() {
   }
 
   return (
-    <div className="mx-auto mt-10 max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-      <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-gray-800">
-        <UserRound className="text-indigo-600" /> {t("profile")}
-      </h2>
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
+      <section className="premium-surface overflow-hidden rounded-[2rem]">
+        <div className="relative bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-900 p-6 text-white sm:p-8">
+          <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full bg-fuchsia-400/20 blur-3xl" />
+          <div className="relative flex items-center gap-4">
+            <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/10 text-2xl font-black ring-1 ring-white/20">{user.name.charAt(0).toUpperCase()}</span>
+            <div className="min-w-0"><p className="text-xs font-black uppercase tracking-[.18em] text-indigo-200">AliShop</p><h2 className="truncate text-2xl font-black sm:text-3xl">{t("profile")}</h2><p className="truncate text-sm text-indigo-100">{user.email}</p></div>
+          </div>
+        </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5 p-5 sm:p-8">
         <div>
-          <label className="mb-1 block text-gray-600">{t("name")}</label>
+          <label className="mb-2 block text-sm font-black text-gray-700 dark:text-gray-200">{t("name")}</label>
           <input
-            className="w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="premium-control w-full px-4 py-3"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-gray-600">{t("email")}</label>
+          <label className="mb-2 block text-sm font-black text-gray-700 dark:text-gray-200">{t("email")}</label>
           <input
-            className="w-full rounded-lg border p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="premium-control w-full px-4 py-3"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
 
-        <button onClick={handleUpdate} className="rounded-lg bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600">
+        <button onClick={handleUpdate} className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 font-black text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 sm:w-auto">
           {t("editProfile")}
         </button>
       </div>
 
-      <div className="mt-10 border-t pt-6">
-        <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-800">
-          <KeyRound className="text-gray-700" /> {t("password")}
+      <div className="border-t border-gray-100 p-5 sm:p-8 dark:border-gray-800">
+        <h3 className="mb-4 flex items-center gap-2 text-xl font-black text-gray-800 dark:text-white">
+          <KeyRound className="text-indigo-600" /> {t("password")}
         </h3>
 
         <Link to="/change-password">
-          <button className="rounded-lg bg-gray-800 px-4 py-2 text-white transition hover:bg-black">
+          <button className="rounded-2xl bg-gray-950 px-5 py-3 font-black text-white transition hover:-translate-y-0.5 hover:bg-indigo-950 dark:bg-indigo-600">
             {t("changePassword")}
           </button>
         </Link>
       </div>
+      </section>
     </div>
   );
 }
