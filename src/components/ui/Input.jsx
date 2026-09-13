@@ -1,4 +1,6 @@
+import { useState } from "react";
 import clsx from "clsx";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Input({
   label,
@@ -12,6 +14,8 @@ export default function Input({
   className = "",
   ...props
 }) {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const isPassword = type === "password";
   const baseStyle =
     "w-full rounded-xl border bg-white outline-none transition-all duration-200 placeholder:text-gray-400 focus:ring-4 dark:bg-gray-900";
 
@@ -35,20 +39,34 @@ export default function Input({
         </label>
       )}
 
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        aria-invalid={Boolean(error)}
-        className={clsx(
-          baseStyle,
-          variants[error ? "danger" : variant],
-          sizes[size],
-          className,
+      <div className="relative">
+        <input
+          type={isPassword && passwordVisible ? "text" : type}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          aria-invalid={Boolean(error)}
+          className={clsx(
+            baseStyle,
+            variants[error ? "danger" : variant],
+            sizes[size],
+            isPassword && "pr-12",
+            className,
+          )}
+          {...props}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setPasswordVisible((visible) => !visible)}
+            className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-gray-500 transition hover:bg-indigo-50 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-gray-800"
+            aria-label={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            title={passwordVisible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          >
+            {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
         )}
-        {...props}
-      />
+      </div>
 
       {error && (
         <span className="text-sm font-semibold text-red-500">

@@ -1,9 +1,10 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { CartContext } from "../../context/CartContext";
 import { NotificationContext } from "../../context/NotificationContext";
 import { useLanguage } from "../../context/LanguageContext";
-import { Bell, BellRing, ChevronDown, Heart, Home, Key, LogOut, Menu, MessageCircle, Package, PackageCheck, ShoppingBag, User, WalletCards, X } from "lucide-react";
+import { Banknote, Bell, BellRing, ChevronDown, Heart, Home, Key, LogOut, Menu, MessageCircle, Package, PackageCheck, ShoppingBag, User, WalletCards, X } from "lucide-react";
 
 function NotificationIcon({ type }) {
   const styles = {
@@ -26,6 +27,7 @@ function NotificationIcon({ type }) {
 
 export default function Navbar() {
   const { user, logoutUser } = useContext(AuthContext);
+  const { cart } = useContext(CartContext) || {};
   const { notifications, unreadCount, markAllRead, markRead } = useContext(NotificationContext);
   const { locale, languages, setLocale, t, formatDate } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -42,6 +44,7 @@ export default function Navbar() {
   const isClient = user?.role === "client";
   const isAdmin = user?.role === "admin";
   const isAdminPage = location.pathname.startsWith("/admin");
+  const cartItemCount = (cart?.items || []).reduce((total, item) => total + Number(item.quantity || 0), 0);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -82,7 +85,7 @@ export default function Navbar() {
   if (isAdminPage) return null;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/70 bg-white/85 shadow-[0_8px_30px_rgba(15,23,42,.05)] backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/90">
+    <nav dir="ltr" className="sticky top-0 z-50 border-b border-white/70 bg-white/85 shadow-[0_8px_30px_rgba(15,23,42,.05)] backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/90">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex justify-between items-center gap-2 sm:gap-3">
         <Link to={isAdmin ? "/admin/dashboard" : "/"} className="flex shrink-0 items-center gap-1.5 text-lg sm:gap-2 sm:text-2xl font-black tracking-tight text-indigo-600 hover:opacity-80">
           <ShoppingBag className="shrink-0" size={24} />
@@ -99,7 +102,7 @@ export default function Navbar() {
               <Link to="/support" className="flex items-center gap-2 hover:text-indigo-600"><MessageCircle size={16} /> {t("support")}</Link>
             </>
           )}
-          {isLivreur && <Link to="/deliveries" className="flex items-center gap-2 text-indigo-600 font-bold"><Package size={18} /> {t("deliveries")}</Link>}
+          {isLivreur && <><Link to="/deliveries" className="flex items-center gap-2 text-indigo-600 font-bold"><Package size={18} /> {t("deliveries")}</Link><Link to="/deliveries/cash" className="flex items-center gap-2 font-bold text-emerald-600"><Banknote size={18} /> Ma caisse</Link></>}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -107,8 +110,9 @@ export default function Navbar() {
             {Object.entries(languages).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
           {!isAdmin && !isLivreur && (
-            <Link to="/cart" id="cart-icon" title={t("cart")} className="relative hidden h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-500 transition hover:-translate-y-0.5 hover:bg-indigo-50 hover:text-indigo-600 sm:flex sm:h-11 sm:w-11 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
+            <Link to="/cart" id="cart-icon" title={`${t("cart")} · ${cartItemCount}`} aria-label={`${t("cart")} : ${cartItemCount} article(s)`} className="relative hidden h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-500 transition hover:-translate-y-0.5 hover:bg-indigo-50 hover:text-indigo-600 sm:flex sm:h-11 sm:w-11 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
               <ShoppingBag size={20} />
+              {cartItemCount > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-indigo-600 px-1 text-[9px] font-black leading-none text-white shadow-sm shadow-indigo-200">{cartItemCount > 99 ? "99+" : cartItemCount}</span>}
             </Link>
           )}
 
@@ -205,7 +209,7 @@ export default function Navbar() {
                 <Link onClick={closeMobile} to="/support" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900"><MessageCircle size={18} /> {t("support")}</Link>
               </>
             )}
-            {isLivreur && <Link onClick={closeMobile} to="/deliveries" className="flex items-center gap-3 rounded-xl px-3 py-3 text-indigo-600"><Package size={18} /> {t("deliveries")}</Link>}
+            {isLivreur && <><Link onClick={closeMobile} to="/deliveries" className="flex items-center gap-3 rounded-xl px-3 py-3 text-indigo-600"><Package size={18} /> {t("deliveries")}</Link><Link onClick={closeMobile} to="/deliveries/cash" className="flex items-center gap-3 rounded-xl px-3 py-3 text-emerald-600"><Banknote size={18} /> Ma caisse</Link></>}
             {!user ? (
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <Link onClick={closeMobile} to="/login" className="rounded-xl border border-gray-200 px-4 py-3 text-center text-sm font-bold dark:border-gray-800">{t("login")}</Link>

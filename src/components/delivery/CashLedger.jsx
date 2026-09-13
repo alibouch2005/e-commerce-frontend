@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import api from '../../Api/axios';
 import { useLanguage } from '../../context/LanguageContext';
 import { showApiError } from '../../utils/showApiError';
+import { formatMoney } from '../../utils/money';
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const inputStyle = 'mt-1 w-full min-w-0 rounded-xl border border-gray-300 bg-white p-3 text-base text-gray-900 focus:outline-indigo-500';
@@ -24,7 +25,7 @@ export default function CashLedger({ courierId, revision = 0, onSettled }) {
   const [legacySelected, setLegacySelected] = useState([]);
   const [saving, setSaving] = useState(false);
   const [initializing, setInitializing] = useState(false);
-  const money = (cents) => new Intl.NumberFormat(locale, { style: 'currency', currency: 'MAD' }).format(Number(cents || 0) / 100);
+  const money = (cents) => formatMoney(Number(cents || 0) / 100, locale);
   const timestamp = (value) => new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short', timeZone: 'Africa/Casablanca' }).format(new Date(value));
 
   useEffect(() => {
@@ -166,7 +167,7 @@ export default function CashLedger({ courierId, revision = 0, onSettled }) {
             <div className="rounded-xl bg-indigo-600 p-3 text-white"><dt className="text-xs">{t('cashGrandTotal')}</dt><dd className="mt-1 font-black tabular-nums">{money(selectedTotal)}</dd></div>
           </dl>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-semibold">{t('cashReceived')}<input name="amount" inputMode="decimal" type="number" step="0.01" min="0.01" value={(selectedTotal / 100).toFixed(2)} readOnly className={`${inputStyle} bg-gray-100`} /></label>
+            <label className="text-sm font-semibold">{t('cashReceived')}<input name="amount" inputMode="decimal" type="number" step="0.01" min="0.01" value={(selectedTotal / 100).toFixed(2).replace(/\.?0+$/, '')} readOnly className={`${inputStyle} bg-gray-100`} /></label>
             <label className="text-sm font-semibold">{t('cashReference')}<input name="reference" maxLength={100} disabled={saving} className={inputStyle} /></label>
           </div>
           <label className="block text-sm font-semibold">{t('cashNote')}<textarea name="note" maxLength={1000} rows={2} disabled={saving} className={inputStyle} /></label>

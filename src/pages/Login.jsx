@@ -49,8 +49,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_bottom_right,#ede9fe,transparent_34%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-10 sm:px-6 dark:bg-[radial-gradient(circle_at_top_left,#1e1b4b,transparent_32%),radial-gradient(circle_at_bottom_right,#0f766e,transparent_30%),#020617]">
-      <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-2xl shadow-indigo-100/60 backdrop-blur md:grid-cols-[0.95fr_1.05fr] dark:border-gray-800/80 dark:bg-gray-900/95 dark:shadow-none">
+    <main className="flex min-h-[calc(100dvh-4.5rem)] items-center justify-center bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_bottom_right,#ede9fe,transparent_34%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-8 sm:px-6 dark:bg-[radial-gradient(circle_at_top_left,#1e1b4b,transparent_32%),radial-gradient(circle_at_bottom_right,#0f766e,transparent_30%),#020617]">
+      <div data-testid="auth-card" className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-2xl shadow-indigo-100/60 backdrop-blur md:grid-cols-[0.95fr_1.05fr] dark:border-gray-800/80 dark:bg-gray-900/95 dark:shadow-none">
         <aside className="relative hidden overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-8 text-white md:flex md:flex-col md:justify-between">
           <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/20 blur-2xl" />
           <div className="absolute bottom-14 left-8 h-36 w-36 rounded-full bg-cyan-300/30 blur-2xl" />
@@ -109,6 +109,6 @@ export default function Login() {
         </form>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

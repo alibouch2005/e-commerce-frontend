@@ -98,8 +98,8 @@ export default function Orders() {
   const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
     style: "currency",
     currency: "MAD",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
+    minimumFractionDigits: Number.isInteger(Number(value || 0)) ? 0 : 2,
+    maximumFractionDigits: Number.isInteger(Number(value || 0)) ? 0 : 2,
   }).format(Number(value || 0));
   const orderTitle = (order) => `Commande ${order?.id ?? ""}`;
 
@@ -270,9 +270,6 @@ export default function Orders() {
                   <div className="flex justify-between text-emerald-700"><span>{t("coupon")}</span><b>-{formatMoney(orderDiscount(selectedOrder))}</b></div>
                 )}
                 <div className="flex justify-between"><span>{t("deliveryFee")}</span><b>{formatMoney(orderDeliveryFee(selectedOrder))}</b></div>
-                {selectedOrder.delivery_distance_km && (
-                  <div className="flex justify-between"><span>{t("deliveryDistance")}</span><b>{Number(selectedOrder.delivery_distance_km).toFixed(2)} km</b></div>
-                )}
                 <div className="flex justify-between text-xl font-black text-indigo-600"><span>{t("total")}</span><span>{formatMoney(orderGrandTotal(selectedOrder))}</span></div>
               </div>
 

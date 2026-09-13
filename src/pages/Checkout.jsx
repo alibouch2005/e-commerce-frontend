@@ -12,7 +12,7 @@ import { login, register } from "../services/authService";
 import { mergeGuestCart } from "../services/cartService";
 import { getApiErrorMessages, showApiError } from "../utils/showApiError";
 import { getDeliveryQuote, STORE_LOCATION } from "../utils/deliveryPricing";
-import SecureCardPayment from "../components/checkout/SecureCardPayment";
+import { formatAmount } from "../utils/money";
 
 const deliverySlots = [
   { value: "08_12", labelKey: "slotMorning", helpKey: "slotMorningHelp" },
@@ -61,7 +61,9 @@ export default function Checkout() {
     ? t("deliveryFreeLoyalty")
     : deliveryQuote.freeDeliveryReason === "product"
       ? t("deliveryFreeProduct")
-      : t("deliveryFreeGlobal");
+      : deliveryQuote.freeDeliveryReason === "coupon"
+        ? t("deliveryFreeCoupon")
+        : t("deliveryFreeGlobal");
   const estimatedTotal = subtotal + deliveryQuote.fee;
   const requiresCardPayment = estimatedTotal >= 5000;
 
@@ -85,6 +87,7 @@ export default function Checkout() {
           delivery_longitude: form.delivery_longitude,
           cart_subtotal: subtotal,
           product_free_delivery: productFreeDelivery,
+          coupon_code: form.coupon_code || null,
         });
 
         if (!active) return;
@@ -104,7 +107,7 @@ export default function Checkout() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [form.fulfillment_method, form.delivery_latitude, form.delivery_longitude, subtotal, productFreeDelivery]);
+  }, [form.fulfillment_method, form.delivery_latitude, form.delivery_longitude, form.coupon_code, subtotal, productFreeDelivery, user?.id]);
 
   useEffect(() => {
     if (requiresCardPayment && form.payment_method !== "card") {
@@ -126,14 +129,24 @@ export default function Checkout() {
     if (!navigator.geolocation) return toast.error(t("geolocationUnsupported"));
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
+      async ({ coords }) => {
+        let resolvedAddress = "";
+        try {
+          const { data } = await api.get("/api/delivery/address", {
+            params: { latitude: coords.latitude, longitude: coords.longitude },
+          });
+          resolvedAddress = data.address || "";
+        } catch {
+          // Les coordonnées restent enregistrées et l'adresse peut être précisée manuellement.
+        }
         setForm((current) => ({
           ...current,
           delivery_latitude: coords.latitude,
           delivery_longitude: coords.longitude,
+          adresse_livraison: resolvedAddress || current.adresse_livraison,
         }));
         setLocating(false);
-        toast.success(t("savedLocation"));
+        toast.success(resolvedAddress ? "Position et adresse détaillée enregistrées" : t("savedLocation"));
       },
       () => {
         setLocating(false);
@@ -153,25 +166,6 @@ export default function Checkout() {
       </div>
     );
   }
-
-  const submitCmiPayment = (payment) => {
-    const formElement = document.createElement("form");
-    formElement.method = payment.method || "POST";
-    formElement.action = payment.gateway_url;
-    formElement.style.display = "none";
-
-    Object.entries(payment.fields || {}).forEach(([name, value]) => {
-      if (value === null || value === undefined) return;
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = String(value);
-      formElement.appendChild(input);
-    });
-
-    document.body.appendChild(formElement);
-    formElement.submit();
-  };
 
   const authenticateInline = async () => {
     if (user?.role === "client") return true;
@@ -238,6 +232,11 @@ export default function Checkout() {
     if (retrySeconds > 0) return;
     setApiErrors([]);
 
+    if (form.payment_method === "card") {
+      setApiErrors([requiresCardPayment ? t("cardComingSoonLargeOrder") : t("cardComingSoonHelp")]);
+      return toast(t("cardComingSoon"), { icon: "💳" });
+    }
+
     if (form.fulfillment_method === "delivery" && !form.adresse_livraison) {
       const message = `${t("deliveryAddress")}: ${t("addressRequired")}`;
       setApiErrors([message]);
@@ -278,12 +277,6 @@ export default function Checkout() {
         metadata: { total: response.data?.data?.total_price },
       });
       await reloadCart();
-
-      if (response.data?.payment) {
-        toast.success(t("cmiRedirecting"));
-        submitCmiPayment(response.data.payment);
-        return;
-      }
 
       toast.success(t("orderConfirmed"));
       navigate("/orders");
@@ -412,13 +405,13 @@ export default function Checkout() {
                 </div>
               </div>
               <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
-                <p className="font-black">{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}: {deliveryQuote.fee.toFixed(2)} DH</p>
+                <p className="font-black">{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}: {formatAmount(deliveryQuote.fee)} DH</p>
                 <p className="mt-1">
                   {deliveryQuote.estimated
                     ? t("deliveryFeeEstimated")
                     : deliveryQuote.freeDelivery
                       ? freeDeliveryMessage
-                      : t("deliveryDistancePrice", { distance: deliveryQuote.distanceKm, fee: deliveryQuote.fee.toFixed(2) })}
+                      : t("deliveryFeeConfirmed", { fee: formatAmount(deliveryQuote.fee) })}
                 </p>
               </div>
             </>
@@ -447,9 +440,10 @@ export default function Checkout() {
                 <input type="radio" name="payment_method_choice" value="cash_on_delivery" checked={form.payment_method === 'cash_on_delivery'} disabled={requiresCardPayment} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
                 <span><strong className="block text-sm text-gray-950">{t('cashPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{t('cashPaymentHelp')}</small></span>
               </label>
-              <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${form.payment_method === 'card' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 bg-white'}`}>
-                <input type="radio" name="payment_method_choice" value="card" checked={form.payment_method === 'card'} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
-                <span><strong className="flex items-center gap-2 text-sm text-gray-950"><CreditCard size={17} />{t('cardPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{t('cardPaymentHelp')}</small></span>
+              <label className={`relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-2xl border p-4 transition ${form.payment_method === 'card' ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-100' : 'border-gray-200 bg-white'}`}>
+                <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase text-amber-700">Bientôt</span>
+                <input type="radio" name="payment_method_choice" value="card" checked={form.payment_method === 'card'} onChange={(e) => { setForm({ ...form, payment_method: e.target.value }); toast(t("cardComingSoon"), { icon: "💳" }); }} className="mt-1 h-5 w-5 shrink-0 accent-amber-500" />
+                <span className="pr-12"><strong className="flex items-center gap-2 text-sm text-gray-950"><CreditCard size={17} />{t('cardPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{requiresCardPayment ? t('cardComingSoonLargeOrder') : t('cardComingSoonHelp')}</small></span>
               </label>
             </div>
           </fieldset>
@@ -459,7 +453,7 @@ export default function Checkout() {
             </div>
           )}
           {form.payment_method === "card" && (
-            <SecureCardPayment amount={estimatedTotal} />
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900"><p className="font-black">{t("cardComingSoon")}</p><p className="mt-1 leading-6">{requiresCardPayment ? t("cardComingSoonLargeOrder") : t("cardComingSoonHelp")}</p></div>
           )}
 
           <input
@@ -469,8 +463,8 @@ export default function Checkout() {
             onChange={(e) => setForm({ ...form, coupon_code: e.target.value.toUpperCase() })}
           />
 
-          <button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-400" disabled={loading || retrySeconds > 0}>
-            {retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : form.payment_method === "card" ? t("continueToCmi") : t("confirmOrder")}
+          <button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-400" disabled={loading || retrySeconds > 0 || form.payment_method === "card"}>
+            {form.payment_method === "card" ? t("cardComingSoon") : retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : t("confirmOrder")}
           </button>
         </form>
 
@@ -482,15 +476,15 @@ export default function Checkout() {
                 <span className="block">{item.product.name} x{item.quantity}</span>
                 <OptionLine options={item.selected_options} />
               </span>
-              <span className="shrink-0 font-bold">{item.total_price} DH</span>
+              <span className="shrink-0 font-bold">{formatAmount(item.total_price)} DH</span>
             </div>
           ))}
           <hr className="my-3" />
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span>{t("subtotal")}</span><span>{subtotal.toFixed(2)} DH</span></div>
-            <div className="flex justify-between"><span>{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}</span><span>{deliveryQuote.fee.toFixed(2)} DH</span></div>
+            <div className="flex justify-between"><span>{t("subtotal")}</span><span>{formatAmount(subtotal)} DH</span></div>
+            <div className="flex justify-between"><span>{deliveryQuote.estimated ? t("estimatedDeliveryFee") : t("deliveryFee")}</span><span>{formatAmount(deliveryQuote.fee)} DH</span></div>
           </div>
-          <div className="mt-4 font-bold text-right text-lg">{t("total")} : {estimatedTotal.toFixed(2)} DH</div>
+          <div className="mt-4 font-bold text-right text-lg">{t("total")} : {formatAmount(estimatedTotal)} DH</div>
         </div>
       </div>
     </div>

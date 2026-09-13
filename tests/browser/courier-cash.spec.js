@@ -31,7 +31,7 @@ test('admin cash reconciliation is readable and responsive', async ({ page }) =>
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/admin/courier-cash');
   await expect(page.getByRole('heading', { level: 1, name: 'Caisse des livreurs' })).toBeVisible();
-  await expect(page.getByText('155,00', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/155\s*MAD/, { exact: false }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Ouvrir la caisse' }).click();
   await expect(page.locator('#courier-cash-detail')).toBeVisible();
   await expect(page.getByText('Commande 42')).toBeVisible();

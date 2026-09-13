@@ -7,6 +7,7 @@ import { AuthContext } from "../../context/AuthContext";
 import api from "../../Api/axios";
 import { useLanguage } from "../../context/LanguageContext";
 import { showApiError } from "../../utils/showApiError";
+import { formatAmount } from "../../utils/money";
 
 export default function ProductCard({ product, favoriteByDefault = false }) {
   const { addItem } = useContext(CartContext);
@@ -51,16 +52,16 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
   };
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-100/60 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900">
-      <div className="absolute left-3 top-3 z-20 flex flex-col gap-2 sm:left-4 sm:top-4">
-        {product.is_on_sale && <span className="rounded-full bg-amber-500 px-3 py-1 text-[10px] font-black text-white sm:text-xs">{t("promos")}</span>}
-        {product.free_delivery && <span className="rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-black text-white sm:text-xs">{t("freeDeliveryProduct")}</span>}
+    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-2xl hover:shadow-indigo-100/60 sm:rounded-3xl dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900">
+      <div className="absolute left-2 top-2 z-20 flex max-w-[68%] flex-col items-start gap-1 sm:left-4 sm:top-4 sm:gap-2">
+        {product.is_on_sale && <span className="max-w-full truncate rounded-full bg-amber-500 px-2 py-1 text-[8px] font-black text-white sm:px-3 sm:text-xs">{t("promos")}</span>}
+        {product.free_delivery && <span className="max-w-full truncate rounded-full bg-emerald-500 px-2 py-1 text-[8px] font-black text-white sm:px-3 sm:text-xs">{t("freeDeliveryProduct")}</span>}
       </div>
-      <button onClick={toggleFavorite} className={`absolute right-3 top-3 z-20 rounded-full bg-white/95 p-2 shadow-sm transition hover:scale-105 sm:right-4 sm:top-4 dark:bg-gray-950 ${favorite ? "text-red-500" : "text-gray-400 hover:text-red-500"}`} title={t("favorites")}>
-        <Heart size={18} fill={favorite ? "currentColor" : "none"} />
+      <button onClick={toggleFavorite} className={`absolute right-2 top-2 z-20 rounded-full bg-white/95 p-1.5 shadow-sm transition hover:scale-105 sm:right-4 sm:top-4 sm:p-2 dark:bg-gray-950 ${favorite ? "text-red-500" : "text-gray-400 hover:text-red-500"}`} title={t("favorites")}>
+        <Heart className="h-4 w-4 sm:h-[18px] sm:w-[18px]" fill={favorite ? "currentColor" : "none"} />
       </button>
 
-      <Link to={`/products/${product.id}`} className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-indigo-50/40 p-5 sm:p-8 dark:from-gray-800 dark:to-gray-900">
+      <Link to={`/products/${product.id}`} className="relative flex aspect-square items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-indigo-50/40 p-2.5 sm:p-8 dark:from-gray-800 dark:to-gray-900">
         <img
           src={imageUrl}
           alt={product.name}
@@ -77,27 +78,27 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
         </span>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-6">
-        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">{product.category?.name || t("product")}</p>
-        <Link to={`/products/${product.id}`} className="mt-2">
-          <h3 className="font-black text-gray-950 text-lg leading-tight line-clamp-2 hover:text-indigo-600">{product.name}</h3>
+      <div className="flex flex-1 flex-col p-3 sm:p-6">
+        <p className="truncate text-[8px] font-black uppercase tracking-wider text-indigo-500 sm:text-[10px] sm:tracking-widest">{product.category?.name || t("product")}</p>
+        <Link to={`/products/${product.id}`} className="mt-1.5 sm:mt-2">
+          <h3 className="line-clamp-2 text-sm font-black leading-tight text-gray-950 hover:text-indigo-600 sm:text-lg">{product.name}</h3>
         </Link>
         {(product.short_description || product.description) && (
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-500">
+          <p className="mt-1.5 hidden line-clamp-2 text-sm leading-6 text-gray-500 sm:block">
             {product.short_description || product.description}
           </p>
         )}
 
-        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-          <div>
-            {product.is_on_sale && <p className="text-sm text-gray-400 line-through">{product.price} DH</p>}
-            <p className="text-xl font-black text-gray-950 sm:text-2xl">{product.current_price ?? product.price} <span className="text-sm text-indigo-600">DH</span></p>
-            <p className={`text-xs font-bold ${isOutOfStock ? "text-indigo-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-500"}`}>
+        <div className="mt-auto flex items-end justify-between gap-1.5 pt-3 sm:gap-3 sm:pt-5">
+          <div className="min-w-0">
+            {product.is_on_sale && <p className="truncate text-[10px] text-gray-400 line-through sm:text-sm">{formatAmount(product.price)} DH</p>}
+            <p className="truncate text-base font-black text-gray-950 sm:text-2xl">{formatAmount(product.current_price ?? product.price)} <span className="text-[10px] text-indigo-600 sm:text-sm">DH</span></p>
+            <p className={`truncate text-[9px] font-bold sm:text-xs ${isOutOfStock ? "text-indigo-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-500"}`}>
               {isOutOfStock ? t("soonAvailable") : product.stock < 10 ? t("lowStockCount", { count: product.stock }) : t("inStock")}
             </p>
           </div>
-          <button disabled={busy || isOutOfStock} onClick={addToCart} className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-2xl bg-indigo-600 p-3 text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:translate-y-0 disabled:bg-gray-300 disabled:shadow-none sm:p-4" title={t("addToCart")}>
-            <ShoppingBag size={18} />
+          <button disabled={busy || isOutOfStock} onClick={addToCart} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-100 transition hover:-translate-y-0.5 hover:bg-indigo-700 disabled:translate-y-0 disabled:bg-gray-300 disabled:shadow-none sm:h-12 sm:w-12 sm:rounded-2xl" title={t("addToCart")}>
+            <ShoppingBag className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
           </button>
         </div>
       </div>

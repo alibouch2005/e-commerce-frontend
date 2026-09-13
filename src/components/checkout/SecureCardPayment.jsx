@@ -1,9 +1,10 @@
 import { ArrowRight, BadgeCheck, CreditCard, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { formatMoney } from '../../utils/money';
 
 export default function SecureCardPayment({ amount }) {
   const { t, locale, dir } = useLanguage();
-  const money = new Intl.NumberFormat(locale, { style: 'currency', currency: 'MAD' }).format(Number(amount || 0));
+  const money = formatMoney(amount, locale);
 
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-950 text-white shadow-2xl" aria-labelledby="secure-card-title">

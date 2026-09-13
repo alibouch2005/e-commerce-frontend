@@ -17,6 +17,8 @@ import PageMetadata from "./components/PageMetadata";
 import { useLanguage } from "./context/LanguageContext";
 
 const Deliveries = lazy(() => import("./pages/Deliveries"));
+const DeliveryDetails = lazy(() => import("./pages/DeliveryDetails"));
+const CourierCash = lazy(() => import("./pages/CourierCash"));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -40,6 +42,7 @@ const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminWiniProducts = lazy(() => import("./pages/AdminWiniProducts"));
 const AdminCourierCash = lazy(() => import("./pages/AdminCourierCash"));
+const AdminIssues = lazy(() => import("./pages/AdminIssues"));
 
 function App() {
   return (
@@ -97,6 +100,8 @@ function AppContent() {
           <Route path="/favorites" element={user ? <Favorites /> : <Navigate to="/login" />} />
           <Route path="/change-password" element={user ? <ChangePassword /> : <Navigate to="/login" />} />
           <Route path="/deliveries" element={user?.role === "livreur" ? <Deliveries /> : <Navigate to="/" />} />
+          <Route path="/deliveries/cash" element={user?.role === "livreur" ? <CourierCash /> : <Navigate to="/" />} />
+          <Route path="/deliveries/:id" element={user?.role === "livreur" ? <DeliveryDetails /> : <Navigate to="/" />} />
 
           <Route
             path="/admin"
@@ -117,6 +122,7 @@ function AppContent() {
             <Route path="support" element={<AdminSupport />} />
             <Route path="wini-products" element={<AdminWiniProducts />} />
             <Route path="courier-cash" element={<AdminCourierCash />} />
+            <Route path="issues" element={<AdminIssues />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

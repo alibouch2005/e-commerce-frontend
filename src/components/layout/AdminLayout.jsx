@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Bell, Menu, X } from "lucide-react";
+import { Activity, Menu, X } from "lucide-react";
 import AdminSidebar from "../Admin/AdminSidebar";
 import AdminDropdown from "../Admin/AdminDropdown";
+import AdminNotifications from "../Admin/AdminNotifications";
 
 const pageTitles = [
+  { match: "/admin/issues", title: "Centre des problèmes" },
   { match: "/admin/courier-cash", title: "Caisse des livreurs" },
   { match: "/admin/wini-products", title: "Wini product" },
   { match: "/admin/categories", title: "Catégories" },
@@ -33,13 +35,13 @@ export default function AdminLayout() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             aria-label="Fermer le menu admin"
-            className="absolute inset-0 bg-gray-950/50"
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             onClick={() => setSidebarOpen(false)}
           />
-          <div className="relative h-full w-72 max-w-[86vw] bg-white shadow-2xl">
+          <div className="relative h-full w-72 max-w-[88vw] animate-[slideIn_.2s_ease-out] bg-white shadow-2xl">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute right-3 top-3 rounded-xl bg-gray-100 p-2 text-gray-500"
+              className="absolute right-2 top-2 z-10 rounded-xl border border-white/15 bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20"
               aria-label="Fermer"
             >
               <X size={18} />
@@ -50,26 +52,24 @@ export default function AdminLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/70 bg-white/80 px-4 py-3 shadow-[0_10px_35px_rgba(15,23,42,.06)] backdrop-blur-xl sm:px-6 dark:border-gray-800 dark:bg-gray-950/85">
+        <header className="sticky top-0 z-40 flex min-h-[72px] items-center justify-between border-b border-indigo-100/70 bg-white/85 px-4 py-3 shadow-[0_12px_40px_rgba(15,23,42,.07)] backdrop-blur-2xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-xl bg-gray-100 p-2 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 lg:hidden"
+              className="rounded-2xl border border-gray-100 bg-white p-2.5 text-gray-600 shadow-sm hover:bg-indigo-50 hover:text-indigo-600 lg:hidden"
               aria-label="Ouvrir le menu admin"
             >
               <Menu size={20} />
             </button>
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AliShop Admin</p>
-              <h2 className="truncate text-base font-black text-gray-950 sm:text-lg">{title}</h2>
+            <div className="min-w-0 border-l-2 border-indigo-500 pl-3">
+              <p className="text-[9px] font-black uppercase tracking-[.2em] text-indigo-500">AliShop Administration</p>
+              <h2 className="truncate text-base font-black tracking-tight text-gray-950 sm:text-lg">{title}</h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-5">
-            <button className="relative rounded-xl p-2 text-gray-400 transition hover:bg-indigo-50 hover:text-indigo-600">
-              <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" />
-            </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="mr-1 hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-emerald-700 xl:inline-flex"><Activity size={13} /> Activité en direct</span>
+            <AdminNotifications />
             <AdminDropdown />
           </div>
         </header>

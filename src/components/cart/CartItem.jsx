@@ -1,3 +1,5 @@
+import { formatAmount } from "../../utils/money";
+
 export default function CartItem({ item }){
 
   const product = item.product;
@@ -28,7 +30,7 @@ export default function CartItem({ item }){
           </h3>
 
           <p className="text-gray-500 text-sm">
-            {item.price} DH
+            {formatAmount(item.price)} DH
           </p>
 
         </div>
@@ -37,7 +39,7 @@ export default function CartItem({ item }){
 
       <div className="font-bold">
 
-        {(item.price * item.quantity).toFixed(2)} DH
+        {formatAmount(item.price * item.quantity)} DH
 
       </div>
 

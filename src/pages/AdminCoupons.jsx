@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { CalendarDays, Loader2, Pencil, Plus, Power, Tag, Trash2, X } from "lucide-react";
+import { CalendarDays, Check, Loader2, Pencil, Plus, Power, Search, Tag, Trash2, Truck, X } from "lucide-react";
 import api from "../Api/axios";
 import { showApiError } from "../utils/showApiError";
+import { formatAmount } from "../utils/money";
 
 const emptyForm = {
   code: "",
@@ -25,6 +26,9 @@ export default function AdminCoupons() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [productSearch, setProductSearch] = useState("");
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -43,10 +47,23 @@ export default function AdminCoupons() {
   }, [load]);
 
   useEffect(() => {
-    api.get("/api/admin/products", { params: { per_page: 100 } })
-      .then(({ data }) => setProducts(data.data || []))
-      .catch(() => toast.error("Impossible de charger les produits"));
-  }, []);
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setProductsLoading(true);
+      try {
+        const { data } = await api.get("/api/admin/products", { params: { per_page: 20, search: productSearch.trim() || undefined } });
+        if (active) setProducts(data.data || []);
+      } catch {
+        if (active) setProducts([]);
+      } finally {
+        if (active) setProductsLoading(false);
+      }
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [productSearch]);
 
   const stats = useMemo(() => ({
     total: coupons.length,
@@ -57,6 +74,8 @@ export default function AdminCoupons() {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+    setProductSearch("");
+    setProductPickerOpen(false);
   };
 
   const save = async (event) => {
@@ -66,6 +85,9 @@ export default function AdminCoupons() {
       const payload = {
         ...form,
         code: form.code.trim().toUpperCase(),
+        type: form.type === "free_delivery" ? "fixed" : form.type,
+        free_delivery: form.type === "free_delivery",
+        value: form.type === "free_delivery" ? 0 : form.value,
         minimum_amount: form.minimum_amount || 0,
         usage_limit: form.usage_limit || null,
         product_id: form.product_id || null,
@@ -93,7 +115,7 @@ export default function AdminCoupons() {
     setEditingId(coupon.id);
     setForm({
       code: coupon.code || "",
-      type: coupon.type || "percent",
+      type: coupon.free_delivery ? "free_delivery" : (coupon.type || "percent"),
       value: coupon.value || "",
       minimum_amount: coupon.minimum_amount || "",
       usage_limit: coupon.usage_limit || "",
@@ -102,6 +124,8 @@ export default function AdminCoupons() {
       expires_at: formatDateTimeInput(coupon.expires_at),
       is_active: Boolean(coupon.is_active),
     });
+    setProductSearch(coupon.product?.name || "");
+    setProductPickerOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -162,14 +186,52 @@ export default function AdminCoupons() {
           <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="rounded-2xl border border-gray-200 bg-white px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="percent">Pourcentage</option>
             <option value="fixed">Montant DH</option>
+            <option value="free_delivery">Livraison gratuite</option>
           </select>
-          <input required type="number" min="0.01" step="0.01" placeholder={form.type === "percent" ? "Valeur %" : "Valeur DH"} value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+          {form.type === "free_delivery" ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 font-black text-sky-700"><Truck size={19} /> Frais de livraison offerts</div>
+          ) : (
+            <input required type="number" min="0.01" step="0.01" placeholder={form.type === "percent" ? "Valeur %" : "Valeur DH"} value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+          )}
           <input type="number" min="0" step="0.01" placeholder="Minimum panier DH" value={form.minimum_amount} onChange={(e) => setForm({ ...form, minimum_amount: e.target.value })} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" />
           <input type="number" min="1" placeholder="Limite utilisations" value={form.usage_limit} onChange={(e) => setForm({ ...form, usage_limit: e.target.value })} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" />
-          <select value={form.product_id} onChange={(e) => setForm({ ...form, product_id: e.target.value })} className="rounded-2xl border border-gray-200 bg-white px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="">Tous les produits</option>
-            {products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
-          </select>
+          <div className="relative" onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setProductPickerOpen(false); }}>
+            <Search className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-gray-400" size={17} />
+            <input
+              type="search"
+              role="combobox"
+              aria-label="Rechercher le produit concerné"
+              aria-expanded={productPickerOpen}
+              aria-controls="coupon-product-results"
+              placeholder="Tous les produits"
+              value={productSearch}
+              onFocus={() => setProductPickerOpen(true)}
+              onChange={(event) => {
+                setProductSearch(event.target.value);
+                setForm((current) => ({ ...current, product_id: "" }));
+                setProductPickerOpen(true);
+              }}
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-10 font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            {(productSearch || form.product_id) && <button type="button" aria-label="Choisir tous les produits" onClick={() => { setProductSearch(""); setForm((current) => ({ ...current, product_id: "" })); setProductPickerOpen(false); }} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"><X size={16} /></button>}
+            {productPickerOpen && (
+              <div id="coupon-product-results" role="listbox" className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-2xl shadow-slate-900/15">
+                <button type="button" role="option" aria-selected={!form.product_id} onClick={() => { setProductSearch(""); setForm((current) => ({ ...current, product_id: "" })); setProductPickerOpen(false); }} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-black text-gray-800 hover:bg-indigo-50">
+                  Tous les produits {!form.product_id && <Check size={17} className="text-indigo-600" />}
+                </button>
+                {productsLoading ? (
+                  <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-gray-500"><Loader2 className="animate-spin" size={17} /> Recherche...</div>
+                ) : products.length ? products.map((product) => (
+                  <button key={product.id} type="button" role="option" aria-selected={String(form.product_id) === String(product.id)} onClick={() => { setForm((current) => ({ ...current, product_id: product.id })); setProductSearch(product.name); setProductPickerOpen(false); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-700">
+                    <img src={product.image || "/product-placeholder.svg"} alt="" className="h-10 w-10 rounded-xl bg-gray-50 object-cover" />
+                    <span className="min-w-0 flex-1 truncate">{product.name}</span>
+                    {String(form.product_id) === String(product.id) && <Check size={17} className="shrink-0 text-indigo-600" />}
+                  </button>
+                )) : <p className="px-3 py-6 text-center text-sm text-gray-500">Aucun produit trouvé</p>}
+              </div>
+            )}
+            <p className="mt-1 px-1 text-[11px] text-gray-500">Laissez vide pour appliquer le code à tout le catalogue.</p>
+          </div>
           <label className="relative">
             <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
             <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -211,8 +273,8 @@ export default function AdminCoupons() {
               ) : coupons.length ? coupons.map((coupon) => (
                 <tr key={coupon.id} className="hover:bg-gray-50">
                   <td className="p-4 font-black text-gray-950">{coupon.code}</td>
-                  <td className="p-4 font-bold">{coupon.type === "percent" ? `${coupon.value}%` : `${coupon.value} DH`}</td>
-                  <td className="p-4">{Number(coupon.minimum_amount || 0).toFixed(2)} DH</td>
+                  <td className="p-4 font-bold">{coupon.free_delivery ? <span className="inline-flex items-center gap-2 text-sky-700"><Truck size={17} /> Livraison offerte</span> : coupon.type === "percent" ? `${formatAmount(coupon.value)}%` : `${formatAmount(coupon.value)} DH`}</td>
+                  <td className="p-4">{formatAmount(coupon.minimum_amount)} DH</td>
                   <td className="p-4 text-sm font-semibold text-gray-600">{coupon.product?.name || "Tous"}</td>
                   <td className="p-4">{coupon.used_count || 0}{coupon.usage_limit ? ` / ${coupon.usage_limit}` : " / illimité"}</td>
                   <td className="p-4 text-sm text-gray-500">

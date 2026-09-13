@@ -1,3 +1,5 @@
+import { formatAmount } from "../../utils/money";
+
 export default function CartSummary({ cart }){
 
   const total = cart.items.reduce(
@@ -16,7 +18,7 @@ export default function CartSummary({ cart }){
       <div className="flex justify-between mb-2">
         <span>Total</span>
         <span className="font-bold">
-          {total.toFixed(2)} DH
+          {formatAmount(total)} DH
         </span>
       </div>
 

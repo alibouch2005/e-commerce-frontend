@@ -3,6 +3,7 @@ import { Banknote, ChevronLeft, ChevronRight, Phone, Truck, Wallet } from 'lucid
 import api from '../Api/axios';
 import CashLedger from '../components/delivery/CashLedger';
 import { useLanguage } from '../context/LanguageContext';
+import { formatMoney } from '../utils/money';
 
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
@@ -16,7 +17,7 @@ export default function AdminCourierCash() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const ledgerRef = useRef(null);
-  const money = (cents) => new Intl.NumberFormat(locale, { style: 'currency', currency: 'MAD' }).format(Number(cents || 0) / 100);
+  const money = (cents) => formatMoney(Number(cents || 0) / 100, locale);
 
   useEffect(() => {
     const controller = new AbortController();

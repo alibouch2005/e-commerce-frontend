@@ -1,5 +1,7 @@
 export default {
   fr: {
+    retryCardPayment: 'Réessayer le paiement par carte', paymentRedirecting: 'Redirection sécurisée…',
+    paymentVerification: 'Vérification sécurisée du paiement…', paymentRetryError: 'Impossible de relancer le paiement',
     choosePayment: 'Choisissez votre moyen de paiement',
     cashPaymentHelp: 'Payez au livreur lorsque vous recevez votre commande.',
     cardPaymentHelp: 'Finalisez le paiement sur la plateforme bancaire sécurisée CMI.',
@@ -10,8 +12,11 @@ export default {
     secureThreeDs: 'Authentification 3D Secure', secureCmi: 'Traitement bancaire par CMI', secureReturn: 'Retour automatique vers AliShop',
     paymentStepOrder: '1. Confirmez la commande', paymentStepBank: '2. Payez sur CMI', paymentStepResult: '3. Recevez le résultat',
     continueToCmi: 'Confirmer et continuer vers CMI', acceptedCards: 'Cartes locales et internationales acceptées selon votre contrat CMI.',
+    cardComingSoon: 'Paiement par carte bientôt disponible', cardComingSoonHelp: 'Cette méthode est en cours de finalisation. Pour commander maintenant, choisissez le paiement à la livraison.', cardComingSoonLargeOrder: 'Le paiement par carte est obligatoire à partir de 5 000 DH. Cette commande ne peut donc pas encore être confirmée en ligne. Contactez le support pour être accompagné.',
   },
   en: {
+    retryCardPayment: 'Retry card payment', paymentRedirecting: 'Secure redirect…',
+    paymentVerification: 'Securely checking payment…', paymentRetryError: 'Unable to retry payment',
     choosePayment: 'Choose your payment method', cashPaymentHelp: 'Pay the courier when your order arrives.',
     cardPaymentHelp: 'Complete payment on the secure CMI banking platform.', secureCheckout: 'Secure bank payment',
     secureCheckoutTitle: 'Pay for your order with confidence', secureCheckoutText: 'After confirmation, you temporarily leave AliShop to enter your details directly on the secure CMI page.',
@@ -20,8 +25,11 @@ export default {
     secureCmi: 'Bank processing by CMI', secureReturn: 'Automatic return to AliShop', paymentStepOrder: '1. Confirm the order',
     paymentStepBank: '2. Pay on CMI', paymentStepResult: '3. Receive the result', continueToCmi: 'Confirm and continue to CMI',
     acceptedCards: 'Local and international cards are accepted according to your CMI agreement.',
+    cardComingSoon: 'Card payment coming soon', cardComingSoonHelp: 'This method is being finalized. To order now, choose cash on delivery.', cardComingSoonLargeOrder: 'Card payment is mandatory from 5,000 MAD. This order cannot yet be confirmed online. Please contact support for assistance.',
   },
   ar: {
+    retryCardPayment: 'إعادة محاولة الدفع بالبطاقة', paymentRedirecting: 'جارٍ التحويل الآمن…',
+    paymentVerification: 'جارٍ التحقق الآمن من الدفع…', paymentRetryError: 'تعذر إعادة محاولة الدفع',
     choosePayment: 'اختر طريقة الدفع', cashPaymentHelp: 'ادفع للمندوب عند استلام طلبك.', cardPaymentHelp: 'أكمل الدفع على منصة CMI البنكية الآمنة.',
     secureCheckout: 'دفع بنكي آمن', secureCheckoutTitle: 'ادفع ثمن طلبك بكل ثقة', secureCheckoutText: 'بعد التأكيد ستغادر AliShop مؤقتاً لإدخال معلوماتك مباشرة في صفحة CMI الآمنة.',
     cardHolder: 'صاحب البطاقة', cardExpiry: 'الصلاحية', cardProtected: 'بطاقة محمية', yourName: 'اسمك',
@@ -29,5 +37,6 @@ export default {
     secureCmi: 'معالجة بنكية عبر CMI', secureReturn: 'عودة تلقائية إلى AliShop', paymentStepOrder: '1. أكد الطلب',
     paymentStepBank: '2. ادفع عبر CMI', paymentStepResult: '3. توصل بالنتيجة', continueToCmi: 'التأكيد والمتابعة إلى CMI',
     acceptedCards: 'تُقبل البطاقات المحلية والدولية حسب عقد CMI الخاص بكم.',
+    cardComingSoon: 'الدفع بالبطاقة متاح قريباً', cardComingSoonHelp: 'نعمل على إتمام هذه الطريقة. لإرسال طلبك الآن اختر الدفع عند الاستلام.', cardComingSoonLargeOrder: 'الدفع بالبطاقة إلزامي ابتداءً من 5000 درهم، لذلك لا يمكن تأكيد هذا الطلب عبر الإنترنت حالياً. يرجى التواصل مع الدعم.',
   },
 };

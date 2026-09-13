@@ -34,6 +34,8 @@ test('order details stay centered and close outside or with Escape', async ({ pa
 
   const dialog = page.getByRole('dialog', { name: 'Commande 22' });
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(/Distance livraison/i)).toHaveCount(0);
+  await expect(dialog.getByText(/57\s*MAD/i)).toBeVisible();
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   const box = await dialog.boundingBox();
   const viewport = page.viewportSize();

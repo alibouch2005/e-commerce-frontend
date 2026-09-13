@@ -1,9 +1,10 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Loader2, Plus, Search, ShoppingBag, Trash2, Trophy, UserCog, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flag, Loader2, Plus, Search, ShieldCheck, ShoppingBag, Trash2, Trophy, UserCog, Users } from "lucide-react";
 import api from "../Api/axios";
 import { AuthContext } from "../context/AuthContext";
 import { showApiError } from "../utils/showApiError";
+import { formatAmount } from "../utils/money";
 
 const emptyForm = {
   name: "",
@@ -25,6 +26,7 @@ const roleBadge = {
   client: "bg-emerald-50 text-emerald-700",
   livreur: "bg-amber-50 text-amber-700",
 };
+const PAGE_SIZE = 10;
 
 export default function AdminUsers() {
   const { user: currentUser } = useContext(AuthContext);
@@ -36,6 +38,7 @@ export default function AdminUsers() {
   const [form, setForm] = useState(emptyForm);
   const [roleFilter, setRoleFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -58,6 +61,11 @@ export default function AdminUsers() {
     if (!term) return users;
     return users.filter((item) => [item.name, item.email, item.phone, item.role].filter(Boolean).some((value) => String(value).toLowerCase().includes(term)));
   }, [search, users]);
+  const lastPage = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const visibleUsers = useMemo(() => filteredUsers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filteredUsers, page]);
+
+  useEffect(() => { setPage(1); }, [roleFilter, search]);
+  useEffect(() => { if (page > lastPage) setPage(lastPage); }, [lastPage, page]);
 
   const stats = useMemo(() => ({
     total: users.length,
@@ -101,7 +109,7 @@ export default function AdminUsers() {
   };
 
   const deleteUser = async (targetUser) => {
-    if (!window.confirm(`Supprimer ${targetUser.name} ? Cette action est definitive.`)) return;
+    if (!window.confirm(`Supprimer le compte de ${targetUser.name} ? Ses commandes, factures et incidents resteront conservés.`)) return;
     setDeletingId(targetUser.id);
     try {
       await api.delete(`/api/admin/users/${targetUser.id}`);
@@ -111,6 +119,22 @@ export default function AdminUsers() {
       showApiError(error, "Suppression impossible");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const toggleFlag = async (targetUser) => {
+    const flagged = targetUser.account_status === "flagged";
+    const reason = flagged ? "" : window.prompt("Motif du signalement (visible seulement par l’administration) :", targetUser.flag_reason || "Comportement de livraison à vérifier.");
+    if (!flagged && reason === null) return;
+    setSavingId(targetUser.id);
+    try {
+      const { data } = await api.put(`/api/admin/users/${targetUser.id}/account-status`, { account_status: flagged ? "active" : "flagged", reason });
+      setUsers((current) => current.map((item) => item.id === targetUser.id ? { ...item, ...data } : item));
+      toast.success(flagged ? "Signalement retiré" : "Compte signalé");
+    } catch (error) {
+      showApiError(error, "Modification du signalement impossible");
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -179,7 +203,7 @@ export default function AdminUsers() {
                     <p className="truncate text-xs text-gray-500">{client.email}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="font-black text-indigo-600">{Number(client.total_spent || 0).toFixed(2)} DH</p>
+                    <p className="font-black text-indigo-600">{formatAmount(client.total_spent)} DH</p>
                     <p className="text-xs text-gray-400">{client.orders_count || 0} commandes</p>
                   </div>
                 </div>
@@ -222,10 +246,11 @@ export default function AdminUsers() {
                     <Loader2 className="mx-auto animate-spin text-indigo-600" />
                   </td>
                 </tr>
-              ) : filteredUsers.length ? (
-                filteredUsers.map((item) => {
+              ) : visibleUsers.length ? (
+                visibleUsers.map((item) => {
                   const isSelf = item.id === currentUser?.id;
-                  const hasHistory = Number(item.orders_count || 0) > 0;
+                  const incidents = Number(item.consecutive_delivery_incidents || 0);
+                  const flagged = item.account_status === "flagged";
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50/70">
@@ -239,6 +264,7 @@ export default function AdminUsers() {
                             <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${roleBadge[item.role] || "bg-gray-100 text-gray-600"}`}>
                               {roleLabels[item.role] || item.role}
                             </span>
+                            {flagged && <span className="ml-2 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase text-red-700">Compte signalé</span>}
                           </div>
                         </div>
                       </td>
@@ -249,8 +275,9 @@ export default function AdminUsers() {
                       </td>
                       <td className="p-4 font-semibold">
                         <span className="inline-flex items-center gap-1"><ShoppingBag size={15} /> {item.orders_count || 0}</span>
+                        {incidents > 0 && <p className={`mt-1 text-xs font-black ${incidents >= 3 ? "text-red-600" : incidents === 2 ? "text-orange-600" : "text-amber-600"}`}>{incidents} incident(s) consécutif(s)</p>}
                       </td>
-                      <td className="p-4 font-bold text-indigo-600">{Number(item.total_spent || 0).toFixed(2)} DH</td>
+                      <td className="p-4 font-bold text-indigo-600">{formatAmount(item.total_spent)} DH</td>
                       <td className="p-4">
                         <select
                           disabled={savingId === item.id}
@@ -264,11 +291,12 @@ export default function AdminUsers() {
                         </select>
                       </td>
                       <td className="p-4 text-right">
+                        {item.role === "client" && <button disabled={isSelf || savingId === item.id} onClick={() => toggleFlag(item)} className={`mr-2 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold disabled:opacity-35 ${flagged ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "bg-amber-50 text-amber-700 hover:bg-amber-100"}`} title={item.flag_reason || "Signaler ce compte"}>{flagged ? <ShieldCheck size={16} /> : <Flag size={16} />}{flagged ? "Réactiver" : "Signaler"}</button>}
                         <button
-                          disabled={isSelf || hasHistory || deletingId === item.id}
+                          disabled={isSelf || deletingId === item.id}
                           onClick={() => deleteUser(item)}
                           className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-35"
-                          title={isSelf ? "Impossible de supprimer votre propre compte" : hasHistory ? "Historique commande conserve" : "Supprimer"}
+                          title={isSelf ? "Impossible de supprimer votre propre compte" : "Supprimer le compte en conservant l’historique"}
                         >
                           {deletingId === item.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
                           Supprimer
@@ -285,6 +313,16 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
+        <nav aria-label="Pagination des utilisateurs" className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-gray-500">
+            {filteredUsers.length ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filteredUsers.length)}` : "0"} sur {filteredUsers.length} utilisateur(s)
+          </p>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} aria-label="Page précédente" className="grid h-10 w-10 place-items-center rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-30"><ChevronLeft size={18} /></button>
+            <span className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-black text-white">{page} / {lastPage}</span>
+            <button type="button" disabled={page >= lastPage} onClick={() => setPage((value) => value + 1)} aria-label="Page suivante" className="grid h-10 w-10 place-items-center rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-30"><ChevronRight size={18} /></button>
+          </div>
+        </nav>
       </section>
     </div>
   );

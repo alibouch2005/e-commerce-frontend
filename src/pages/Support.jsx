@@ -26,6 +26,8 @@ export default function Support() {
   const [messages, setMessages] = useState([]);
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyingId, setReplyingId] = useState(null);
   const priorities = ["low", "normal", "high", "urgent"];
   const openCount = messages.filter((message) => message.status !== "closed").length;
   const resolvedCount = messages.filter((message) => message.status === "closed").length;
@@ -76,6 +78,22 @@ export default function Support() {
       toast.success(t("ticketClosed"));
     } catch {
       toast.error(t("closeTicketError"));
+    }
+  };
+
+  const replyToTicket = async (message) => {
+    const text = (replyDrafts[message.id] || "").trim();
+    if (text.length < 2) return;
+    setReplyingId(message.id);
+    try {
+      await api.post(`/api/support/messages/${message.id}/replies`, { message: text });
+      setReplyDrafts((current) => ({ ...current, [message.id]: "" }));
+      toast.success("Votre réponse a été ajoutée à la discussion.");
+      await loadMessages();
+    } catch (error) {
+      showApiError(error, "Impossible d’envoyer cette réponse");
+    } finally {
+      setReplyingId(null);
     }
   };
 
@@ -232,16 +250,15 @@ export default function Support() {
                   </span>
                 </div>
                 <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-gray-300">{message.message}</p>
-                {message.admin_reply && (
+                {!message.replies?.length && message.admin_reply && (
                   <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
                     <p className="mb-2 flex items-center gap-2 font-black"><MessageSquareText size={17} /> {t("supportReply")}</p>
                     <p className="whitespace-pre-wrap">{message.admin_reply}</p>
                   </div>
                 )}
+                {message.replies?.length > 0 && <div className="mt-4 space-y-3 border-t border-gray-100 pt-4"><p className="text-xs font-black uppercase tracking-wider text-gray-400">Discussion</p>{message.replies.map((reply) => <div key={reply.id} className={`flex ${reply.sender_role === "client" ? "justify-end" : "justify-start"}`}><div className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm ${reply.sender_role === "client" ? "bg-indigo-600 text-white" : "bg-emerald-50 text-emerald-950"}`}><p className="whitespace-pre-wrap break-words leading-6">{reply.message}</p><p className={`mt-2 text-[10px] font-bold ${reply.sender_role === "client" ? "text-indigo-200" : "text-emerald-600"}`}>{reply.sender_role === "client" ? t("client") : "Support AliShop"} · {formatDate(reply.created_at)}</p></div></div>)}</div>}
                 {message.status !== "closed" && (
-                  <button onClick={() => closeTicket(message)} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-gray-700 dark:text-gray-300">
-                    <CheckCircle2 size={16} /> {t("markResolved")}
-                  </button>
+                  <div className="mt-4 rounded-2xl bg-gray-50 p-3 dark:bg-gray-800"><textarea rows="2" maxLength="5000" value={replyDrafts[message.id] || ""} onChange={(event) => setReplyDrafts((current) => ({ ...current, [message.id]: event.target.value }))} placeholder="Continuer cette discussion…" className="premium-control w-full resize-y px-4 py-3 text-sm" /><div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-between"><button onClick={() => closeTicket(message)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"><CheckCircle2 size={16} /> {t("markResolved")}</button><button disabled={replyingId === message.id || (replyDrafts[message.id] || "").trim().length < 2} onClick={() => replyToTicket(message)} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-black text-white disabled:bg-gray-300"><Send size={16} /> {replyingId === message.id ? t("sending") : "Répondre"}</button></div></div>
                 )}
               </article>
             ))}

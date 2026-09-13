@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import api from "../Api/axios";
 import { showApiError } from "../utils/showApiError";
+import { formatMoney } from "../utils/money";
 
 const statusConfig = {
   pending: { label: "En attente", color: "bg-amber-50 text-amber-700 border-amber-100", icon: Clock },
@@ -27,12 +28,6 @@ const statusConfig = {
   cancelled: { label: "Annulée", color: "bg-red-50 text-red-700 border-red-100", icon: AlertCircle },
   refunded: { label: "Remboursée", color: "bg-slate-100 text-slate-700 border-slate-200", icon: CheckCircle },
 };
-
-const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
-  style: "currency",
-  currency: "MAD",
-  maximumFractionDigits: 2,
-}).format(Number(value || 0));
 
 const displayTotal = (order) => formatMoney(order?.computed_total ?? order?.total_price ?? order?.total);
 const deliveryLabel = (order) => order.fulfillment_method === "pickup" ? "Retrait magasin" : "Livraison";
@@ -225,6 +220,7 @@ export default function AdminOrders() {
 function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatus, onAssign, onStatusUpdate, onDetails }) {
   const config = statusConfig[order.status] || statusConfig.pending;
   const Icon = config.icon;
+  const rankedLivreurs = [...livreurs].sort((first, second) => routeDistance(first, order) - routeDistance(second, order) || Number(first.active_deliveries_count || 0) - Number(second.active_deliveries_count || 0));
 
   return (
     <article className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
@@ -265,7 +261,7 @@ function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatu
               className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               <option value="">{order.livreur_id ? "Changer livreur" : "Assigner livreur"}</option>
-              {livreurs.map((livreur) => <option key={livreur.id} value={livreur.id}>{livreur.name}</option>)}
+              {rankedLivreurs.map((livreur, index) => <option key={livreur.id} value={livreur.id}>{index === 0 && !order.livreur_id ? "★ Recommandé · " : ""}{livreur.name} · {livreur.active_deliveries_count || 0} active(s){Number.isFinite(routeDistance(livreur, order)) ? ` · ${routeDistance(livreur, order).toFixed(1)} km du trajet` : ""}</option>)}
             </select>
           </div>
 
@@ -285,6 +281,19 @@ function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatu
       </div>
     </article>
   );
+}
+
+function routeDistance(livreur, order) {
+  const lat1 = Number(livreur.active_route_latitude);
+  const lon1 = Number(livreur.active_route_longitude);
+  const lat2 = Number(order.delivery_latitude);
+  const lon2 = Number(order.delivery_longitude);
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite) || !lat1 || !lat2) return Number.POSITIVE_INFINITY;
+  const toRadians = (value) => value * Math.PI / 180;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function Metric({ label, value }) {

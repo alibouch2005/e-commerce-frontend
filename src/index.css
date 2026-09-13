@@ -185,6 +185,36 @@ textarea {
   font-weight: 700;
 }
 
+.admin-premium-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(165 180 252) transparent;
+  overscroll-behavior: contain;
+}
+
+.admin-premium-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-premium-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-premium-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(rgb(165 180 252), rgb(196 181 253));
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .dark .app-toast {
   background: #111827 !important;
   border-color: #1f2937 !important;

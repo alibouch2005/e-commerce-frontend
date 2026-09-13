@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, BadgePercent, Heart, MapPin, PackageSearch, Search, ShieldCheck, Sparkles, Truck } from "lucide-react";
+import { ArrowRight, BadgePercent, Heart, MapPin, PackageSearch, Search, ShieldCheck, Sparkles, Star, Truck } from "lucide-react";
 import api from "../Api/axios";
 import { AuthContext } from "../context/AuthContext";
 import ProductGrid from "../components/products/ProductGrid";
@@ -13,6 +13,7 @@ export default function Home() {
   const { user } = useContext(AuthContext);
   const { t } = useLanguage();
   const [newProducts, setNewProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [saleProducts, setSaleProducts] = useState([]);
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,14 +28,16 @@ export default function Home() {
     try {
       const requests = [
         api.get("/api/products?per_page=8"),
+        api.get("/api/products?featured=1&per_page=8"),
         api.get("/api/products?on_sale=1&per_page=8"),
       ];
       if (user?.role === "client") requests.push(api.get("/api/user/favorites"));
-      const [newRes, saleRes, favoriteRes] = await Promise.allSettled(requests);
+      const [newRes, featuredRes, saleRes, favoriteRes] = await Promise.allSettled(requests);
       setNewProducts(newRes.value?.data?.data || []);
+      setFeaturedProducts(featuredRes.value?.data?.data || []);
       setSaleProducts(saleRes.value?.data?.data || []);
       setFavoriteProducts(favoriteRes?.value?.data?.data || []);
-      setError(newRes.status === 'rejected' || saleRes.status === 'rejected');
+      setError(newRes.status === 'rejected' || featuredRes.status === 'rejected' || saleRes.status === 'rejected');
     } finally {
       setLoading(false);
     }
@@ -54,7 +57,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-gray-950">
-      <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-gray-950 text-white sm:min-h-[640px]">
+      <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-indigo-950 text-white sm:min-h-[640px]">
         {heroReady && (
           <img
             src={heroImage}
@@ -65,10 +68,12 @@ export default function Home() {
             alt="AliShop"
             fetchPriority="high"
             decoding="async"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover brightness-[1.08] saturate-[1.12]"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/72 to-gray-950/18" />
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-950/88 via-indigo-950/52 to-sky-900/5" />
+        <div className="absolute -left-24 top-24 h-80 w-80 rounded-full bg-violet-500/18 blur-3xl" />
+        <div className="absolute right-[18%] top-16 h-64 w-64 rounded-full bg-cyan-400/12 blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#f6f7fb] to-transparent" />
 
         <div className="relative mx-auto flex min-h-[calc(100vh-72px)] max-w-7xl items-center px-4 pb-16 pt-12 sm:min-h-[640px] sm:px-6 sm:pb-20">
@@ -130,6 +135,7 @@ export default function Home() {
         </div>}
         {loading ? <ProductSkeletonGrid /> : (
           <>
+            {featuredProducts.length > 0 && <ProductSection title={t("featuredProducts")} subtitle={t("featuredProductsSubtitle")} products={featuredProducts} icon={<Star size={18} />} t={t} />}
             <ProductSection title={t("latestProducts")} subtitle={t("latestProductsSubtitle")} products={newProducts} icon={<Sparkles size={18} />} t={t} />
             <ProductSection title={t("promoProducts")} subtitle={t("promoProductsSubtitle")} products={saleProducts} icon={<BadgePercent size={18} />} empty={t("noActivePromos")} t={t} to="/products?sale=1" />
             {user?.role === "client" && <ProductSection title={t("yourFavorites")} subtitle={t("yourFavoritesSubtitle")} products={favoriteProducts.slice(0, 8)} icon={<Heart size={18} />} empty={t("noFavoriteHome")} favoriteByDefault t={t} to="/favorites" />}

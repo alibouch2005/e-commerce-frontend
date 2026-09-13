@@ -78,15 +78,16 @@ export default function ProductDetails() {
   </div>;
   if (!product) return <ProductDetailsSkeleton />;
 
-  const isOutOfStock = product.stock <= 0;
   const fallbackImage = "/product-placeholder.svg";
-  const gallery = [product.image, ...(product.images || []).map((image) => image.url)].filter(Boolean);
+  const gallery = [...new Set([product.image, ...(product.images || []).map((image) => image.url)].filter(Boolean))];
   const mainImage = activeImage || product.image || fallbackImage;
-  const maxQuantity = Math.max(1, Number(product.stock || 1));
   const variantGroups = Object.entries(product.variant_options || {}).filter(([, values]) => Array.isArray(values) && values.length > 0);
   const hasVariantChoices = product.has_variants && variantGroups.length > 0;
   const variantMedia = product.variant_media || {};
   const selectedUnitPrice = getVariantPrice(product, selectedOptions);
+  const selectedStock = getVariantStock(product, selectedOptions);
+  const isOutOfStock = selectedStock <= 0;
+  const maxQuantity = Math.max(1, selectedStock);
   const baseUnitPrice = Number(product.current_price ?? product.price ?? 0);
   const hasSelectedPrice = Math.abs(selectedUnitPrice - baseUnitPrice) > 0.009;
 
@@ -194,13 +195,13 @@ export default function ProductDetails() {
             <h1 className="mt-3 text-3xl font-black leading-tight text-gray-950 sm:text-4xl md:text-5xl">{product.name}</h1>
             <p className="mt-5 leading-relaxed text-gray-600">{product.short_description || product.description || t("descriptionEmpty")}</p>
             <div className="mt-8">
-              {product.is_on_sale && <span className="mr-3 text-xl text-gray-400 line-through">{product.price} DH</span>}
+              {product.is_on_sale && <span className="mr-3 text-xl text-gray-400 line-through">{formatPrice(product.price)} DH</span>}
               <span className="text-4xl font-black text-gray-950 sm:text-5xl">{formatPrice(selectedUnitPrice)}</span>
               <span className="ml-2 font-bold text-indigo-600">DH</span>
               {hasSelectedPrice && <p className="mt-2 text-sm font-bold text-indigo-600">{t("optionPriceAdapted")}</p>}
             </div>
-            <p className={`mt-4 text-sm font-bold ${isOutOfStock ? "text-red-500" : product.stock < 10 ? "text-amber-500" : "text-emerald-600"}`}>
-              {isOutOfStock ? t("unavailable") : product.stock < 10 ? t("lowStockCount", { count: product.stock }) : t("inStockCount", { count: product.stock })}
+            <p className={`mt-4 text-sm font-bold ${isOutOfStock ? "text-red-500" : selectedStock < 10 ? "text-amber-500" : "text-emerald-600"}`}>
+              {isOutOfStock ? t("unavailable") : selectedStock < 10 ? t("lowStockCount", { count: selectedStock }) : t("inStockCount", { count: selectedStock })}
             </p>
             {product.free_delivery && (
               <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
@@ -222,8 +223,10 @@ export default function ProductDetails() {
                     productImage={mainImage}
                     variantMedia={variantMedia}
                     variantPrices={product.variant_prices || {}}
+                    variantStocks={product.variant_stocks || {}}
                     onChange={(value) => {
                       setSelectedOptions((current) => ({ ...current, [key]: value }));
+                      setQuantity(1);
                       if (key === "color" && variantMedia.color?.[value]) setActiveImage(variantMedia.color[value]);
                     }}
                   />
@@ -241,7 +244,7 @@ export default function ProductDetails() {
                   <Plus size={18} />
                 </button>
               </div>
-              {!isOutOfStock && <p className="text-sm text-gray-500">{t("maxOrderQuantity", { count: product.stock })}</p>}
+              {!isOutOfStock && <p className="text-sm text-gray-500">{t("maxOrderQuantity", { count: selectedStock })}</p>}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -381,7 +384,7 @@ function InfoTile({ label, value }) {
   );
 }
 
-function VariantOptionGroup({ optionKey, values, selectedValue, productImage, variantMedia = {}, variantPrices = {}, onChange }) {
+function VariantOptionGroup({ optionKey, values, selectedValue, productImage, variantMedia = {}, variantPrices = {}, variantStocks = {}, onChange }) {
   const isVisualChoice = ["color", "custom"].includes(optionKey);
 
   return (
@@ -399,17 +402,20 @@ function VariantOptionGroup({ optionKey, values, selectedValue, productImage, va
             const active = selectedValue === value;
             const optionImage = optionKey === "color" ? (variantMedia.color?.[value] || productImage) : productImage;
             const optionPrice = variantPrices?.[optionKey]?.[value];
+            const optionStock = variantStocks?.[optionKey]?.[value];
+            const unavailable = optionStock !== undefined && Number(optionStock) <= 0;
 
             return (
               <label
                 key={value}
                 title={`${variantLabel(optionKey)}: ${value}`}
-                className={`group relative flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 bg-white p-2 transition hover:-translate-y-0.5 hover:border-gray-900 ${active ? "border-gray-950 shadow-lg shadow-gray-200" : "border-gray-200 hover:shadow-md"}`}
+                className={`group relative flex flex-col items-center gap-2 rounded-2xl border-2 bg-white p-2 transition ${unavailable ? "cursor-not-allowed border-gray-100 opacity-45" : "cursor-pointer hover:-translate-y-0.5 hover:border-gray-900"} ${active ? "border-gray-950 shadow-lg shadow-gray-200" : "border-gray-200 hover:shadow-md"}`}
               >
                 <input
                   type="radio"
                   name={`variant-${optionKey}`}
                   checked={active}
+                  disabled={unavailable}
                   onChange={() => onChange(value)}
                   className="sr-only"
                 />
@@ -422,6 +428,7 @@ function VariantOptionGroup({ optionKey, values, selectedValue, productImage, va
                   <span className="truncate">{value}</span>
                 </span>
                 {optionPrice && <span className="text-[10px] font-black text-indigo-600">{formatPrice(optionPrice)} DH</span>}
+                {optionStock !== undefined && <span className={`text-[10px] font-black ${unavailable ? "text-red-500" : "text-emerald-600"}`}>{unavailable ? "Indisponible" : `${optionStock} en stock`}</span>}
                 {active && (
                   <span className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-950 text-white">
                     <CheckCircle2 size={14} />
@@ -436,21 +443,25 @@ function VariantOptionGroup({ optionKey, values, selectedValue, productImage, va
           {values.map((value) => {
             const active = selectedValue === value;
             const optionPrice = variantPrices?.[optionKey]?.[value];
+            const optionStock = variantStocks?.[optionKey]?.[value];
+            const unavailable = optionStock !== undefined && Number(optionStock) <= 0;
 
             return (
               <label
                 key={value}
-                className={`cursor-pointer border-2 px-5 py-3 text-sm font-black transition ${active ? "border-gray-950 bg-white text-gray-950 shadow-md" : "border-gray-200 bg-white text-gray-700 hover:border-gray-900"}`}
+                className={`border-2 px-5 py-3 text-sm font-black transition ${unavailable ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400 line-through" : "cursor-pointer"} ${active ? "border-gray-950 bg-white text-gray-950 shadow-md" : "border-gray-200 bg-white text-gray-700 hover:border-gray-900"}`}
               >
                 <input
                   type="radio"
                   name={`variant-${optionKey}`}
                   checked={active}
+                  disabled={unavailable}
                   onChange={() => onChange(value)}
                   className="sr-only"
                 />
                 <span>{value}</span>
                 {optionPrice && <span className="ml-2 text-xs text-indigo-600">{formatPrice(optionPrice)} DH</span>}
+                {optionStock !== undefined && <span className="ml-2 text-xs font-bold">({optionStock})</span>}
               </label>
             );
           })}
@@ -486,10 +497,20 @@ function getVariantPrice(product, selectedOptions = {}) {
   return Number(product?.current_price ?? product?.price ?? 0);
 }
 
+function getVariantStock(product, selectedOptions = {}) {
+  const values = Object.entries(selectedOptions || {})
+    .map(([group, value]) => product?.variant_stocks?.[group]?.[value])
+    .filter((stock) => stock !== undefined && stock !== null && Number.isFinite(Number(stock)))
+    .map(Number);
+  return Math.max(0, Math.min(Number(product?.stock || 0), ...(values.length ? values : [Number(product?.stock || 0)])));
+}
+
 function formatPrice(value) {
-  return Number(value || 0).toLocaleString("fr-MA", {
-    minimumFractionDigits: Number(value) % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
+  const numericValue = Number(value || 0);
+  const digits = Number.isInteger(numericValue) ? 0 : 2;
+  return numericValue.toLocaleString("fr-MA", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   });
 }
 
@@ -497,7 +518,7 @@ function defaultSelectedOptions(product) {
   return Object.fromEntries(
     Object.entries(product.variant_options || {})
       .filter(([, values]) => Array.isArray(values) && values.length > 0)
-      .map(([key, values]) => [key, values[0]])
+      .map(([key, values]) => [key, values.find((value) => Number(product?.variant_stocks?.[key]?.[value] ?? 1) > 0) || values[0]])
   );
 }
 

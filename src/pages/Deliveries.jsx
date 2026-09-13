@@ -1,50 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarClock, Camera, CheckCircle2, ChevronLeft, ChevronRight, Handshake, MapPin, Navigation, PackageCheck, Phone, Truck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Banknote, CalendarClock, ChevronLeft, ChevronRight, MapPin, Navigation, PackageOpen, RefreshCw, Route, Truck } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../Api/axios";
-import DeliveryMap from "../components/delivery/DeliveryMap";
-import CashLedger from "../components/delivery/CashLedger";
 import { useLanguage } from "../context/LanguageContext";
-import { showApiError } from "../utils/showApiError";
+import { formatAmount } from "../utils/money";
 
-const statusColor = {
-  pending: "bg-amber-100 text-amber-700",
-  preparing: "bg-blue-100 text-blue-700",
-  shipping: "bg-indigo-100 text-indigo-700",
-  delivered: "bg-emerald-100 text-emerald-700",
-  cancelled: "bg-red-100 text-red-700",
-  refunded: "bg-slate-100 text-slate-700",
-};
-
-const toNumber = (value) => Number(value || 0);
-const itemLineTotal = (item) => {
-  const explicitTotal = toNumber(item?.total_price);
-  if (explicitTotal > 0) return explicitTotal;
-  return toNumber(item?.price || item?.product?.current_price || item?.product?.price) * toNumber(item?.quantity || 1);
-};
-const displayTotal = (order) => Number(order?.computed_total ?? order?.total_price ?? 0).toFixed(2);
-const slotLabel = (slot) => ({
-  "08_12": "08:00 - 12:00",
-  "12_18": "12:00 - 18:00",
-  "18_21": "18:00 - 21:00",
-}[slot] || "Non precise");
+const slotLabel = (slot) => ({ "08_12": "08:00 – 12:00", "12_18": "12:00 – 18:00", "18_21": "18:00 – 21:00" }[slot] || "Créneau non précisé");
+const statusLabel = (status) => ({ pending: "Disponible", preparing: "Disponible", shipping: "En cours", delivered: "Livrée" }[status] || status);
 
 export default function Deliveries() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(null);
   const [orders, setOrders] = useState([]);
   const [meta, setMeta] = useState({});
   const [page, setPage] = useState(1);
-  const [proofs, setProofs] = useState({});
-  const [cashRevision, setCashRevision] = useState(0);
+  const [filter, setFilter] = useState("all");
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await api.get("/api/livreur/orders", { params: { page } });
-      const ordersData = res.data.data || res.data;
-      setOrders(Array.isArray(ordersData) ? ordersData : []);
-      setMeta(res.data.meta || {});
+      setLoading(true);
+      const { data } = await api.get("/api/livreur/orders", { params: { page } });
+      setOrders(Array.isArray(data.data) ? data.data : []);
+      setMeta(data.meta || {});
     } catch {
       toast.error(t("deliveryLoadError"));
     } finally {
@@ -52,271 +30,18 @@ export default function Deliveries() {
     }
   }, [page, t]);
 
-  useEffect(() => {
-    void fetchOrders();
-  }, [fetchOrders]);
+  useEffect(() => { void fetchOrders(); }, [fetchOrders]);
+  const filtered = useMemo(() => orders.filter((order) => filter === "available" ? !order.livreur_id : filter === "mine" ? Boolean(order.livreur_id) : true), [filter, orders]);
+  const availableCount = orders.filter((order) => !order.livreur_id).length;
+  const mineCount = orders.filter((order) => order.livreur_id).length;
 
-  const activeCount = useMemo(() => orders.filter((order) => order.status !== "delivered").length, [orders]);
-
-  const updateProof = (orderId, key, value) => {
-    setProofs((current) => ({
-      ...current,
-      [orderId]: { ...current[orderId], [key]: value },
-    }));
-  };
-
-  const handlePhotoChange = (orderId, file) => {
-    if (!file) return;
-    updateProof(orderId, "proof_image", file);
-    updateProof(orderId, "preview", URL.createObjectURL(file));
-  };
-
-  const handleUpdateStatus = async (order) => {
-    const id = order.id;
-    const proof = proofs[id] || {};
-
-    if (!proof.recipient_name || !proof.proof_image) {
-      return toast.error(t("proofRequired"));
-    }
-    if (order.payment_method === 'cash_on_delivery' && !window.confirm(t('cashCollectConfirm', { amount: displayTotal(order) }))) {
-      return;
-    }
-
-    try {
-      setUpdating(id);
-      const payload = new FormData();
-      payload.append("status", "delivered");
-      payload.append("recipient_name", proof.recipient_name);
-      payload.append("proof_image", proof.proof_image);
-      if (proof.delivery_note) payload.append("delivery_note", proof.delivery_note);
-
-      await api.post(`/api/livreur/orders/${id}/status?_method=PUT`, payload);
-      toast.success(t("deliveryConfirmed"));
-      await fetchOrders();
-      setCashRevision((value) => value + 1);
-    } catch (err) {
-      showApiError(err, t("updateError"));
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  const acceptDelivery = async (id) => {
-    try {
-      setUpdating(id);
-      await api.post(`/api/livreur/orders/${id}/accept`);
-      toast.success(t("deliveryAccepted"));
-      await fetchOrders();
-    } catch (err) {
-      showApiError(err, t("deliveryUnavailable"));
-      await fetchOrders();
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f6f7fb] text-gray-500">
-        {t("loadingDeliveries")}
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f6f7fb] px-4 py-6 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-5 text-white shadow-xl sm:p-7">
-          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-200">
-            <Truck size={16} /> {t("deliverySpace")}
-          </p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-black sm:text-4xl">{t("myDeliveries")}</h1>
-              <p className="mt-2 text-sm text-gray-300">{t("activeDeliveries", { count: activeCount })}</p>
-            </div>
-            <button onClick={fetchOrders} className="rounded-xl bg-white/15 px-4 py-3 text-sm font-bold backdrop-blur hover:bg-white/25">
-              {t("refresh")}
-            </button>
-          </div>
-        </div>
-
-        <CashLedger revision={cashRevision} />
-
-        {orders.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
-            {t("noAssignedOrders")}
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {orders.map((order) => {
-              const proof = proofs[order.id] || {};
-              const isAvailable = !order.livreur_id;
-              const mapsUrl = order.delivery_latitude && order.delivery_longitude
-                ? `https://www.google.com/maps?q=${order.delivery_latitude},${order.delivery_longitude}`
-                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.adresse_livraison || "")}`;
-
-              return (
-                <article key={order.id} className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
-                  <div className="flex flex-col gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                    <div className="flex gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                        <Truck size={22} />
-                      </div>
-                      <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-indigo-600">{t("orderNumber", { id: order.id })}</p>
-                      <h2 className="mt-1 text-xl font-black text-gray-950">{order.user?.name || t("client")}</h2>
-                      <p className="mt-1 text-xs font-bold text-gray-500">
-                        <CalendarClock className="mr-1 inline" size={14} /> {slotLabel(order.delivery_time_slot)}
-                      </p>
-                      </div>
-                    </div>
-                    <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${isAvailable ? "bg-amber-100 text-amber-700" : statusColor[order.status] || "bg-gray-100 text-gray-700"}`}>
-                      {isAvailable ? t("available") : t(order.status) || order.status}
-                    </span>
-                  </div>
-
-                  <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_360px]">
-                    <div className="space-y-4">
-                      <div className="grid gap-3 rounded-2xl bg-gray-50 p-4 sm:grid-cols-2">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-gray-400">{t("contact")}</p>
-                          <a href={order.phone ? `tel:${order.phone}` : undefined} className="mt-2 inline-flex items-center gap-2 font-bold text-indigo-600">
-                            <Phone size={17} /> {order.phone || t("phoneUnavailable")}
-                          </a>
-                        </div>
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-gray-400">{t("address")}</p>
-                          <p className="mt-2 flex gap-2 text-sm text-gray-700"><MapPin size={16} className="mt-0.5 shrink-0 text-indigo-500" /> {order.adresse_livraison}</p>
-                          <p className="mt-2 text-xs font-black text-indigo-600">{t("deliveryTimeSlot")}: {slotLabel(order.delivery_time_slot)}</p>
-                        </div>
-                      </div>
-
-                      <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-700 sm:w-auto">
-                        <Navigation size={18} /> {t("openRoute")}
-                      </a>
-
-                      <div>
-                        <p className="mb-2 text-xs font-black uppercase tracking-widest text-gray-400">{t("packageContent")}</p>
-                        <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100">
-                          {order.items?.map((item) => (
-                            <div key={item.id} className="flex justify-between gap-4 p-3 text-sm">
-                              <span className="min-w-0 text-gray-700">
-                                <span className="block">{item.product?.name} x{item.quantity}</span>
-                                <DeliveryOptionLine options={item.selected_options} />
-                              </span>
-                              <span className="shrink-0 font-bold">{itemLineTotal(item).toFixed(2)} DH</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
-                        <div><p className="text-xs font-bold uppercase tracking-wider text-indigo-500">{order.payment_method === 'card' ? t('cashOnline') : t('cashCash')}</p><p className="mt-1 text-xl font-black text-indigo-700">{t("total")}: {displayTotal(order)} DH</p></div>
-                        {order.payment_method === 'cash_on_delivery' && <span className="rounded-full bg-amber-100 px-3 py-2 text-xs font-black text-amber-800">{t('cashPending')}</span>}
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="overflow-hidden rounded-2xl border border-gray-100">
-                        <DeliveryMap latitude={order.delivery_latitude} longitude={order.delivery_longitude} address={order.adresse_livraison} />
-                      </div>
-
-                      {isAvailable ? (
-                        <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50 p-4">
-                          <p className="text-sm font-bold text-amber-800">
-                            {t("missionAvailable")}
-                          </p>
-                          <button
-                            onClick={() => acceptDelivery(order.id)}
-                            disabled={updating === order.id}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-4 font-black text-white hover:bg-amber-600 disabled:bg-gray-300"
-                          >
-                            {updating === order.id ? t("accepting") : <><Handshake size={19} /> {t("acceptDelivery")}</>}
-                          </button>
-                        </div>
-                      ) : order.status !== "delivered" ? (
-                        <div className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                          <input
-                            value={proof.recipient_name || ""}
-                            onChange={(event) => updateProof(order.id, "recipient_name", event.target.value)}
-                            placeholder={t("receiverName")}
-                            className="w-full rounded-xl border border-gray-200 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                          <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-200 bg-white p-4 text-center text-indigo-700">
-                            <Camera size={24} />
-                            <span className="mt-2 text-sm font-black">{t("photoOnSite")}</span>
-                            <span className="mt-1 text-xs text-gray-500">{t("cameraOrGallery")}</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              capture="environment"
-                              onChange={(event) => handlePhotoChange(order.id, event.target.files?.[0])}
-                              className="hidden"
-                            />
-                          </label>
-                          {proof.preview && <img src={proof.preview} alt="Preuve" className="h-36 w-full rounded-xl object-cover" />}
-                          <textarea
-                            value={proof.delivery_note || ""}
-                            onChange={(event) => updateProof(order.id, "delivery_note", event.target.value)}
-                            placeholder={t("deliveryNote")}
-                            rows="2"
-                            className="w-full rounded-xl border border-gray-200 bg-white p-3 text-base outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                          <button
-                            onClick={() => handleUpdateStatus(order)}
-                            disabled={updating === order.id}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-4 font-black text-white hover:bg-emerald-700 disabled:bg-gray-300"
-                          >
-                            {updating === order.id ? t("processing") : <><PackageCheck size={19} /> {t("confirmDelivery")}</>}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 font-bold text-emerald-700">
-                          <CheckCircle2 size={20} /> {t("deliveryDone")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-        {Number(meta.last_page || 1) > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-            <button disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="rounded-xl border border-gray-200 p-3 disabled:opacity-30">
-              <ChevronLeft size={18} />
-            </button>
-            <span className="rounded-xl bg-indigo-50 px-4 py-3 text-sm font-black text-indigo-700">
-              Page {meta.current_page || page} / {meta.last_page || 1}
-            </span>
-            <button disabled={page >= Number(meta.last_page || 1)} onClick={() => setPage((value) => value + 1)} className="rounded-xl border border-gray-200 p-3 disabled:opacity-30">
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen bg-[radial-gradient(circle_at_10%_0%,rgba(99,102,241,.13),transparent_28rem),#f7f8fc] px-3 py-5 sm:px-6 sm:py-9"><div className="mx-auto max-w-6xl space-y-5">
+    <header className="relative isolate overflow-hidden rounded-[1.8rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 p-5 text-white shadow-[0_28px_75px_-32px_rgba(79,70,229,.8)] sm:p-7"><div className="absolute -right-14 -top-20 -z-10 h-56 w-56 rounded-full bg-violet-400/20 blur-3xl" /><div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-indigo-200"><Truck size={15} /> Espace livreur</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">Commandes disponibles</h1><p className="mt-2 max-w-xl text-sm leading-6 text-indigo-100">Consultez toutes les missions, vérifiez le trajet puis acceptez librement celle qui vous convient.</p></div><div className="flex gap-2"><Link to="/deliveries/cash" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-black text-white shadow-lg hover:bg-emerald-400"><Banknote size={17} /> Ma caisse</Link><button type="button" onClick={() => void fetchOrders()} className="grid h-11 w-11 place-items-center rounded-xl border border-white/15 bg-white/10 hover:bg-white/20" aria-label={t("refresh")}><RefreshCw size={18} /></button></div></div></header>
+    <section className="grid grid-cols-3 gap-2 sm:gap-3"><Metric label="Toutes" value={orders.length} color="indigo" /><Metric label="Disponibles" value={availableCount} color="amber" /><Metric label="Mes missions" value={mineCount} color="emerald" /></section>
+    <div className="flex gap-2 overflow-x-auto rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">{[["all", "Toutes"], ["available", "À accepter"], ["mine", "Mes livraisons"]].map(([value, label]) => <button key={value} type="button" onClick={() => setFilter(value)} className={`min-h-10 shrink-0 rounded-xl px-4 text-xs font-black transition ${filter === value ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"}`}>{label}</button>)}</div>
+    {loading ? <div role="status" className="grid min-h-64 place-items-center rounded-3xl bg-white text-sm font-bold text-gray-400">Chargement des missions…</div> : filtered.length ? <div className="grid gap-3 md:grid-cols-2">{filtered.map((order) => { const available = !order.livreur_id; return <Link key={order.id} to={`/deliveries/${order.id}`} className="group overflow-hidden rounded-[1.5rem] border border-gray-100 bg-white shadow-sm transition hover:-translate-y-1 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-950/10"><div className="flex items-start justify-between gap-3 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/60 p-4"><div className="flex min-w-0 gap-3"><span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${available ? "bg-amber-50 text-amber-600" : "bg-indigo-50 text-indigo-600"}`}><PackageOpen size={20} /></span><span className="min-w-0"><b className="block truncate text-sm text-gray-950">Commande {order.id}</b><span className="mt-1 block truncate text-xs text-gray-500">{order.user?.name || "Client"}</span></span></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase ${available ? "bg-amber-100 text-amber-700" : order.status === "delivered" ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"}`}>{statusLabel(order.status)}</span></div><div className="space-y-3 p-4"><div className="flex items-start gap-2 text-sm text-gray-700"><MapPin size={17} className="mt-0.5 shrink-0 text-indigo-500" /><b className="line-clamp-2">{order.adresse_livraison || "Adresse à confirmer"}</b></div><div className="flex flex-wrap gap-2 text-[10px] font-black"><span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-2 text-gray-600"><CalendarClock size={13} /> {slotLabel(order.delivery_time_slot)}</span>{available && order.route_score != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-2 text-emerald-700"><Route size={13} /> Trajet conseillé</span>}</div><div className="flex items-center justify-between border-t border-gray-100 pt-3"><b className="text-lg text-indigo-700">{formatAmount(order.computed_total ?? order.total_price)} DH</b><span className="inline-flex items-center gap-1 text-xs font-black text-indigo-600">Voir les détails <Navigation size={14} /></span></div></div></Link>; })}</div> : <div className="grid min-h-64 place-items-center rounded-3xl border border-dashed border-indigo-200 bg-white p-8 text-center"><div><PackageOpen className="mx-auto text-indigo-300" size={38} /><b className="mt-3 block text-gray-800">Aucune mission dans cette liste</b><p className="mt-1 text-sm text-gray-400">Actualisez dans quelques instants.</p></div></div>}
+    {Number(meta.last_page || 1) > 1 && <div className="flex items-center justify-center gap-2 rounded-2xl bg-white p-3 shadow-sm"><button aria-label="Page précédente" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded-xl border p-3 disabled:opacity-30"><ChevronLeft size={18} /></button><b className="px-3 text-sm text-indigo-700">{meta.current_page || page} / {meta.last_page}</b><button aria-label="Page suivante" disabled={page >= Number(meta.last_page)} onClick={() => setPage((value) => value + 1)} className="rounded-xl border p-3 disabled:opacity-30"><ChevronRight size={18} /></button></div>}
+  </div></div>;
 }
 
-function DeliveryOptionLine({ options }) {
-  const entries = Object.entries(options || {}).filter(([, value]) => value);
-  if (!entries.length) return null;
-
-  return (
-    <span className="mt-1 block text-xs font-semibold text-indigo-600">
-      {entries.map(([key, value]) => `${variantLabel(key)}: ${value}`).join(" · ")}
-    </span>
-  );
-}
-
-function variantLabel(key) {
-  return {
-    color: "Couleur",
-    size: "Taille",
-    weight: "Poids",
-    custom: "Option",
-  }[key] || key;
-}
+function Metric({ label, value, color }) { const tones = { indigo: "bg-indigo-50 text-indigo-700", amber: "bg-amber-50 text-amber-700", emerald: "bg-emerald-50 text-emerald-700" }; return <div className={`rounded-2xl p-3 text-center sm:p-4 ${tones[color]}`}><b className="block text-2xl font-black">{value}</b><span className="text-[9px] font-black uppercase tracking-wide sm:text-[10px]">{label}</span></div>; }

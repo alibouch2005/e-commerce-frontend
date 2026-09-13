@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../Api/axios";
 import toast from "react-hot-toast";
 import DeliveryMap from "../components/delivery/DeliveryMap";
+import { formatAmount } from "../utils/money";
 import { 
   ArrowLeft, 
   User, 
@@ -221,7 +222,7 @@ export default function AdminOrderDetails() {
                 // Calcul sécurisé pour éviter le NaN
                 const unitPrice = Number(item.price || item.product?.price || 0);
                 const quantity = Number(item.quantity || 0);
-                const totalPrice = (unitPrice * quantity).toFixed(2);
+                const totalPrice = formatAmount(unitPrice * quantity);
                  
                 return (
                   <div key={item.id} className="py-4 flex items-center justify-between group">
@@ -244,7 +245,7 @@ export default function AdminOrderDetails() {
                           {item.product?.category?.name || "Catégorie inconnue"}
                         </p>
                         <p className="text-xs text-gray-400 mt-1 uppercase font-medium">
-                          Prix Unitaire: {unitPrice} DH
+                          Prix unitaire : {formatAmount(unitPrice)} DH
                         </p>
                         <AdminOrderOptionLine options={item.selected_options} />
                       </div>
@@ -263,13 +264,13 @@ export default function AdminOrderDetails() {
           {/* TOTAL FINAL */}
           <div className="bg-indigo-600 p-6 rounded-xl shadow-lg text-white flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
             <div className="space-y-1 text-sm opacity-90">
-              <p>Sous-total produits : {orderSubtotal(order).toFixed(2)} DH</p>
-              {orderDiscount(order) > 0 && <p>Remise : -{orderDiscount(order).toFixed(2)} DH</p>}
-              <p>Livraison : {orderDeliveryFee(order).toFixed(2)} DH</p>
+              <p>Sous-total produits : {formatAmount(orderSubtotal(order))} DH</p>
+              {orderDiscount(order) > 0 && <p>Remise : -{formatAmount(orderDiscount(order))} DH</p>}
+              <p>Livraison : {formatAmount(orderDeliveryFee(order))} DH</p>
             </div>
             <div className="text-right">
               <span className="text-lg font-medium opacity-90">Total de la commande</span>
-              <p className="text-3xl font-black">{orderGrandTotal(order).toFixed(2)} DH</p>
+              <p className="text-3xl font-black">{formatAmount(orderGrandTotal(order))} DH</p>
               <p className="text-xs opacity-75">TVA incluse / Paiement à la livraison</p>
             </div>
           </div>

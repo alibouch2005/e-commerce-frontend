@@ -5,6 +5,7 @@ import { ArrowRight, CircleAlert, Minus, Plus, RefreshCw, ShieldCheck, ShoppingB
 import { CartContext } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
 import { showApiError } from "../utils/showApiError";
+import { formatAmount } from "../utils/money";
 
 export default function Cart() {
   const { cart, loading, cartError, reloadCart, updateItemQuantity, removeItem } = useContext(CartContext);
@@ -123,8 +124,8 @@ export default function Cart() {
                     <h3 className="font-black">{item.product.name}</h3>
                     <OptionPills options={item.selected_options} />
                     <div className="text-sm">
-                      {item.product?.is_on_sale && <span className="mr-2 text-gray-400 line-through">{item.product.price} DH</span>}
-                      <span className="font-bold text-indigo-600">{item.price} DH</span>
+                      {item.product?.is_on_sale && <span className="mr-2 text-gray-400 line-through">{formatAmount(item.product.price)} DH</span>}
+                      <span className="font-bold text-indigo-600">{formatAmount(item.price)} DH</span>
                     </div>
                   </div>
                 </div>
@@ -132,9 +133,9 @@ export default function Cart() {
                   <div className="flex items-center rounded-xl border bg-white">
                     <button disabled={updatingId === item.id || item.quantity <= 1} onClick={() => changeQty(item, item.quantity - 1)} className="p-3 transition hover:bg-gray-50 disabled:opacity-30"><Minus size={16} /></button>
                     <span className="w-10 text-center font-bold">{item.quantity}</span>
-                    <button disabled={updatingId === item.id || (item.product?.stock && item.quantity >= item.product.stock)} onClick={() => changeQty(item, item.quantity + 1)} className="p-3 transition hover:bg-gray-50 disabled:opacity-30"><Plus size={16} /></button>
+                    <button disabled={updatingId === item.id || item.quantity >= Number(item.available_stock ?? item.product?.stock ?? 0)} onClick={() => changeQty(item, item.quantity + 1)} className="p-3 transition hover:bg-gray-50 disabled:opacity-30"><Plus size={16} /></button>
                   </div>
-                  <div className="min-w-24 text-right font-black">{Number(item.total_price).toFixed(2)} DH</div>
+                  <div className="min-w-24 text-right font-black">{formatAmount(item.total_price)} DH</div>
                   <button disabled={updatingId === item.id} onClick={() => handleRemoveItem(item)} className="rounded-xl bg-red-50 p-3 text-red-500 hover:bg-red-100"><Trash2 size={18} /></button>
                 </div>
               </div>
@@ -142,10 +143,10 @@ export default function Cart() {
           </div>
           <div className="premium-surface h-fit rounded-3xl p-5 md:sticky md:top-24 sm:p-6">
             <h2 className="text-xl font-black mb-4">{t("summary")}</h2>
-            <div className="flex justify-between mb-2"><span>{t("subtotal")}</span><span>{subtotal.toFixed(2)} DH</span></div>
+            <div className="flex justify-between mb-2"><span>{t("subtotal")}</span><span>{formatAmount(subtotal)} DH</span></div>
             <div className="mb-2 rounded-xl bg-indigo-50 p-3 text-sm font-semibold text-indigo-700">{t("deliveryCalculatedCheckout")}</div>
             <hr className="my-4" />
-            <div className="flex justify-between font-black text-lg"><span>{t("total")}</span><span>{subtotal.toFixed(2)} DH</span></div>
+            <div className="flex justify-between font-black text-lg"><span>{t("total")}</span><span>{formatAmount(subtotal)} DH</span></div>
             <button onClick={handleCheckout} className="mt-5 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-3 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5">{t("placeOrder")}</button>
           </div>
         </div>

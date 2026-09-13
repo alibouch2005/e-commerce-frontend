@@ -35,6 +35,35 @@ test.beforeEach(async ({ page }) => {
 
 const noOverflow = async (page) => expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
+test('mobile catalog shows exactly two usable product cards per row', async ({ page }) => {
+  await page.goto('/products');
+  const cards = page.locator('article');
+  await expect(cards).toHaveCount(12);
+  const first = await cards.nth(0).boundingBox();
+  const second = await cards.nth(1).boundingBox();
+  expect(Math.abs(first.y - second.y)).toBeLessThan(2);
+  expect(second.x).toBeGreaterThan(first.x + first.width - 2);
+  await noOverflow(page);
+});
+
+test('authentication card is centered on desktop and remains responsive', async ({ page }, testInfo) => {
+  await page.goto('/login');
+  const card = page.getByTestId('auth-card');
+  await expect(card).toBeVisible();
+  const password = page.locator('input[type="password"]');
+  await expect(password).toHaveCount(1);
+  await page.getByRole('button', { name: 'Afficher le mot de passe' }).click();
+  await expect(page.locator('input[type="text"]')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Masquer le mot de passe' }).click();
+  await expect(password).toHaveCount(1);
+  await noOverflow(page);
+  if (testInfo.project.name === 'desktop') {
+    const box = await card.boundingBox();
+    const viewport = page.viewportSize();
+    expect(Math.abs((box.y + box.height / 2) - viewport.height / 2)).toBeLessThan(55);
+  }
+});
+
 test('empty cart is stable, responsive and guides the customer back to products', async ({ page }) => {
   const errors = [];
   const consoleErrors = [];
@@ -105,6 +134,7 @@ test('home, product details and Arabic layout remain usable', async ({ page }, t
   await page.evaluate(() => localStorage.setItem('locale', 'ar'));
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.locator('nav')).toHaveAttribute('dir', 'ltr');
   await expect(page.getByRole('heading', { name: 'مشترياتك تستحق المكافأة' })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({ path: testInfo.outputPath('home-ar.png') });
@@ -128,6 +158,19 @@ test('signed-in navigation fits and mobile menu closes outside', async ({ page }
     await page.mouse.click(1, 1);
     await expect(menu).toHaveAttribute('aria-expanded', 'false');
   }
+});
+
+test('cart badge displays the total quantity of products', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile', 'The compact mobile navigation uses the menu instead of the desktop cart shortcut.');
+  await page.route('**/api/cart', (route) => route.fulfill({ json: { data: {
+    items: [
+      { id: 1, quantity: 2, price: 10, product: products[0] },
+      { id: 2, quantity: 3, price: 20, product: products[1] },
+    ],
+    total: 80,
+  } } }));
+  await page.goto('/products');
+  await expect(page.getByRole('link', { name: 'Panier : 5 article(s)' })).toBeVisible();
 });
 
 test('unknown pages, missing products and forged payment success are handled', async ({ page }) => {
