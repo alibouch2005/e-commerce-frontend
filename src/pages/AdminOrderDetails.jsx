@@ -42,7 +42,7 @@ const slotLabel = (slot) => ({
   "08_12": "08:00 - 12:00",
   "12_18": "12:00 - 18:00",
   "18_21": "18:00 - 21:00",
-}[slot] || "Non precise");
+}[slot] || "Non précisé");
 
 export default function AdminOrderDetails() {
   const { id } = useParams();
@@ -58,7 +58,7 @@ export default function AdminOrderDetails() {
     shipping: { label: "En cours de livraison", color: "bg-purple-100 text-purple-700" },
     delivered: { label: "Livré", color: "bg-green-100 text-green-700" },
     cancelled: { label: "Annulé", color: "bg-red-100 text-red-700" },
-    refunded: { label: "Remboursee", color: "bg-slate-100 text-slate-700" },
+    refunded: { label: "Remboursée", color: "bg-slate-100 text-slate-700" },
   };
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function AdminOrderDetails() {
       }
       const { data } = await api.put(`/api/admin/orders/${id}/status`, { status, reason });
       setOrder(data.data || data);
-      toast.success("Statut mis a jour");
+      toast.success("Statut mis à jour");
     }
     catch (error) { toast.error(error.response?.data?.message || "Mise à jour impossible"); }
     finally { setUpdating(false); }
@@ -119,7 +119,7 @@ export default function AdminOrderDetails() {
       link.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast.error("Impossible de telecharger le recu");
+      toast.error("Impossible de télécharger le reçu");
     }
   };
 
@@ -142,7 +142,7 @@ export default function AdminOrderDetails() {
             onClick={downloadReceipt}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
           >
-            <Download size={18} /> Recu PDF
+            <Download size={18} /> Reçu PDF
           </button>
           <button
             onClick={() => navigate("/admin/orders")}
@@ -181,7 +181,7 @@ export default function AdminOrderDetails() {
               </div>
               {order.fulfillment_method === "delivery" && (
                 <div>
-                  <p className="text-xs text-gray-400 uppercase font-bold">Disponibilite client</p>
+                  <p className="text-xs text-gray-400 uppercase font-bold">Disponibilité du client</p>
                   <p className="font-medium text-gray-900">{slotLabel(order.delivery_time_slot)}</p>
                 </div>
               )}
@@ -203,7 +203,7 @@ export default function AdminOrderDetails() {
                 </span>
               </div>
               <select disabled={updating} value={order.status} onChange={(e) => changeStatus(e.target.value)} className="w-full border rounded-lg p-2 font-medium">
-                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option><option value="refunded">Remboursee</option>
+                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option><option value="refunded">Remboursée</option>
               </select>
             </div>
           </div>

@@ -130,21 +130,21 @@ export default function ProductDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc]">
+    <div className="min-h-screen bg-[#f7f8fc] pb-28 sm:pb-0">
       <PageMetadata product={product} />
-      <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10 lg:space-y-14">
+      <div className="mx-auto max-w-7xl space-y-7 px-3 py-4 sm:space-y-10 sm:px-6 sm:py-10 lg:space-y-14">
         <button
           type="button"
           onClick={() => navigate("/products")}
-          className="inline-flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:-translate-x-0.5 hover:border-indigo-100 hover:text-indigo-600"
+          className="inline-flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-3 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:-translate-x-0.5 hover:border-indigo-100 hover:text-indigo-600 sm:px-4 sm:py-3"
         >
           <ArrowLeft size={18} />
           {t("backToProducts")}
         </button>
 
-        <section className="grid gap-8 rounded-2xl border border-gray-100 bg-white p-4 sm:p-6 md:p-10 lg:grid-cols-2 lg:gap-10">
+        <section className="grid gap-6 overflow-hidden rounded-[1.75rem] border border-gray-100 bg-white p-3 shadow-[0_20px_60px_-38px_rgba(15,23,42,.35)] sm:gap-8 sm:p-6 md:p-10 lg:grid-cols-2 lg:gap-10">
           <div>
-            <div className="relative flex aspect-square max-h-[460px] items-center justify-center rounded-2xl bg-gray-50 p-4 sm:p-8">
+            <div className="relative flex aspect-square max-h-[460px] items-center justify-center overflow-hidden rounded-[1.4rem] bg-gradient-to-br from-slate-50 to-indigo-50/60 p-4 sm:p-8">
               {product.is_on_sale && <span className="absolute left-5 top-5 rounded-full bg-amber-500 px-4 py-1 text-xs font-black text-white">{t("promos")}</span>}
               {isOutOfStock && <span className="absolute right-5 top-5 rounded-full bg-red-600 px-4 py-1 text-xs font-black text-white">{t("outOfStock")}</span>}
               {product.free_delivery && <span className="absolute bottom-5 left-5 rounded-full bg-emerald-500 px-4 py-1 text-xs font-black text-white">{t("freeDeliveryProduct")}</span>}
@@ -157,13 +157,13 @@ export default function ProductDetails() {
                   event.currentTarget.onerror = null;
                   event.currentTarget.src = fallbackImage;
                 }}
-                className="max-h-full max-w-full object-contain"
+                className="max-h-full max-w-full object-contain drop-shadow-[0_18px_24px_rgba(15,23,42,.12)] transition duration-500 hover:scale-[1.03]"
               />
             </div>
             {gallery.length > 1 && (
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+              <div className="mt-3 flex snap-x gap-2 overflow-x-auto pb-2 sm:mt-4 sm:gap-3">
                 {gallery.map((url) => (
-                  <button key={url} onClick={() => setActiveImage(url)} className={`h-16 w-16 shrink-0 rounded-xl border bg-white p-2 sm:h-20 sm:w-20 ${activeImage === url ? "border-indigo-600" : "border-gray-100"}`}>
+                  <button key={url} onClick={() => setActiveImage(url)} className={`h-16 w-16 shrink-0 snap-start rounded-xl border-2 bg-white p-2 transition sm:h-20 sm:w-20 ${activeImage === url ? "border-indigo-600 shadow-md shadow-indigo-100" : "border-gray-100"}`}>
                     <img
                       src={url}
                       alt=""
@@ -192,11 +192,11 @@ export default function ProductDetails() {
 
           <div className="flex flex-col">
             <p className="text-xs font-black uppercase tracking-widest text-indigo-600">{product.category?.name || t("product")}</p>
-            <h1 className="mt-3 text-3xl font-black leading-tight text-gray-950 sm:text-4xl md:text-5xl">{product.name}</h1>
-            <p className="mt-5 leading-relaxed text-gray-600">{product.short_description || product.description || t("descriptionEmpty")}</p>
-            <div className="mt-8">
+            <h1 className="mt-2 text-[1.75rem] font-black leading-tight text-gray-950 sm:mt-3 sm:text-4xl md:text-5xl">{product.name}</h1>
+            <p className="mt-3 text-sm leading-6 text-gray-600 sm:mt-5 sm:text-base sm:leading-relaxed">{product.short_description || product.description || t("descriptionEmpty")}</p>
+            <div className="mt-5 sm:mt-8">
               {product.is_on_sale && <span className="mr-3 text-xl text-gray-400 line-through">{formatPrice(product.price)} DH</span>}
-              <span className="text-4xl font-black text-gray-950 sm:text-5xl">{formatPrice(selectedUnitPrice)}</span>
+              <span className="text-3xl font-black text-gray-950 sm:text-5xl">{formatPrice(selectedUnitPrice)}</span>
               <span className="ml-2 font-bold text-indigo-600">DH</span>
               {hasSelectedPrice && <p className="mt-2 text-sm font-bold text-indigo-600">{t("optionPriceAdapted")}</p>}
             </div>
@@ -209,7 +209,7 @@ export default function ProductDetails() {
               </p>
             )}
             {hasVariantChoices && (
-              <div className="mt-7 space-y-5 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-4">
+              <div className="mt-5 space-y-5 rounded-3xl border border-indigo-100 bg-indigo-50/50 p-3 sm:mt-7 sm:p-4">
                 <div>
                   <h2 className="font-black text-gray-950">{t("chooseOptions")}</h2>
                   <p className="text-sm text-gray-600">{t("variantHelp")}</p>
@@ -247,14 +247,14 @@ export default function ProductDetails() {
               {!isOutOfStock && <p className="text-sm text-gray-500">{t("maxOrderQuantity", { count: selectedStock })}</p>}
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 hidden flex-col gap-3 sm:flex sm:flex-row">
               <button onClick={() => handleAddToCart(false)} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-4 font-black text-white hover:bg-indigo-700 disabled:bg-gray-300 sm:px-6">
                 <ShoppingBag /> {t("addToCart")}
               </button>
               <button onClick={() => handleAddToCart(true)} disabled={busy || isOutOfStock} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-4 font-black text-white hover:bg-black disabled:bg-gray-300 sm:px-6">
                 <Zap size={20} /> {t("orderNow")}
               </button>
-              <button onClick={toggleFavorite} className={`rounded-2xl border px-5 ${isFavorite ? "border-red-200 bg-red-50 text-red-600" : "border-gray-200 text-gray-500 hover:text-red-500"}`}>
+              <button onClick={toggleFavorite} aria-label={isFavorite ? t("removedFromFavorites") : t("addedToFavorites")} className={`rounded-2xl border px-5 ${isFavorite ? "border-red-200 bg-red-50 text-red-600" : "border-gray-200 text-gray-500 hover:text-red-500"}`}>
                 <Heart fill={isFavorite ? "currentColor" : "none"} />
               </button>
             </div>
@@ -282,6 +282,20 @@ export default function ProductDetails() {
             </div>
           </div>
         </section>
+
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-3 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-18px_50px_rgba(15,23,42,.14)] backdrop-blur-xl sm:hidden">
+          <div className="mx-auto flex max-w-lg items-center gap-2">
+            <button onClick={toggleFavorite} aria-label={isFavorite ? t("removedFromFavorites") : t("addedToFavorites")} className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl border ${isFavorite ? "border-rose-200 bg-rose-50 text-rose-600" : "border-slate-200 text-slate-500"}`}>
+              <Heart fill={isFavorite ? "currentColor" : "none"} size={20} />
+            </button>
+            <button onClick={() => handleAddToCart(false)} disabled={busy || isOutOfStock} className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-3 text-sm font-black text-white shadow-lg shadow-indigo-200 disabled:bg-gray-300">
+              <ShoppingBag size={18} /> {t("addToCart")}
+            </button>
+            <button onClick={() => handleAddToCart(true)} disabled={busy || isOutOfStock} aria-label={t("orderNow")} className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-950 text-white disabled:bg-gray-300">
+              <Zap size={20} />
+            </button>
+          </div>
+        </div>
 
         <section className="grid gap-6 md:grid-cols-3">
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:col-span-2 md:p-8">

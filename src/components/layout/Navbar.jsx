@@ -4,7 +4,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import { NotificationContext } from "../../context/NotificationContext";
 import { useLanguage } from "../../context/LanguageContext";
-import { Banknote, Bell, BellRing, ChevronDown, Heart, Home, Key, LogOut, Menu, MessageCircle, Package, PackageCheck, ShoppingBag, User, WalletCards, X } from "lucide-react";
+import { Banknote, Bell, BellRing, Check, ChevronDown, Globe2, Heart, Home, Key, LogOut, Mail, Menu, MessageCircle, Package, PackageCheck, ShoppingBag, User, WalletCards, X } from "lucide-react";
 
 function NotificationIcon({ type }) {
   const styles = {
@@ -31,9 +31,11 @@ export default function Navbar() {
   const { notifications, unreadCount, markAllRead, markRead } = useContext(NotificationContext);
   const { locale, languages, setLocale, t, formatDate } = useLanguage();
   const [open, setOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef();
+  const languageRef = useRef();
   const notificationRef = useRef();
   const mobileMenuRef = useRef();
   const mobileToggleRef = useRef();
@@ -49,6 +51,7 @@ export default function Navbar() {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setOpen(false);
+      if (languageRef.current && !languageRef.current.contains(event.target)) setLanguageOpen(false);
       if (notificationRef.current && !notificationRef.current.contains(event.target)) setNotificationsOpen(false);
       if (
         mobileMenuRef.current
@@ -86,10 +89,13 @@ export default function Navbar() {
 
   return (
     <nav dir="ltr" className="sticky top-0 z-50 border-b border-white/70 bg-white/85 shadow-[0_8px_30px_rgba(15,23,42,.05)] backdrop-blur-xl dark:border-gray-800 dark:bg-gray-950/90">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex justify-between items-center gap-2 sm:gap-3">
-        <Link to={isAdmin ? "/admin/dashboard" : "/"} className="flex shrink-0 items-center gap-1.5 text-lg sm:gap-2 sm:text-2xl font-black tracking-tight text-indigo-600 hover:opacity-80">
-          <ShoppingBag className="shrink-0" size={24} />
-          <span className="leading-none">AliShop</span>
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 py-3 flex justify-between items-center gap-1 sm:gap-3">
+        <Link to={isAdmin ? "/admin/dashboard" : "/"} className="flex shrink-0 items-center gap-1.5 font-black text-indigo-600 transition hover:opacity-80">
+          <span className="flex items-center gap-1.5 sm:hidden">
+            <img src="/alishop-symbol.png" alt="" className="h-7 w-7 object-contain" />
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-lg font-black tracking-tight text-transparent">AliShop</span>
+          </span>
+          <img src="/alishop-logo.png" alt="AliShop" className="hidden h-10 w-[134px] object-contain sm:block" />
           {isAdmin && <span className="text-xs bg-red-100 px-2 py-0.5 rounded-md text-red-600">ADMIN</span>}
         </Link>
 
@@ -100,17 +106,46 @@ export default function Navbar() {
               <Link to="/products" className="hover:text-indigo-600">{t("products")}</Link>
               {isClient && <Link to="/favorites" className="flex items-center gap-2 hover:text-indigo-600"><Heart size={16} /> {t("favorites")}</Link>}
               <Link to="/support" className="flex items-center gap-2 hover:text-indigo-600"><MessageCircle size={16} /> {t("support")}</Link>
+              <Link to="/contact" className="flex items-center gap-2 hover:text-indigo-600"><Mail size={16} /> {t("contact")}</Link>
             </>
           )}
           {isLivreur && <><Link to="/deliveries" className="flex items-center gap-2 text-indigo-600 font-bold"><Package size={18} /> {t("deliveries")}</Link><Link to="/deliveries/cash" className="flex items-center gap-2 font-bold text-emerald-600"><Banknote size={18} /> Ma caisse</Link></>}
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-          <select value={locale} onChange={(event) => setLocale(event.target.value)} title={t("language")} className="h-10 w-[62px] rounded-2xl border border-gray-100 bg-gray-50 px-2 text-xs font-black text-gray-700 outline-none transition hover:bg-indigo-50 hover:text-indigo-600 sm:h-11 sm:w-auto sm:px-3 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100">
-            {Object.entries(languages).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
+          <div className="relative" ref={languageRef}>
+            <button
+              type="button"
+              aria-label={t("language")}
+              aria-haspopup="listbox"
+              aria-expanded={languageOpen}
+              onClick={() => setLanguageOpen((value) => !value)}
+              className={`flex h-10 min-w-[62px] items-center justify-center gap-1 rounded-2xl border px-2 text-xs font-black outline-none transition sm:h-11 sm:min-w-[82px] sm:px-3 ${languageOpen ? "border-indigo-300 bg-indigo-50 text-indigo-700 shadow-md shadow-indigo-100" : "border-gray-100 bg-gray-50 text-gray-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600"}`}
+            >
+              <Globe2 size={15} className="hidden sm:block" />
+              <span>{languages[locale]}</span>
+              <ChevronDown size={14} className={`transition-transform ${languageOpen ? "rotate-180" : ""}`} />
+            </button>
+            {languageOpen && (
+              <div role="listbox" aria-label={t("language")} className="premium-popover absolute right-0 top-full z-[70] mt-2 w-44 overflow-hidden rounded-2xl border border-white/80 bg-white/95 p-1.5 shadow-[0_20px_55px_rgba(15,23,42,.2)] backdrop-blur-xl dark:border-gray-700 dark:bg-gray-900/95">
+                {Object.entries(languages).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="option"
+                    aria-selected={locale === value}
+                    onClick={() => { setLocale(value); setLanguageOpen(false); }}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-bold transition ${locale === value ? "bg-indigo-600 text-white shadow-sm" : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 dark:text-gray-200 dark:hover:bg-gray-800"}`}
+                  >
+                    <span>{({ fr: "Français", en: "English", ar: "العربية" })[value]}</span>
+                    <span className="flex items-center gap-1.5 text-xs opacity-80">{label}{locale === value && <Check size={14} />}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {!isAdmin && !isLivreur && (
-            <Link to="/cart" id="cart-icon" title={`${t("cart")} · ${cartItemCount}`} aria-label={`${t("cart")} : ${cartItemCount} article(s)`} className="relative hidden h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-500 transition hover:-translate-y-0.5 hover:bg-indigo-50 hover:text-indigo-600 sm:flex sm:h-11 sm:w-11 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
+            <Link to="/cart" id="cart-icon" title={`${t("cart")} · ${cartItemCount}`} aria-label={`${t("cart")} : ${cartItemCount} article(s)`} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-500 transition hover:-translate-y-0.5 hover:bg-indigo-50 hover:text-indigo-600 sm:h-11 sm:w-11 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
               <ShoppingBag size={20} />
               {cartItemCount > 0 && <span className="absolute -right-1.5 -top-1.5 grid min-h-5 min-w-5 place-items-center rounded-full border-2 border-white bg-indigo-600 px-1 text-[9px] font-black leading-none text-white shadow-sm shadow-indigo-200">{cartItemCount > 99 ? "99+" : cartItemCount}</span>}
             </Link>
@@ -207,6 +242,7 @@ export default function Navbar() {
                 <Link onClick={closeMobile} to="/cart" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900"><ShoppingBag size={18} /> {t("cart")}</Link>
                 {isClient && <Link onClick={closeMobile} to="/favorites" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900"><Heart size={18} /> {t("favorites")}</Link>}
                 <Link onClick={closeMobile} to="/support" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900"><MessageCircle size={18} /> {t("support")}</Link>
+                <Link onClick={closeMobile} to="/contact" className="flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900"><Mail size={18} /> {t("contact")}</Link>
               </>
             )}
             {isLivreur && <><Link onClick={closeMobile} to="/deliveries" className="flex items-center gap-3 rounded-xl px-3 py-3 text-indigo-600"><Package size={18} /> {t("deliveries")}</Link><Link onClick={closeMobile} to="/deliveries/cash" className="flex items-center gap-3 rounded-xl px-3 py-3 text-emerald-600"><Banknote size={18} /> Ma caisse</Link></>}

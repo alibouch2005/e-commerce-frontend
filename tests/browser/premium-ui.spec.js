@@ -36,10 +36,10 @@ test('premium support is responsive, clear and keyboard friendly', async ({ page
   await page.goto('/support');
 
   await expect(page.getByRole('heading', { name: 'Une assistance claire, humaine et suivie' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Historique support' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Historique de l’assistance' })).toBeVisible();
   await page.getByRole('button', { name: 'Important' }).click();
   await expect(page.getByRole('button', { name: 'Important' })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Demander produit' }).click();
+  await page.getByRole('button', { name: 'Demander un produit' }).click();
   await expect(page.getByText('Image JPG, PNG ou WebP · 4 Mo maximum')).toBeVisible();
   await noOverflow(page);
   if (testInfo.project.name === 'desktop') await page.screenshot({ path: testInfo.outputPath('support-premium.png'), fullPage: true });
@@ -61,4 +61,17 @@ test('premium notification stack closes outside and marks an item read', async (
   await toggle.click();
   await page.getByRole('button', { name: 'Marquer cette notification comme lue' }).click();
   await expect(page.getByRole('button', { name: 'Marquer cette notification comme lue' })).toHaveCount(0);
+});
+
+test('mobile language menu is compact and keeps the selected language clear', async ({ page }) => {
+  await page.goto('/support');
+  const language = page.getByRole('button', { name: 'Langue' });
+
+  await language.click();
+  await expect(language).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('listbox', { name: 'Langue' })).toBeVisible();
+  await page.getByRole('option', { name: /English/ }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('button', { name: 'Language' })).toHaveAttribute('aria-expanded', 'false');
+  await noOverflow(page);
 });

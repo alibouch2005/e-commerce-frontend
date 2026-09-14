@@ -29,6 +29,19 @@ test('card choice clearly announces that the payment is coming soon', async ({ p
   expect(errors).toEqual([]);
 });
 
+test('delivery and store pickup use a clear mobile choice', async ({ page }) => {
+  await page.goto('/checkout');
+
+  const delivery = page.getByRole('button', { name: /Livraison à domicile/ });
+  const pickup = page.getByRole('button', { name: /Retrait en magasin/ });
+  await expect(delivery).toHaveAttribute('aria-pressed', 'true');
+  await pickup.click();
+  await expect(pickup).toHaveAttribute('aria-pressed', 'true');
+  await expect(delivery).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByPlaceholder('Adresse de livraison')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});
+
 test('a failed card payment can be retried on the same secured order', async ({ page }) => {
   await page.context().addCookies([{ name: 'XSRF-TOKEN', value: 'test-token', url: 'http://127.0.0.1:4173' }]);
   await page.addInitScript(() => {

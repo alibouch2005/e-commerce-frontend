@@ -57,7 +57,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-gray-950">
-      <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-indigo-950 text-white sm:min-h-[640px]">
+      <section className="relative min-h-[calc(100vh-72px)] overflow-hidden bg-indigo-50 text-gray-950 sm:min-h-[640px]">
         {heroReady && (
           <img
             src={heroImage}
@@ -71,20 +71,20 @@ export default function Home() {
             className="absolute inset-0 h-full w-full object-cover brightness-[1.08] saturate-[1.12]"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-950/88 via-indigo-950/52 to-sky-900/5" />
-        <div className="absolute -left-24 top-24 h-80 w-80 rounded-full bg-violet-500/18 blur-3xl" />
-        <div className="absolute right-[18%] top-16 h-64 w-64 rounded-full bg-cyan-400/12 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/96 via-indigo-50/82 to-sky-100/20" />
+        <div className="absolute -left-24 top-24 h-80 w-80 rounded-full bg-violet-400/20 blur-3xl" />
+        <div className="absolute right-[18%] top-16 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#f6f7fb] to-transparent" />
 
         <div className="relative mx-auto flex min-h-[calc(100vh-72px)] max-w-7xl items-center px-4 pb-16 pt-12 sm:min-h-[640px] sm:px-6 sm:pb-20">
           <div className="max-w-3xl">
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur sm:px-4 sm:text-xs">
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-indigo-700 shadow-sm backdrop-blur sm:px-4 sm:text-xs">
               <MapPin size={16} /> Casablanca · {t("deliveryPickup")}
             </p>
             <h1 className="max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-7xl md:leading-none">
               {t("heroTitle")}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-gray-100 sm:mt-6 sm:text-lg">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg">
               {t("heroSubtitle")}
             </p>
 
@@ -108,7 +108,7 @@ export default function Home() {
               <Link to="/products" className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 font-bold text-white hover:bg-indigo-700">
                 {t("exploreProducts")} <ArrowRight size={18} />
               </Link>
-              <Link to="/support" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3 font-bold text-white backdrop-blur hover:bg-white/20">
+              <Link to="/support" className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-100 bg-white/80 px-6 py-3 font-bold text-indigo-700 shadow-sm backdrop-blur hover:bg-white">
                 {t("needHelp")}
               </Link>
             </div>
@@ -149,9 +149,9 @@ export default function Home() {
 
 function HeroStat({ value, label }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 p-3 text-center backdrop-blur">
-      <p className="text-lg font-black text-white sm:text-2xl">{value}</p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-200">{label}</p>
+    <div className="rounded-2xl border border-white bg-white/75 p-3 text-center shadow-sm backdrop-blur">
+      <p className="text-lg font-black text-indigo-700 sm:text-2xl">{value}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
     </div>
   );
 }

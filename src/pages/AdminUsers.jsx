@@ -84,7 +84,7 @@ export default function AdminUsers() {
     setCreating(true);
     try {
       await api.post("/api/admin/users", form);
-      toast.success(form.role === "livreur" ? "Livreur ajoute avec succes" : "Utilisateur ajoute avec succes");
+      toast.success(form.role === "livreur" ? "Livreur ajouté avec succès" : "Utilisateur ajouté avec succès");
       setForm(emptyForm);
       await loadUsers();
     } catch (error) {
@@ -100,9 +100,9 @@ export default function AdminUsers() {
     try {
       const { data } = await api.put(`/api/admin/users/${targetUser.id}/role`, { role });
       setUsers((current) => current.map((item) => (item.id === targetUser.id ? { ...item, ...data } : item)));
-      toast.success("Role mis a jour");
+      toast.success("Rôle mis à jour");
     } catch (error) {
-      showApiError(error, "Mise a jour impossible");
+      showApiError(error, "Mise à jour impossible");
     } finally {
       setSavingId(null);
     }
@@ -114,7 +114,7 @@ export default function AdminUsers() {
     try {
       await api.delete(`/api/admin/users/${targetUser.id}`);
       setUsers((current) => current.filter((item) => item.id !== targetUser.id));
-      toast.success("Utilisateur supprime");
+      toast.success("Utilisateur supprimé");
     } catch (error) {
       showApiError(error, "Suppression impossible");
     } finally {
@@ -146,7 +146,7 @@ export default function AdminUsers() {
             <Users className="text-indigo-600" /> Utilisateurs
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Gere les clients, ajoute les livreurs, protege les admins et garde l'historique commercial propre.
+            Gérez les clients, ajoutez les livreurs, protégez les administrateurs et conservez un historique commercial propre.
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export default function AdminUsers() {
 
             <input required placeholder="Nom complet" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
             <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
-            <input placeholder="Telephone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input placeholder="Téléphone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
             <input placeholder="Adresse (optionnel)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
             <input required type="password" placeholder="Mot de passe initial" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full rounded-xl bg-gray-50 p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
 
@@ -219,7 +219,7 @@ export default function AdminUsers() {
         <div className="grid gap-3 border-b border-gray-100 p-4 lg:grid-cols-[1fr_180px]">
           <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3">
             <Search size={18} className="text-gray-400" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, email, telephone..." className="min-h-11 w-full bg-transparent text-sm outline-none" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom, e-mail ou téléphone…" className="min-h-11 w-full bg-transparent text-sm outline-none" />
           </div>
           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="rounded-xl border border-gray-200 px-3 py-3 text-sm">
             <option value="">Tous les roles</option>
@@ -271,7 +271,7 @@ export default function AdminUsers() {
                       <td className="p-4 text-gray-500">
                         {item.email}
                         <br />
-                        <span className="text-xs">{item.phone || "Telephone non renseigne"}</span>
+                        <span className="text-xs">{item.phone || "Téléphone non renseigné"}</span>
                       </td>
                       <td className="p-4 font-semibold">
                         <span className="inline-flex items-center gap-1"><ShoppingBag size={15} /> {item.orders_count || 0}</span>
@@ -307,7 +307,7 @@ export default function AdminUsers() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="p-10 text-center text-gray-400">Aucun utilisateur trouve.</td>
+                  <td colSpan="6" className="p-10 text-center text-gray-400">Aucun utilisateur trouvé.</td>
                 </tr>
               )}
             </tbody>

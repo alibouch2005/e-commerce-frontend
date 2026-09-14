@@ -37,12 +37,15 @@ const AdminOrders = lazy(() => import("./pages/AdminOrders"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminCategories = lazy(() => import("./pages/AdminCategories"));
 const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminOrderedProducts = lazy(() => import("./pages/AdminOrderedProducts"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminWiniProducts = lazy(() => import("./pages/AdminWiniProducts"));
 const AdminCourierCash = lazy(() => import("./pages/AdminCourierCash"));
 const AdminIssues = lazy(() => import("./pages/AdminIssues"));
+const Legal = lazy(() => import("./pages/Legal"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 function App() {
   return (
@@ -56,7 +59,7 @@ function AppContent() {
   const { t } = useLanguage();
   const { user } = useContext(AuthContext);
   const location = useLocation();
-  const showFooter = ["/", "/products", "/support"].some((path) => (
+  const showFooter = ["/", "/products", "/support", "/contact", "/legal"].some((path) => (
     location.pathname === path || location.pathname.startsWith("/products/")
   ));
 
@@ -83,6 +86,9 @@ function AppContent() {
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/legal/contact" element={<Navigate to="/contact" replace />} />
+          <Route path="/legal/:document" element={<Legal />} />
           <Route path="/cart" element={<Cart />} />
 
           <Route element={<GuestGuard />}>
@@ -115,6 +121,7 @@ function AppContent() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="ordered-products" element={<AdminOrderedProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<AdminOrderDetails />} />
             <Route path="users" element={<AdminUsers />} />

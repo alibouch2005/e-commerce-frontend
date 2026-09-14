@@ -81,7 +81,7 @@ export default function ProductCard({ product, favoriteByDefault = false }) {
       <div className="flex flex-1 flex-col p-3 sm:p-6">
         <p className="truncate text-[8px] font-black uppercase tracking-wider text-indigo-500 sm:text-[10px] sm:tracking-widest">{product.category?.name || t("product")}</p>
         <Link to={`/products/${product.id}`} className="mt-1.5 sm:mt-2">
-          <h3 className="line-clamp-2 text-sm font-black leading-tight text-gray-950 hover:text-indigo-600 sm:text-lg">{product.name}</h3>
+          <h3 className="line-clamp-2 text-sm font-black leading-tight text-gray-950 hover:text-indigo-600 sm:text-lg title-product">{product.name}</h3>
         </Link>
         {(product.short_description || product.description) && (
           <p className="mt-1.5 hidden line-clamp-2 text-sm leading-6 text-gray-500 sm:block">

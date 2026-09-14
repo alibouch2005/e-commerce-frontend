@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const orders = Array.from({ length: 12 }, (_, index) => ({
   id: 22 - index,
+  client_order_number: 12 - index,
   status: 'pending',
   fulfillment_method: 'delivery',
   created_at: '2026-09-09T10:00:00Z',
@@ -23,30 +24,35 @@ test.beforeEach(async ({ page }) => {
     if (url.pathname === '/api/user') return json({ user: { id: 2, name: 'Client Test', email: 'client@example.test', role: 'client' } });
     if (url.pathname === '/api/cart') return json({ data: { items: [], total: 0 } });
     if (url.pathname === '/api/orders') return json({ data: orders, meta: { current_page: 1, last_page: 1 } });
+    if (url.pathname === '/api/orders/22') return json({ data: orders[0] });
     return json({ data: [] });
   });
 });
 
-test('order details stay centered and close outside or with Escape', async ({ page }) => {
+test('order details fit the viewport and close outside or with Escape', async ({ page }, testInfo) => {
   await page.goto('/orders');
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.getByRole('button', { name: /Commande 22/ }).click();
+  await page.getByRole('button', { name: /Commande 12/ }).click();
 
-  const dialog = page.getByRole('dialog', { name: 'Commande 22' });
+  const dialog = page.getByRole('dialog', { name: 'Commande 12' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/Distance livraison/i)).toHaveCount(0);
   await expect(dialog.getByText(/57\s*MAD/i)).toBeVisible();
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   const box = await dialog.boundingBox();
   const viewport = page.viewportSize();
-  expect(Math.abs((box.y + box.height / 2) - viewport.height / 2)).toBeLessThan(3);
+  if (['mobile', 'small-mobile'].includes(testInfo.project.name)) {
+    expect(Math.abs(box.y + box.height - viewport.height)).toBeLessThan(3);
+  } else {
+    expect(Math.abs((box.y + box.height / 2) - viewport.height / 2)).toBeLessThan(3);
+  }
 
   await dialog.getByText('Produit test x1').click();
   await expect(dialog).toBeVisible();
-  await page.mouse.click(2, Math.round(viewport.height / 2));
+  await page.mouse.click(Math.round(viewport.width / 2), Math.max(70, Math.floor(box.y - 10)));
   await expect(dialog).toHaveCount(0);
 
-  await page.getByRole('button', { name: /Commande 22/ }).click();
+  await page.getByRole('button', { name: /Commande 12/ }).click();
   await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);

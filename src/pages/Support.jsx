@@ -3,6 +3,8 @@ import {
   CheckCircle2,
   Clock,
   ImagePlus,
+  Mic,
+  Paperclip,
   LifeBuoy,
   Mail,
   MessageSquareText,
@@ -18,11 +20,15 @@ import { AuthContext } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { showApiError } from "../utils/showApiError";
 
+const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/+$/, "").replace(/\/api$/, "");
+const assetUrl = (path) => (!path ? "" : path.startsWith("http") ? path : `${apiUrl}${path}`);
+
 export default function Support() {
   const { user } = useContext(AuthContext);
   const { t, formatDate } = useLanguage();
   const [form, setForm] = useState({ type: "support", name: user?.name || "", email: user?.email || "", subject: "", requested_product_name: "", requested_product_city: "Casablanca", message: "", priority: "normal" });
   const [productImage, setProductImage] = useState(null);
+  const [supportAttachment, setSupportAttachment] = useState(null);
   const [messages, setMessages] = useState([]);
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -56,6 +62,7 @@ export default function Support() {
       const payload = new FormData();
       Object.entries(form).forEach(([key, value]) => payload.append(key, value || ""));
       if (productImage) payload.append("requested_product_image", productImage);
+      if (supportAttachment) payload.append("support_attachment", supportAttachment);
 
       await api.post("/api/support/messages", payload, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -63,6 +70,7 @@ export default function Support() {
       toast.success(t("messageSent"));
       setForm((current) => ({ ...current, subject: "", requested_product_name: "", message: "", priority: "normal" }));
       setProductImage(null);
+      setSupportAttachment(null);
       await loadMessages();
     } catch (error) {
       showApiError(error, t("messageSendError"));
@@ -100,16 +108,16 @@ export default function Support() {
   return (
     <div className="min-h-screen px-4 py-6 sm:px-6 sm:py-10">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] lg:gap-8">
-        <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(125deg,#111827_0%,#312e81_52%,#6d28d9_100%)] px-5 py-7 text-white shadow-[0_30px_90px_-35px_rgba(79,70,229,.75)] sm:px-8 sm:py-9 lg:col-span-2">
-          <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-fuchsia-400/25 blur-3xl" />
-          <div aria-hidden="true" className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-cyan-300/20 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-indigo-100 bg-[linear-gradient(125deg,#ffffff_0%,#eef2ff_52%,#faf5ff_100%)] px-5 py-6 text-slate-950 shadow-[0_24px_70px_-40px_rgba(79,70,229,.45)] sm:px-8 sm:py-9 lg:col-span-2">
+          <div aria-hidden="true" className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-fuchsia-200/45 blur-3xl" />
+          <div aria-hidden="true" className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-cyan-200/35 blur-3xl" />
           <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="max-w-3xl">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.2em] text-indigo-200">
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[.2em] text-indigo-600">
                 <Sparkles size={16} /> {t("premiumExperience")}
               </p>
-              <h1 className="mt-3 max-w-2xl text-3xl font-black leading-tight sm:text-5xl">{t("supportPromise")}</h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-indigo-100 sm:text-base">{t("supportPromiseText")}</p>
+              <h1 className="mt-3 max-w-2xl text-2xl font-black leading-tight sm:text-5xl">{t("supportPromise")}</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-4 sm:text-base">{t("supportPromiseText")}</p>
             </div>
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {[
@@ -117,9 +125,9 @@ export default function Support() {
                 [<Clock key="tracked" size={20} />, t("trackedReplies")],
                 [<ShieldCheck key="available" size={20} />, t("supportAvailable")],
               ].map(([icon, label]) => (
-                <div key={label} className="min-w-0 rounded-2xl border border-white/15 bg-white/10 px-3 py-4 text-center backdrop-blur sm:min-w-28 sm:px-4">
-                  <span className="mx-auto grid w-fit place-items-center text-indigo-200">{icon}</span>
-                  <p className="mt-2 truncate text-[10px] font-black uppercase tracking-wide sm:text-xs">{label}</p>
+                <div key={label} className="min-w-0 rounded-2xl border border-white bg-white/75 px-2 py-3 text-center shadow-sm backdrop-blur sm:min-w-28 sm:px-4 sm:py-4">
+                  <span className="mx-auto grid w-fit place-items-center text-indigo-600">{icon}</span>
+                  <p className="mt-2 truncate text-[9px] font-black uppercase tracking-wide text-slate-600 sm:text-xs">{label}</p>
                 </div>
               ))}
             </div>
@@ -204,6 +212,11 @@ export default function Support() {
                 <textarea required minLength="10" maxLength="3000" rows="6" placeholder={t("yourMessage")} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="premium-control min-h-36 w-full resize-y px-4 py-3 text-base" />
                 <p className="mt-1 text-right text-[11px] font-bold text-gray-400">{t("messageCharacters", { count: form.message.length })}</p>
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 text-xs font-black text-indigo-700"><Paperclip size={16} /> Ajouter une photo<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={(event) => setSupportAttachment(event.target.files?.[0] || null)} /></label>
+                <label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-violet-100 bg-violet-50 px-3 text-xs font-black text-violet-700"><Mic size={16} /> Message audio<input type="file" accept="audio/*" capture className="hidden" onChange={(event) => setSupportAttachment(event.target.files?.[0] || null)} /></label>
+              </div>
+              {supportAttachment && <div className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600"><span className="truncate">{supportAttachment.name}</span><button type="button" onClick={() => setSupportAttachment(null)} className="shrink-0 text-rose-600">Supprimer</button></div>}
             </fieldset>
 
             <button disabled={sending} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 px-5 font-black text-white shadow-[0_16px_35px_-16px_rgba(79,70,229,.8)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-18px_rgba(79,70,229,.9)] disabled:translate-y-0 disabled:from-gray-300 disabled:to-gray-300">
@@ -250,6 +263,7 @@ export default function Support() {
                   </span>
                 </div>
                 <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-gray-300">{message.message}</p>
+                {message.attachment_url && (message.attachment_type === "audio" ? <audio controls preload="metadata" className="mt-3 w-full" src={assetUrl(message.attachment_url)} /> : <a href={assetUrl(message.attachment_url)} target="_blank" rel="noreferrer" className="mt-3 block"><img src={assetUrl(message.attachment_url)} alt="Pièce jointe du support" className="max-h-64 w-full rounded-2xl object-cover" /></a>)}
                 {!message.replies?.length && message.admin_reply && (
                   <div className="mt-4 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
                     <p className="mb-2 flex items-center gap-2 font-black"><MessageSquareText size={17} /> {t("supportReply")}</p>

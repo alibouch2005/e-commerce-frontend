@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component {
             <AlertTriangle size={28} />
           </div>
           <h1 className="mt-5 text-2xl font-black text-gray-950 dark:text-white">Une erreur est survenue</h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">Rechargez la page ou retournez a l'accueil.</p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">Rechargez la page ou retournez à l’accueil.</p>
           <a href="/" className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white hover:bg-indigo-700">
             <Home size={18} /> Retour accueil
           </a>

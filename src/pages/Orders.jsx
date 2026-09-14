@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   Download,
+  LoaderCircle,
   MapPin,
   Package,
   ShoppingBag,
@@ -94,6 +95,7 @@ export default function Orders() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({});
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const closeModalRef = useRef(null);
   const formatMoney = (value) => new Intl.NumberFormat("fr-MA", {
     style: "currency",
@@ -101,16 +103,14 @@ export default function Orders() {
     minimumFractionDigits: Number.isInteger(Number(value || 0)) ? 0 : 2,
     maximumFractionDigits: Number.isInteger(Number(value || 0)) ? 0 : 2,
   }).format(Number(value || 0));
-  const orderTitle = (order) => `Commande ${order?.id ?? ""}`;
+  const orderTitle = (order) => `Commande ${order?.client_order_number ?? order?.id ?? ""}`;
 
   const loadOrders = useCallback(async (active = { current: true }) => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/orders?page=${page}`);
+      const res = await api.get("/api/orders", { params: { page, per_page: 10, ...(status ? { status } : {}) } });
       if (!active.current) return;
-      let data = res.data.data || res.data;
-      if (status) data = data.filter((order) => order.status === status);
-      setOrders(data);
+      setOrders(res.data.data || res.data);
       setMeta(res.data.meta || {});
     } catch (error) {
       if (active.current) showApiError(error, t("loadOrdersError"));
@@ -159,6 +159,19 @@ export default function Orders() {
     }
   };
 
+  const openOrder = async (order) => {
+    setSelectedOrder(order);
+    setDetailLoading(true);
+    try {
+      const { data } = await api.get(`/api/orders/${order.id}`);
+      setSelectedOrder(data.data || data);
+    } catch (error) {
+      showApiError(error, t("loadOrdersError"));
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const cancelOrder = async (orderId) => {
     const reason = window.prompt(`${t("cancelOrder")} — ${t("cancelOnlyPending60")}`);
     if (reason === null) return;
@@ -200,7 +213,7 @@ export default function Orders() {
             const Icon = order.fulfillment_method === "pickup" ? ShoppingBag : config.icon;
 
             return (
-              <button key={order.id} onClick={() => setSelectedOrder(order)} className="group w-full overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-xl sm:p-5">
+              <button key={order.id} onClick={() => void openOrder(order)} className="group w-full overflow-hidden rounded-3xl border border-gray-100 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-xl sm:p-5">
                 <div className="flex items-center gap-4">
                   <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                     <Icon size={24} />
@@ -228,8 +241,11 @@ export default function Orders() {
 
         {selectedOrder && (
           <div
-            className="premium-popover fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
-            onMouseDown={(event) => {
+            className="premium-popover fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center sm:p-5"
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) setSelectedOrder(null);
+            }}
+            onClick={(event) => {
               if (event.target === event.currentTarget) setSelectedOrder(null);
             }}
           >
@@ -237,9 +253,9 @@ export default function Orders() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="order-dialog-title"
-              className="max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl border border-white/70 bg-white p-4 shadow-[0_32px_100px_rgba(15,23,42,.35)] sm:max-h-[calc(100dvh-2.5rem)] sm:p-6 dark:border-gray-700 dark:bg-gray-900"
+              className="relative max-h-[94dvh] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-t-[2rem] border border-white/70 bg-white px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_32px_100px_rgba(15,23,42,.35)] sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-3xl sm:p-6 dark:border-gray-700 dark:bg-gray-900"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="sticky top-0 z-10 -mx-4 mb-1 flex items-start justify-between gap-4 border-b border-gray-100 bg-white/95 px-4 pb-4 pt-5 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 dark:border-gray-800 dark:bg-gray-900/95">
                 <div>
                   <h2 id="order-dialog-title" className="text-2xl font-black">{orderTitle(selectedOrder)}</h2>
                   <p className="text-sm text-gray-500">{selectedOrder.fulfillment_method === "pickup" ? t("storePickup") : t("homeDelivery")}</p>
@@ -252,7 +268,14 @@ export default function Orders() {
                 </button>
               </div>
 
-              <div className="mt-6 space-y-3">
+              {detailLoading && (
+                <div className="flex min-h-48 items-center justify-center text-indigo-600" role="status">
+                  <LoaderCircle className="animate-spin" size={28} />
+                  <span className="sr-only">{t("loading")}</span>
+                </div>
+              )}
+
+              {!detailLoading && <><div className="mt-5 space-y-3 sm:mt-6">
                 {selectedOrder.items?.map((item) => (
                   <div key={item.id} className="flex justify-between gap-4 border-b pb-2">
                     <span className="min-w-0">
@@ -303,22 +326,23 @@ export default function Orders() {
                 <DeliveryTracking status={selectedOrder.status} t={t} />
               )}
 
-              {selectedOrder.delivery?.proof_image && (
+              {selectedOrder.delivery?.proof_url && (
                 <div className="mt-5 border-t pt-4">
                   <p className="text-sm font-semibold">{t("deliveryProof")}</p>
                   <p className="text-sm text-gray-500">{t("receivedBy", { name: selectedOrder.delivery.recipient_name })}</p>
-                  <img src={assetUrl(selectedOrder.delivery.proof_image)} alt={t("deliveryProof")} className="mt-2 h-24 w-36 rounded-lg border object-cover" />
+                  <img src={assetUrl(selectedOrder.delivery.proof_url)} alt={t("deliveryProof")} className="mt-2 h-24 w-36 rounded-lg border object-cover" />
                 </div>
               )}
+              </>}
             </div>
           </div>
         )}
 
-        <div className="mt-8 flex justify-center gap-2">
+        {(meta.last_page || 1) > 1 && <div className="mt-8 flex items-center justify-center gap-2 rounded-2xl bg-white p-2 shadow-sm sm:bg-transparent sm:p-0 sm:shadow-none">
           <button disabled={page === 1} onClick={() => setPage((p) => Math.max(p - 1, 1))} className="rounded-xl border bg-white px-4 py-3 disabled:opacity-40">{t("previous")}</button>
           <span className="px-3 py-3 sm:px-4">{t("page", { page })}</span>
           <button disabled={meta.last_page && page >= meta.last_page} onClick={() => setPage((p) => p + 1)} className="rounded-xl border bg-white px-4 py-3 disabled:opacity-40">{t("next")}</button>
-        </div>
+        </div>}
       </div>
     </div>
   );

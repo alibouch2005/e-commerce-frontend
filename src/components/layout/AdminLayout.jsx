@@ -6,6 +6,7 @@ import AdminDropdown from "../Admin/AdminDropdown";
 import AdminNotifications from "../Admin/AdminNotifications";
 
 const pageTitles = [
+  { match: "/admin/ordered-products", title: "Produits commandés" },
   { match: "/admin/issues", title: "Centre des problèmes" },
   { match: "/admin/courier-cash", title: "Caisse des livreurs" },
   { match: "/admin/wini-products", title: "Wini product" },

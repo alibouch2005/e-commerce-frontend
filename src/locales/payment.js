@@ -7,7 +7,7 @@ export default {
     cardPaymentHelp: 'Finalisez le paiement sur la plateforme bancaire sécurisée CMI.',
     secureCheckout: 'Paiement bancaire sécurisé', secureCheckoutTitle: 'Réglez votre commande en toute confiance',
     secureCheckoutText: 'Après confirmation, vous quittez temporairement AliShop pour saisir vos informations directement sur la page sécurisée CMI.',
-    cardHolder: 'Titulaire', cardExpiry: 'Expire', cardProtected: 'CARTE PROTÉGÉE', yourName: 'VOTRE NOM',
+    cardHolder: 'Titulaire', cardExpiry: 'Expiration', cardProtected: 'CARTE PROTÉGÉE', yourName: 'VOTRE NOM',
     cardNeverStored: 'AliShop ne voit et ne conserve jamais votre numéro de carte ni votre CVV.',
     secureThreeDs: 'Authentification 3D Secure', secureCmi: 'Traitement bancaire par CMI', secureReturn: 'Retour automatique vers AliShop',
     paymentStepOrder: '1. Confirmez la commande', paymentStepBank: '2. Payez sur CMI', paymentStepResult: '3. Recevez le résultat',

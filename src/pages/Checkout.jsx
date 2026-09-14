@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { trackEvent } from "../services/analyticsService";
 import DeliveryMap from "../components/delivery/DeliveryMap";
-import { CreditCard, LogIn, UserPlus } from "lucide-react";
+import { Check, CreditCard, LogIn, Store, Truck, UserPlus } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import { login, register } from "../services/authService";
 import { mergeGuestCart } from "../services/cartService";
@@ -367,10 +367,32 @@ export default function Checkout() {
             </div>
           )}
 
-          <select value={form.fulfillment_method} onChange={(e) => changeFulfillmentMethod(e.target.value)} className="w-full rounded-xl border border-gray-200 p-3 text-base focus:ring-2 focus:ring-indigo-500">
-            <option value="delivery">{t("homeDelivery")}</option>
-            <option value="pickup">{t("pickup")}</option>
-          </select>
+          <fieldset>
+            <legend className="mb-3 text-sm font-black text-gray-950">{t("fulfillmentMode")}</legend>
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                { value: "delivery", label: t("homeDelivery"), detail: t("delivery"), icon: Truck },
+                { value: "pickup", label: t("pickup"), detail: t("pickupFree"), icon: Store },
+              ].map(({ value, label, detail, icon }) => {
+                const selected = form.fulfillment_method === value;
+                const FulfillmentIcon = icon;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => changeFulfillmentMethod(value)}
+                    className={`relative min-h-24 overflow-hidden rounded-2xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${selected ? "border-indigo-600 bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200" : "border-gray-200 bg-white text-gray-700 hover:border-indigo-200 hover:bg-indigo-50"}`}
+                  >
+                    <span className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${selected ? "bg-white/15" : "bg-indigo-50 text-indigo-600"}`}><FulfillmentIcon size={18} /></span>
+                    <strong className="block text-sm leading-tight">{label}</strong>
+                    <small className={`mt-1 block text-[11px] font-semibold ${selected ? "text-indigo-100" : "text-gray-500"}`}>{detail}</small>
+                    {selected && <span className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full bg-white text-indigo-600"><Check size={14} strokeWidth={3} /></span>}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
 
           {form.fulfillment_method === "delivery" && (
             <>

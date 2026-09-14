@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   MessageCircle,
   Package,
+  PackageCheck,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -36,6 +37,7 @@ export default function AdminSidebar({ onNavigate }) {
       label: "Opérations",
       items: [
         ...(user?.role === "admin" ? [{ to: "/admin/orders", label: t("orders"), icon: ClipboardList }] : []),
+        { to: "/admin/ordered-products", label: "Produits commandés", icon: PackageCheck },
         { to: "/admin/courier-cash", label: t("cashTitle"), icon: Banknote },
         { to: "/admin/users", label: t("users"), icon: Users },
         { to: "/admin/coupons", label: t("promos"), icon: Tag },
@@ -53,8 +55,8 @@ export default function AdminSidebar({ onNavigate }) {
 
       <div className="relative p-4 pb-2">
         <Link to="/admin/dashboard" onClick={handleNavigate} className="group flex items-center gap-3 overflow-hidden rounded-[1.35rem] bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 p-4 text-white shadow-xl shadow-indigo-950/20">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/10 shadow-inner backdrop-blur transition duration-300 group-hover:rotate-6 group-hover:scale-105"><Package size={22} className="text-violet-200" /></span>
-          <span className="min-w-0 flex-1"><span className="block truncate text-lg font-black tracking-tight">AliShop</span><span className="block text-[9px] font-black uppercase tracking-[.2em] text-indigo-200">Administration</span></span>
+          <img src="/alishop-logo-on-dark.png" alt="AliShop" className="h-10 min-w-0 flex-1 rounded-xl object-contain object-left" />
+          <span className="sr-only">Administration</span>
           <Sparkles size={16} className="shrink-0 text-amber-300 opacity-80" />
         </Link>
       </div>

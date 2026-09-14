@@ -56,8 +56,8 @@ export default function Register() {
   };
 
   return (
-    <main className="flex min-h-[calc(100dvh-4.5rem)] items-center justify-center bg-[radial-gradient(circle_at_top_left,#ecfeff,transparent_34%),#f6f7fb] px-4 py-8 sm:px-6 dark:bg-gray-950">
-      <div data-testid="auth-card" className="w-full max-w-2xl rounded-3xl border border-gray-100 bg-white p-5 shadow-2xl shadow-emerald-100/50 sm:p-8 dark:border-gray-800 dark:bg-gray-900 dark:shadow-none">
+    <main className="flex min-h-[calc(100dvh-4.5rem)] items-start justify-center bg-[radial-gradient(circle_at_top_left,#ecfeff,transparent_34%),radial-gradient(circle_at_bottom_right,#ede9fe,transparent_35%),#f6f7fb] px-3 py-5 sm:items-center sm:px-6 sm:py-8">
+      <div data-testid="auth-card" className="w-full max-w-2xl rounded-[1.75rem] border border-white bg-white/95 p-5 shadow-2xl shadow-emerald-100/50 backdrop-blur sm:p-8">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
             <UserPlus size={24} />

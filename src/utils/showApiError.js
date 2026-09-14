@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 const fallbackLabels = {
   name: "Nom",
   email: "Email",
-  phone: "Telephone",
+  phone: "Téléphone",
   address: "Adresse",
   adresse_livraison: "Adresse livraison",
   password: "Mot de passe",
@@ -11,7 +11,7 @@ const fallbackLabels = {
   current_password: "Mot de passe actuel",
   new_password: "Nouveau mot de passe",
   new_password_confirmation: "Confirmation mot de passe",
-  category_id: "Categorie",
+  category_id: "Catégorie",
   price: "Prix",
   sale_price: "Prix promo",
   stock: "Stock",
@@ -20,17 +20,17 @@ const fallbackLabels = {
   coupon_code: "Code promo",
   payment_method: "Paiement",
   fulfillment_method: "Mode de reception",
-  recipient_name: "Receptionnaire",
+  recipient_name: "Réceptionnaire",
   proof_image: "Photo preuve",
-  admin_reply: "Reponse admin",
+  admin_reply: "Réponse de l’administration",
 };
 
 const statusLabels = {
-  400: "Requete invalide",
+  400: "Requête invalide",
   401: "Connexion requise",
   403: "Acces refuse",
   404: "Element introuvable",
-  419: "Session expiree",
+  419: "Session expirée",
   422: "Erreur de validation",
   429: "Trop de tentatives",
   500: "Erreur serveur",
@@ -46,7 +46,7 @@ export function getApiErrorMessages(error, fallback = "Une erreur est survenue")
   const retryAfter = Number(error?.response?.headers?.["retry-after"] || 0);
 
   if (!error?.response) {
-    return ["Connexion impossible. Verifiez internet ou le serveur API."];
+    return ["Connexion impossible. Vérifiez votre connexion Internet ou le serveur API."];
   }
 
   if (data?.errors && typeof data.errors === "object") {
@@ -57,7 +57,7 @@ export function getApiErrorMessages(error, fallback = "Une erreur est survenue")
   }
 
   if (status === 429) {
-    const waitText = retryAfter > 0 ? ` Attendez ${retryAfter} seconde(s) avant de reessayer.` : " Patientez un instant avant de reessayer.";
+    const waitText = retryAfter > 0 ? ` Attendez ${retryAfter} seconde(s) avant de réessayer.` : " Patientez un instant avant de réessayer.";
     return [`${title}.${waitText}`];
   }
 

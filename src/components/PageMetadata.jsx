@@ -6,13 +6,14 @@ export default function PageMetadata({ product }) {
   const { pathname, search } = useLocation();
   // Product pages provide metadata only after the actual product is loaded.
   if (/^\/products\/[^/]+$/.test(pathname) && !product) return null;
-  const isPublic = Boolean(product) || ['/', '/products', '/support'].includes(pathname);
+  const isPublic = Boolean(product) || ['/', '/products', '/support', '/contact'].includes(pathname) || pathname.startsWith('/legal/');
   const base = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '');
   const canonical = new URL(pathname, base);
   const page = Number(new URLSearchParams(search).get('page'));
   if (pathname === '/products' && Number.isSafeInteger(page) && page > 1) canonical.searchParams.set('page', page);
-  const title = product ? `${product.name} | AliShop Casablanca` : pathname === '/' ? t('seoHomeTitle') : `${pathname === '/products' ? t('products') : pathname === '/support' ? t('support') : 'AliShop'} | AliShop Casablanca`;
-  const description = product ? (product.short_description || product.description || product.name).slice(0, 170) : t(pathname === '/products' ? 'seoProductsDescription' : 'seoHomeDescription');
+  const legalTitle = { contact: 'Contact', 'delivery-returns': 'Livraison et retours', terms: 'Conditions de vente', privacy: 'Confidentialité' }[pathname.split('/').pop()];
+  const title = product ? `${product.name} | AliShop Casablanca` : pathname === '/' ? t('seoHomeTitle') : `${pathname === '/contact' ? 'Contact' : legalTitle || (pathname === '/products' ? t('products') : pathname === '/support' ? t('support') : 'AliShop')} | AliShop Casablanca`;
+  const description = product ? (product.short_description || product.description || product.name).slice(0, 170) : pathname === '/contact' ? 'Contactez AliShop Casablanca pour une question sur un produit, une commande ou une livraison.' : t(pathname === '/products' ? 'seoProductsDescription' : 'seoHomeDescription');
   const image = new URL(product?.image || '/store-hero-pro.png', base).href;
   const structured = product ? {
     '@context': 'https://schema.org', '@type': 'Product', name: product.name,
@@ -30,6 +31,7 @@ export default function PageMetadata({ product }) {
     <link rel="canonical" href={canonical.href} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="AliShop" />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:image" content={image} />
     <meta property="og:type" content="website" />

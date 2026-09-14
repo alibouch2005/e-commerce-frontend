@@ -197,7 +197,7 @@ export default function AdminProducts() {
 
     if (!form.category_id) return toast.error("Choisissez une catégorie");
     if (form.sale_price && Number(form.sale_price) >= Number(form.price)) {
-      return toast.error("Le prix promo doit etre inferieur au prix normal");
+      return toast.error("Le prix promotionnel doit être inférieur au prix normal");
     }
 
     const formData = new FormData();
@@ -605,8 +605,8 @@ export default function AdminProducts() {
               <div className="mb-3 flex items-start gap-3">
                 <span className="rounded-xl bg-white p-3 text-violet-600 shadow-sm"><Video size={20} /></span>
                 <div>
-                  <p className="font-black text-gray-950">VidÃ©o produit optionnelle</p>
-                  <p className="text-xs text-gray-500">Ajoutez une courte vidÃ©o MP4, MOV ou WEBM pour mieux montrer le produit au client.</p>
+                  <p className="font-black text-gray-950">Vidéo du produit (facultative)</p>
+                  <p className="text-xs text-gray-500">Ajoutez une courte vidéo MP4, MOV ou WEBM pour mieux présenter le produit au client.</p>
                 </div>
               </div>
               {videoPreview && (
@@ -619,7 +619,7 @@ export default function AdminProducts() {
               )}
               <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-violet-700 shadow-sm hover:bg-violet-100">
                 <Video size={18} />
-                {videoPreview ? "Changer la vidÃ©o" : "Choisir une vidÃ©o"}
+                {videoPreview ? "Changer la vidéo" : "Choisir une vidéo"}
                 <input type="file" className="hidden" accept="video/mp4,video/quicktime,video/webm" onChange={(e) => chooseVideo(e.target.files?.[0])} />
               </label>
             </div>
@@ -697,7 +697,7 @@ export default function AdminProducts() {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="4" className="p-10 text-center text-gray-400">Aucun produit trouve</td></tr>
+                <tr><td colSpan="4" className="p-10 text-center text-gray-400">Aucun produit trouvé</td></tr>
               )}
             </tbody>
           </table>

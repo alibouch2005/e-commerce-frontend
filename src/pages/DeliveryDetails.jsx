@@ -21,7 +21,12 @@ export default function DeliveryDetails() {
   const [proof, setProof] = useState({ recipient_name: "", delivery_note: "", proof_image: null, preview: "" });
 
   const fetchOrder = useCallback(async () => {
-    try { const { data } = await api.get(`/api/livreur/orders/${id}`); setOrder(data.data || data); }
+    try {
+      const { data } = await api.get(`/api/livreur/orders/${id}`);
+      const nextOrder = data.data || data;
+      setOrder(nextOrder);
+      setProof((current) => current.recipient_name ? current : { ...current, recipient_name: nextOrder.user?.name || "" });
+    }
     catch (error) { showApiError(error, "Cette livraison n’est plus disponible"); navigate("/deliveries", { replace: true }); }
     finally { setLoading(false); }
   }, [id, navigate]);

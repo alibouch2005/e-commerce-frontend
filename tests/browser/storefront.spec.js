@@ -77,9 +77,9 @@ test('empty cart is stable, responsive and guides the customer back to products'
   expect(errors).toEqual([]);
   expect(consoleErrors.filter((message) => /ReferenceError|Application error/i.test(message))).toEqual([]);
   await expect(page.getByRole('heading', { name: 'Votre panier est vide' })).toBeVisible();
-  await expect(page.getByText('Paiement securise')).toBeVisible();
+  await expect(page.getByText('Paiement sécurisé')).toBeVisible();
   await noOverflow(page);
-  await page.getByRole('button', { name: 'Voir produits' }).click();
+  await page.getByRole('button', { name: 'Voir les produits' }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
 
@@ -134,7 +134,7 @@ test('home, product details and Arabic layout remain usable', async ({ page }, t
   await page.evaluate(() => localStorage.setItem('locale', 'ar'));
   await page.goto('/');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-  await expect(page.locator('nav')).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('nav[dir]')).toHaveAttribute('dir', 'ltr');
   await expect(page.getByRole('heading', { name: 'مشترياتك تستحق المكافأة' })).toBeVisible();
   await noOverflow(page);
   await page.screenshot({ path: testInfo.outputPath('home-ar.png') });
@@ -142,6 +142,14 @@ test('home, product details and Arabic layout remain usable', async ({ page }, t
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Shopping that rewards you' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+});
+
+test('contact page is responsive and exposes the official email', async ({ page }) => {
+  await page.goto('/contact');
+  await expect(page.getByRole('heading', { level: 1, name: 'Parlons de votre besoin.' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'contact@alishop.ma' }).first()).toHaveAttribute('href', 'mailto:contact@alishop.ma');
+  await expect(page.getByRole('heading', { name: 'Envoyer un message' })).toBeVisible();
+  await noOverflow(page);
 });
 
 test('signed-in navigation fits and mobile menu closes outside', async ({ page }) => {

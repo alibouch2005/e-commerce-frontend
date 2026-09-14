@@ -252,7 +252,7 @@ export default function AdminWiniProducts() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <ActionCard title="Stock test" text="Commence par 5 à 10 unités max pour chaque nouveau produit." />
-        <ActionCard title="Photos" text="Ajoute 3 photos minimum: produit seul, utilisation réelle, détail qualité." />
+        <ActionCard title="Photos" text="Ajoutez au moins trois photos : produit seul, utilisation réelle et détail de qualité." />
         <ActionCard title="Prix lancement" text="Mets une promo courte pour mesurer clics, paniers, favoris et commandes." />
       </section>
     </div>

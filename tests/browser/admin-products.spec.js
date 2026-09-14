@@ -22,6 +22,10 @@ test.beforeEach(async ({ page }) => {
         to: current === 1 ? 10 : 15, total: 15,
       } });
     }
+    if (url.pathname === '/api/admin/ordered-products') return json({
+      data: [{ ...product(30), name: 'Cigar', stock: 9, orders_count: 5 }],
+      current_page: 1, last_page: 1, total: 1,
+    });
     if (url.pathname === '/api/admin/stats') return json({ total_orders: 2, delivered_orders: 1, low_stock_products: [], status: {}, revenue_trends: { monthly: [], yearly: [] }, customer_conversion: {}, admin_attention: {}, revenue_breakdown: {} });
     if (url.pathname === '/api/admin/sales-by-day') return json([]);
     if (url.pathname === '/api/admin/orders') return json({ data: [], meta: {} });
@@ -67,4 +71,14 @@ test('users list is paginated', async ({ page }) => {
   await expect(page.getByText('Utilisateur 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Page suivante' }).click();
   await expect(page.getByText('Utilisateur 11', { exact: true })).toBeVisible();
+});
+
+test('ordered products show only order count and current stock', async ({ page }) => {
+  await page.goto('/admin/ordered-products');
+  const card = page.locator('article').filter({ hasText: 'Cigar' });
+  await expect(card).toContainText('5');
+  await expect(card).toContainText('Commandes');
+  await expect(card).toContainText('9');
+  await expect(card).toContainText('Stock actuel');
+  await expect(card.getByText(/unités|DH/i)).toHaveCount(0);
 });
