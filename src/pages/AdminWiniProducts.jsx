@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -11,6 +11,8 @@ import {
   Search,
   Sparkles,
   TrendingUp,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import api from "../Api/axios";
 import toast from "react-hot-toast";
@@ -30,22 +32,23 @@ export default function AdminWiniProducts() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [priority, setPriority] = useState("all");
+  const [researching, setResearching] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const { data } = await api.get("/api/admin/stats");
-        setStats(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Impossible de charger Wini product");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
+  const load = useCallback(async (term = "") => {
+    setResearching(true);
+    try {
+      const { data } = await api.get("/api/admin/stats", { params: { research: term, refresh: Date.now() } });
+      setStats(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Impossible d’actualiser la recherche produit");
+    } finally {
+      setLoading(false);
+      setResearching(false);
+    }
   }, []);
+
+  useEffect(() => { void load(); }, [load]);
 
   const suggestions = useMemo(() => stats?.market_suggestions || [], [stats]);
   const requests = useMemo(() => stats?.requested_products || [], [stats]);
@@ -67,7 +70,7 @@ export default function AdminWiniProducts() {
     });
   }, [category, priority, search, suggestions]);
 
-  const topScore = suggestions[0]?.score || 0;
+  const topSignal = suggestions[0]?.signal_count || 0;
   const highPriorityCount = suggestions.filter((item) => item.priority === "Haute").length;
 
   if (loading) {
@@ -87,15 +90,15 @@ export default function AdminWiniProducts() {
               <Sparkles size={16} /> Wini product
             </span>
             <h1 className="mt-5 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">
-              Produits tendance à tester pour AliShop.
+              Décisions produits basées sur vos données réelles.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-              Une page admin dédiée pour décider quoi ajouter au catalogue : tendances e-commerce Maroc,
-              demandes réelles des clients, score priorité, marge et prix de test.
+              Chaque actualisation relit les demandes clients, les commandes livrées et les vues produits consenties.
+              Aucun volume, score, prix ou marge n’est inventé.
             </p>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
-              <HeroMetric label="Meilleur score" value={`${topScore}/100`} />
+              <HeroMetric label="Signal le plus fort" value={topSignal} />
               <HeroMetric label="Priorité haute" value={highPriorityCount} />
               <HeroMetric label="Demandes clients" value={stats?.product_requests_count || 0} />
             </div>
@@ -124,12 +127,12 @@ export default function AdminWiniProducts() {
       <section className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-widest text-indigo-600">Recherche marché</p>
-            <h2 className="text-2xl font-black text-gray-950">Liste des produits tendance</h2>
-            <p className="mt-1 text-sm text-gray-500">Filtre les produits selon catégorie, priorité ou mot-clé.</p>
+            <p className="text-xs font-black uppercase tracking-widest text-indigo-600">Recherche actualisée</p>
+            <h2 className="text-2xl font-black text-gray-950">Signaux produits vérifiables</h2>
+            <p className="mt-1 text-sm text-gray-500">Source : {stats?.market_research?.source || "données AliShop"}</p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-[1fr_190px_170px] lg:w-[720px]">
+          <div className="grid gap-3 sm:grid-cols-2 lg:w-[820px] lg:grid-cols-[1fr_160px_150px_auto]">
             <label className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
               <Search size={18} className="text-gray-400" />
               <input
@@ -147,28 +150,31 @@ export default function AdminWiniProducts() {
               <option value="Haute">Haute</option>
               <option value="Moyenne">Moyenne</option>
             </select>
+            <button type="button" disabled={researching} onClick={() => load(search.trim())} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 text-sm font-black text-white disabled:opacity-50">
+              <RefreshCw size={17} className={researching ? "animate-spin" : ""} /> Rechercher
+            </button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredSuggestions.map((item, index) => (
-            <article key={`${item.name}-${item.score}`} className="group rounded-3xl border border-gray-100 bg-gray-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl">
+            <article key={`${item.source}-${item.product_id || item.name}`} className="group rounded-3xl border border-gray-100 bg-gray-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-xl">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-black uppercase tracking-widest text-indigo-600">#{index + 1} · {item.category}</p>
                   <h3 className="mt-2 text-xl font-black text-gray-950">{item.name}</h3>
                 </div>
                 <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
-                  <b className="block text-lg text-gray-950">{item.score}</b>
-                  <span className="text-[10px] font-black text-gray-400">/100</span>
+                  <b className="block text-lg text-gray-950">{item.signal_count}</b>
+                  <span className="text-[10px] font-black text-gray-400">{item.signal_label}</span>
                 </div>
               </div>
 
               <p className="mt-4 min-h-16 text-sm leading-6 text-gray-600">{item.reason}</p>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <InfoPill label="Prix test" value={item.test_price || "À définir"} />
-                <InfoPill label="Marge" value={item.margin_level || "Moyenne"} />
+                <InfoPill label="Signal mesuré" value={`${item.signal_count} ${item.signal_label}`} />
+                <InfoPill label="Source" value={item.source} />
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2">
@@ -176,7 +182,7 @@ export default function AdminWiniProducts() {
                   {item.priority}
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500">
-                  Saison: {item.season || "normal"}
+                  {item.already_in_catalog ? "Déjà au catalogue" : "Produit demandé"}
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-500">
                   MAJ {item.updated_at}
@@ -187,6 +193,9 @@ export default function AdminWiniProducts() {
                 <Link to="/admin/products" className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-black text-white hover:bg-indigo-700">
                   Ajouter <ArrowUpRight size={16} />
                 </Link>
+                <a href={`https://trends.google.com/trends/explore?geo=MA&q=${encodeURIComponent(item.name)}`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-gray-700 hover:border-indigo-200 hover:text-indigo-600">
+                  Trends Maroc <ExternalLink size={15} />
+                </a>
                 <button
                   onClick={() => navigator.clipboard?.writeText(item.name).then(() => toast.success("Nom copié"))}
                   className="rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-gray-700 hover:border-indigo-200 hover:text-indigo-600"

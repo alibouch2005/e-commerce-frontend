@@ -22,7 +22,22 @@ export default function PageMetadata({ product }) {
       '@type': 'Offer', url: canonical.href, priceCurrency: 'MAD',
       price: Number(product.current_price ?? product.price).toFixed(2),
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@type': 'Organization', name: 'AliShop' },
     } } : {}),
+  } : pathname === '/' ? {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite', name: 'AliShop', url: `${base}/`, inLanguage: ['fr-MA', 'ar-MA', 'en'],
+        potentialAction: { '@type': 'SearchAction', target: `${base}/products?search={search_term_string}`, 'query-input': 'required name=search_term_string' },
+      },
+      {
+        '@type': 'Store', name: 'AliShop', url: `${base}/`, image, logo: new URL('/alishop-logo.png', base).href,
+        address: { '@type': 'PostalAddress', streetAddress: 'Rue 177', postalCode: '20202', addressLocality: 'Casablanca', addressCountry: 'MA' },
+        areaServed: { '@type': 'City', name: 'Casablanca' }, currenciesAccepted: 'MAD', paymentAccepted: 'Cash',
+      },
+    ],
   } : null;
   return <>
     <title>{title}</title>
@@ -34,9 +49,12 @@ export default function PageMetadata({ product }) {
     <meta property="og:site_name" content="AliShop" />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:image" content={image} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={product ? 'product' : 'website'} />
     <meta property="og:locale" content={{ fr: 'fr_MA', en: 'en_US', ar: 'ar_MA' }[locale]} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
     {structured && <script type="application/ld+json">{JSON.stringify(structured).replaceAll('<', '\\u003c')}</script>}
   </>;
 }

@@ -39,7 +39,7 @@ export const resetPassword = (data) => {
 
 // Récupérer les informations de l'utilisateur connecté
 export const getUser = () => {
-  return api.get("/api/user");
+  return api.get("/api/user", { timeout: 10000 });
 };
 
 // CHANGE PASSWORD

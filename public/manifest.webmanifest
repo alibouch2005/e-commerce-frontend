@@ -1,7 +1,7 @@
 {
   "name": "AliShop Casablanca",
   "short_name": "AliShop",
-  "description": "Boutique e-commerce moderne avec livraison, retrait magasin et paiement sécurisé.",
+  "description": "Boutique en ligne à Casablanca avec livraison locale, retrait gratuit en magasin et paiement à la livraison.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f6f7fb",

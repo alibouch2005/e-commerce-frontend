@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import { getUser, logout } from "../services/authService";
+import AppLoadingScreen from "../components/AppLoadingScreen";
 
 export function AuthProvider({ children }) {
 
@@ -39,7 +40,7 @@ export function AuthProvider({ children }) {
 
     setUser(null); // clear frontend
   };
-if(loading) return <p>Loading...</p>;
+  if (loading) return <AppLoadingScreen label="Vérification de votre session…" />;
   return (
 
     <AuthContext.Provider

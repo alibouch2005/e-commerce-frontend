@@ -18,7 +18,7 @@ export default function Home() {
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroImage, setHeroImage] = useState("/store-hero-pro.png");
-  const [heroReady, setHeroReady] = useState(true);
+  const [heroReady, setHeroReady] = useState(() => window.matchMedia("(min-width: 768px)").matches);
   const [quickSearch, setQuickSearch] = useState("");
   const [error, setError] = useState(false);
 
@@ -114,9 +114,9 @@ export default function Home() {
             </div>
 
             <div className="mt-8 grid max-w-2xl grid-cols-3 gap-3">
-              <HeroStat value="24h" label={t("fastProcessing")} />
-              <HeroStat value="CMI" label={t("cardPayment")} />
-              <HeroStat value={t("twoModes")} label={t("deliveryPickup")} />
+              <HeroStat value="Casa" label={t("delivery")} />
+              <HeroStat value="0 DH" label={t("pickup")} />
+              <HeroStat value="COD" label={t("cashPayment")} />
             </div>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function Home() {
         <div className="grid gap-4 md:grid-cols-3">
           <FeatureCard icon={<PackageSearch className="text-indigo-600" />} title={t("organizedCatalog")} text={t("organizedCatalogText")} />
           <FeatureCard icon={<Truck className="text-emerald-600" />} title={t("deliveryPickupTitle")} text={t("deliveryPickupText")} />
-          <FeatureCard icon={<ShieldCheck className="text-amber-600" />} title={t("cmiSecure")} text={`${t("cashPayment")} / ${t("cardPayment")}`} />
+          <FeatureCard icon={<ShieldCheck className="text-amber-600" />} title={t("cashPayment")} text={t("cashPaymentHelp")} />
         </div>
 
         {error && <div role="alert" className="rounded-2xl border border-rose-200 bg-white p-5 text-gray-900">

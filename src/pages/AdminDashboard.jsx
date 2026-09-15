@@ -40,7 +40,7 @@ import {
   Users,
 } from "lucide-react";
 
-const COLORS = ["#facc15", "#60a5fa", "#a78bfa", "#22c55e"];
+const COLORS = ["#facc15", "#60a5fa", "#a78bfa", "#22c55e", "#f87171", "#94a3b8"];
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const assetUrl = (path) => (!path ? "" : path.startsWith("http") ? path : `${apiUrl}${path}`);
 const orderStatus = {
@@ -104,6 +104,8 @@ export default function AdminDashboard() {
     { name: "Préparation", value: stats?.status?.preparing || 0 },
     { name: "Livraison", value: stats?.status?.shipping || 0 },
     { name: "Livrée", value: stats?.status?.delivered || 0 },
+    { name: "Annulée", value: stats?.status?.cancelled || 0 },
+    { name: "Remboursée", value: stats?.status?.refunded || 0 },
   ];
   const monthlyRevenue = stats?.revenue_trends?.monthly || [];
   const yearlyRevenue = stats?.revenue_trends?.yearly || [];
@@ -142,19 +144,19 @@ export default function AdminDashboard() {
       <div className="grid gap-3 sm:grid-cols-3">
         <MoneyBreakdown title="Revenus produits" value={formatMoney(stats?.revenue_breakdown?.delivered_products)} color="emerald" />
         <MoneyBreakdown title="Frais livraison encaissés" value={formatMoney(stats?.revenue_breakdown?.delivery_fees)} color="sky" />
-        <MoneyBreakdown title="Revenus en cours" value={formatMoney(stats?.revenue_breakdown?.pending_revenue)} color="amber" />
+        <MoneyBreakdown title="Montant des commandes en cours" value={formatMoney(stats?.revenue_breakdown?.pending_revenue)} color="amber" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <RevenueTrendChart
           title="Revenus par mois"
-          subtitle="Commandes livrées sur les 12 derniers mois"
+          subtitle="Revenus classés selon la date réelle de livraison"
           data={monthlyRevenue}
           formatMoney={formatMoney}
         />
         <RevenueTrendChart
           title="Revenus par année"
-          subtitle="Vue annuelle des revenus encaissés"
+          subtitle="Revenus livrés, classés à leur date d’encaissement"
           data={yearlyRevenue}
           formatMoney={formatMoney}
         />

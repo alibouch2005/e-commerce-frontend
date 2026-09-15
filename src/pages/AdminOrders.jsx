@@ -252,7 +252,7 @@ function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatu
             <p className="text-xl font-black text-indigo-600">{displayTotal(order)}</p>
           </div>
 
-          <div className="relative min-w-[190px]">
+          {order.fulfillment_method === "delivery" && <div className="relative min-w-[190px]">
             <UserPlus className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <select
               disabled={loadingAssign === order.id}
@@ -263,7 +263,7 @@ function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatu
               <option value="">{order.livreur_id ? "Changer livreur" : "Assigner livreur"}</option>
               {rankedLivreurs.map((livreur, index) => <option key={livreur.id} value={livreur.id}>{index === 0 && !order.livreur_id ? "★ Recommandé · " : ""}{livreur.name} · {livreur.active_deliveries_count || 0} active(s){Number.isFinite(routeDistance(livreur, order)) ? ` · ${routeDistance(livreur, order).toFixed(1)} km du trajet` : ""}</option>)}
             </select>
-          </div>
+          </div>}
 
           <select
             disabled={updatingStatus === order.id}
@@ -271,7 +271,7 @@ function OrderCard({ order, livreurs, statusConfig, loadingAssign, updatingStatu
             onChange={(event) => onStatusUpdate(order.id, event.target.value)}
             className="min-w-[160px] rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            {Object.entries(statusConfig).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+            {Object.entries(statusConfig).filter(([key]) => order.fulfillment_method === "delivery" || key !== "shipping").map(([key, item]) => <option key={key} value={key}>{key === "delivered" && order.fulfillment_method === "pickup" ? "Retirée par le client" : item.label}</option>)}
           </select>
 
           <button onClick={onDetails} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white hover:bg-indigo-700">

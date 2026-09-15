@@ -4,7 +4,6 @@ import { Toaster } from "react-hot-toast";
 import { AuthContext } from "./context/AuthContext";
 
 import Home from "./pages/Home";
-import Products from "./pages/Products";
 import Navbar from "./components/layout/Navbar";
 import GuestGuard from "./guards/GuestRoute";
 import AdminGuard from "./guards/AdminGuard";
@@ -15,8 +14,10 @@ import CookieConsentBanner from "./components/analytics/CookieConsentBanner";
 import NotFound from "./pages/NotFound";
 import PageMetadata from "./components/PageMetadata";
 import { useLanguage } from "./context/LanguageContext";
+import AppLoadingScreen from "./components/AppLoadingScreen";
 
 const Deliveries = lazy(() => import("./pages/Deliveries"));
+const Products = lazy(() => import("./pages/Products"));
 const DeliveryDetails = lazy(() => import("./pages/DeliveryDetails"));
 const CourierCash = lazy(() => import("./pages/CourierCash"));
 const Login = lazy(() => import('./pages/Login'));
@@ -80,7 +81,7 @@ function AppContent() {
       <CookieConsentBanner />
 
       <main id="main-content" tabIndex={-1}>
-      <Suspense fallback={<div role="status" className="flex min-h-[40vh] items-center justify-center text-gray-500">{t('loading')}</div>}>
+      <Suspense fallback={<AppLoadingScreen label={t('loading')} />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />

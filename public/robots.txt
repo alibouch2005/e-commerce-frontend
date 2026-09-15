@@ -6,3 +6,4 @@ Disallow: /orders
 Disallow: /profile
 Disallow: /deliveries
 Sitemap: https://www.alishop.ma/sitemap.xml
+Sitemap: https://www.alishop.ma/sitemap-products.xml

@@ -24,13 +24,17 @@ function distanceKm(lat1, lon1, lat2, lon2) {
 
 const roundMoney = (amount) => Math.round(amount * 2) / 2;
 
-export function getDeliveryQuote({ fulfillmentMethod, latitude, longitude, productFreeDelivery = false }) {
+export function getDeliveryQuote({ fulfillmentMethod, latitude, longitude, productFreeDelivery = false, productDeliveryPrice = null }) {
   if (fulfillmentMethod === "pickup") {
     return { fee: 0, distanceKm: 0, estimated: false, freeDelivery: true, freeDeliveryReason: "pickup" };
   }
 
   if (productFreeDelivery) {
     return { fee: 0, distanceKm: null, estimated: false, freeDelivery: true, freeDeliveryReason: "product" };
+  }
+
+  if (productDeliveryPrice !== null && productDeliveryPrice !== undefined && productDeliveryPrice !== "") {
+    return { fee: roundMoney(Math.max(0, Number(productDeliveryPrice))), distanceKm: null, estimated: false, freeDelivery: Number(productDeliveryPrice) <= 0, freeDeliveryReason: Number(productDeliveryPrice) <= 0 ? "product" : null, pricingSource: "product" };
   }
 
   if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {

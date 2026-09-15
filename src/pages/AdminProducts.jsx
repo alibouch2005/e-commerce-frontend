@@ -27,6 +27,7 @@ const emptyForm = {
   sale_price: "",
   sale_ends_at: "",
   stock: "",
+  delivery_price: "",
   free_delivery: false,
   free_delivery_ends_at: "",
   featured_home: false,
@@ -207,6 +208,7 @@ export default function AdminProducts() {
     formData.append("long_description", form.long_description || "");
     formData.append("price", form.price);
     formData.append("stock", form.stock);
+    formData.append("delivery_price", form.free_delivery ? "" : form.delivery_price);
     formData.append("free_delivery", form.free_delivery ? "1" : "0");
     formData.append("free_delivery_ends_at", form.free_delivery ? (form.free_delivery_ends_at || "") : "");
     formData.append("featured_home", form.featured_home ? "1" : "0");
@@ -257,6 +259,7 @@ export default function AdminProducts() {
       sale_price: product.sale_price || "",
       sale_ends_at: product.sale_ends_at ? product.sale_ends_at.slice(0, 16) : "",
       stock: product.stock ?? "",
+      delivery_price: product.delivery_price ?? "",
       free_delivery: Boolean(product.free_delivery),
       free_delivery_ends_at: product.free_delivery_ends_at ? product.free_delivery_ends_at.slice(0, 16) : "",
       featured_home: Boolean(product.featured_home),
@@ -414,7 +417,14 @@ export default function AdminProducts() {
               <input type="datetime-local" value={form.sale_ends_at} onChange={(e) => setForm({ ...form, sale_ends_at: e.target.value })} className="p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
 
-            <input type="number" min="0" placeholder="Quantité en stock" required value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <input type="number" min="0" placeholder="Quantité en stock" required value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
+              <label className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-bold text-sky-900">
+                Prix de livraison (DH)
+                <input type="number" step="0.5" min="0" max="10000" placeholder="Ex. 25" disabled={form.free_delivery} value={form.delivery_price} onChange={(e) => setForm({ ...form, delivery_price: e.target.value })} className="mt-1 w-full rounded-lg border border-sky-100 bg-white p-2 text-base font-normal outline-none focus:ring-2 focus:ring-sky-500 disabled:opacity-50" />
+                <span className="mt-1 block font-normal text-sky-700">Facultatif. Dans un panier mixte, le prix produit le plus élevé est appliqué une seule fois.</span>
+              </label>
+            </div>
             <label className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-950">
               <input type="checkbox" checked={form.featured_home} onChange={(e) => setForm({ ...form, featured_home: e.target.checked })} className="mt-1 h-5 w-5 accent-amber-500" />
               <span><span className="block font-black">Mettre en avant sur l’accueil</span><span className="text-amber-700">Le produit apparaîtra dans une sélection dédiée sur l’accueil, même sans promotion.</span></span>
@@ -423,7 +433,7 @@ export default function AdminProducts() {
               <input
                 type="checkbox"
                 checked={form.free_delivery}
-                onChange={(e) => setForm({ ...form, free_delivery: e.target.checked })}
+                onChange={(e) => setForm({ ...form, free_delivery: e.target.checked, delivery_price: e.target.checked ? "" : form.delivery_price })}
                 className="mt-1 h-5 w-5 accent-emerald-600"
               />
               <span>
@@ -677,6 +687,7 @@ export default function AdminProducts() {
                         <div className="flex flex-wrap gap-2">
                           <p className={`text-[10px] font-bold uppercase ${product.stock > 0 ? "text-emerald-500" : "text-red-400"}`}>{product.stock > 0 ? `${product.stock} unités` : "Rupture de stock"}</p>
                           {product.free_delivery && <p className="text-[10px] font-black uppercase text-sky-600">Livraison gratuite</p>}
+                          {!product.free_delivery && product.delivery_price !== null && <p className="text-[10px] font-black uppercase text-sky-600">Livraison {formatAmount(product.delivery_price)} DH</p>}
                           {product.featured_home && <p className="text-[10px] font-black uppercase text-amber-600">Accueil</p>}
                           {product.has_variants && <p className="text-[10px] font-black uppercase text-indigo-600">Variantes</p>}
                           {product.video && <p className="text-[10px] font-black uppercase text-violet-600">Vidéo</p>}

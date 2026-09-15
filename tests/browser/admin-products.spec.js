@@ -42,6 +42,7 @@ test('product inventory is primary and editor opens only on demand', async ({ pa
 
   await page.getByRole('button', { name: 'Ajouter un produit' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByText('Prix de livraison (DH)')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
@@ -49,6 +50,14 @@ test('product inventory is primary and editor opens only on demand', async ({ pa
   await expect(page.getByText('Produit admin 11', { exact: true })).toBeVisible();
   await expect(page.getByText(/Produits 11–15 sur/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});
+
+test('admin route reload restores the page without a bare loading screen', async ({ page }) => {
+  await page.goto('/admin/coupons');
+  await expect(page.getByRole('heading', { name: 'Promotions', level: 1 })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Promotions', level: 1 })).toBeVisible();
+  await expect(page.getByText('Loading...', { exact: true })).toHaveCount(0);
 });
 
 test('dashboard provides a direct orders action', async ({ page }) => {

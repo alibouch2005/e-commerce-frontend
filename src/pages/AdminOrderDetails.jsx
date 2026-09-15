@@ -4,6 +4,7 @@ import api from "../Api/axios";
 import toast from "react-hot-toast";
 import DeliveryMap from "../components/delivery/DeliveryMap";
 import { formatAmount } from "../utils/money";
+import { STORE_LOCATION } from "../utils/deliveryPricing";
 import { 
   ArrowLeft, 
   User, 
@@ -173,10 +174,10 @@ export default function AdminOrderDetails() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
-                  <MapPin size={12} /> Adresse
+                  <MapPin size={12} /> {order.fulfillment_method === "pickup" ? "Point de retrait" : "Adresse de livraison"}
                 </p>
                 <p className="font-medium text-gray-900 leading-relaxed">
-                  {order.adresse_livraison}
+                  {order.fulfillment_method === "pickup" ? STORE_LOCATION.address : order.adresse_livraison}
                 </p>
               </div>
               {order.fulfillment_method === "delivery" && (
@@ -203,7 +204,7 @@ export default function AdminOrderDetails() {
                 </span>
               </div>
               <select disabled={updating} value={order.status} onChange={(e) => changeStatus(e.target.value)} className="w-full border rounded-lg p-2 font-medium">
-                <option value="pending">En attente</option><option value="preparing">Préparation</option><option value="shipping">En livraison</option><option value="delivered">Livrée</option><option value="cancelled">Annulée</option><option value="refunded">Remboursée</option>
+                <option value="pending">En attente</option><option value="preparing">Préparation</option>{order.fulfillment_method === "delivery" && <option value="shipping">En livraison</option>}<option value="delivered">{order.fulfillment_method === "pickup" ? "Retirée par le client" : "Livrée"}</option><option value="cancelled">Annulée</option><option value="refunded">Remboursée</option>
               </select>
             </div>
           </div>
@@ -212,7 +213,7 @@ export default function AdminOrderDetails() {
         {/* PRODUITS */}
         <div className="md:col-span-2 space-y-6">
           {order.fulfillment_method === "delivery" && <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"><h2 className="font-bold mb-3">Carte de livraison</h2><DeliveryMap latitude={order.delivery_latitude} longitude={order.delivery_longitude} address={order.adresse_livraison} /></div>}
-          {order.fulfillment_method === "pickup" && <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl font-medium">Commande à retirer localement par le client.</div>}
+          {order.fulfillment_method === "pickup" && <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl font-medium">Retrait par le client à {STORE_LOCATION.address}. Aucun livreur et aucun frais de livraison.</div>}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h2 className="font-bold text-gray-800 border-b pb-3 mb-4 flex items-center gap-2">
               <Tag size={18} className="text-indigo-600" /> Articles

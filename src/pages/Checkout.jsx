@@ -49,11 +49,14 @@ export default function Checkout() {
   const [retrySeconds, setRetrySeconds] = useState(0);
   const subtotal = Number(cart?.total || 0);
   const productFreeDelivery = Boolean(cart?.items?.length) && cart.items.every((item) => item.product?.free_delivery);
+  const productDeliveryPrices = (cart?.items || []).map((item) => item.product?.delivery_price).filter((price) => price !== null && price !== undefined && price !== "").map(Number);
+  const productDeliveryPrice = productDeliveryPrices.length ? Math.max(...productDeliveryPrices) : null;
   const localDeliveryQuote = getDeliveryQuote({
     fulfillmentMethod: form.fulfillment_method,
     latitude: form.delivery_latitude,
     longitude: form.delivery_longitude,
     productFreeDelivery,
+    productDeliveryPrice,
   });
   const [serverDeliveryQuote, setServerDeliveryQuote] = useState(null);
   const deliveryQuote = serverDeliveryQuote || localDeliveryQuote;
@@ -65,7 +68,6 @@ export default function Checkout() {
         ? t("deliveryFreeCoupon")
         : t("deliveryFreeGlobal");
   const estimatedTotal = subtotal + deliveryQuote.fee;
-  const requiresCardPayment = estimatedTotal >= 5000;
 
   useEffect(() => {
     trackEvent("checkout_started", { metadata: { items: cart?.items?.length || 0 } });
@@ -108,12 +110,6 @@ export default function Checkout() {
       window.clearTimeout(timer);
     };
   }, [form.fulfillment_method, form.delivery_latitude, form.delivery_longitude, form.coupon_code, subtotal, productFreeDelivery, user?.id]);
-
-  useEffect(() => {
-    if (requiresCardPayment && form.payment_method !== "card") {
-      setForm((current) => ({ ...current, payment_method: "card" }));
-    }
-  }, [form.payment_method, requiresCardPayment]);
 
   const changeFulfillmentMethod = (fulfillment_method) => {
     setForm((current) => ({
@@ -233,7 +229,7 @@ export default function Checkout() {
     setApiErrors([]);
 
     if (form.payment_method === "card") {
-      setApiErrors([requiresCardPayment ? t("cardComingSoonLargeOrder") : t("cardComingSoonHelp")]);
+      setApiErrors([t("cardComingSoonHelp")]);
       return toast(t("cardComingSoon"), { icon: "💳" });
     }
 
@@ -245,12 +241,6 @@ export default function Checkout() {
 
     if (form.fulfillment_method === "delivery" && !/casa|casablanca/i.test(form.adresse_livraison || "") && !form.delivery_latitude) {
       const message = t("casaOnlyDelivery");
-      setApiErrors([message]);
-      return toast.error(message);
-    }
-
-    if (requiresCardPayment && form.payment_method !== "card") {
-      const message = t("cardRequiredLargeOrder");
       setApiErrors([message]);
       return toast.error(message);
     }
@@ -441,9 +431,15 @@ export default function Checkout() {
 
           {form.fulfillment_method === "pickup" && (
             <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-700">
-              <p className="font-bold">{t("pickup")}</p>
+              <p className="font-black">{t("pickup")}</p>
               <p>{STORE_LOCATION.address}</p>
               <p className="font-black text-emerald-700">{t("pickupFree")}</p>
+              <ol className="grid gap-2 rounded-xl bg-white/80 p-3 text-xs font-semibold text-indigo-950 sm:grid-cols-3">
+                <li>1. Commande confirmée</li>
+                <li>2. Préparation par le magasin</li>
+                <li>3. Retrait après notification</li>
+              </ol>
+              <p className="text-xs font-semibold">Présentez votre numéro de commande au magasin. Aucun livreur ne sera affecté.</p>
               <DeliveryMap latitude={STORE_LOCATION.latitude} longitude={STORE_LOCATION.longitude} address={STORE_LOCATION.address} />
             </div>
           )}
@@ -458,24 +454,19 @@ export default function Checkout() {
           <fieldset>
             <legend className="mb-3 text-sm font-black text-gray-950">{t('choosePayment')}</legend>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${form.payment_method === 'cash_on_delivery' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 bg-white'} ${requiresCardPayment ? 'cursor-not-allowed opacity-50' : ''}`}>
-                <input type="radio" name="payment_method_choice" value="cash_on_delivery" checked={form.payment_method === 'cash_on_delivery'} disabled={requiresCardPayment} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
+              <label className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition ${form.payment_method === 'cash_on_delivery' ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-100' : 'border-gray-200 bg-white'}`}>
+                <input type="radio" name="payment_method_choice" value="cash_on_delivery" checked={form.payment_method === 'cash_on_delivery'} onChange={(e) => setForm({ ...form, payment_method: e.target.value })} className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" />
                 <span><strong className="block text-sm text-gray-950">{t('cashPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{t('cashPaymentHelp')}</small></span>
               </label>
-              <label className={`relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-2xl border p-4 transition ${form.payment_method === 'card' ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-100' : 'border-gray-200 bg-white'}`}>
+              <label className="relative flex cursor-not-allowed items-start gap-3 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-75">
                 <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black uppercase text-amber-700">Bientôt</span>
-                <input type="radio" name="payment_method_choice" value="card" checked={form.payment_method === 'card'} onChange={(e) => { setForm({ ...form, payment_method: e.target.value }); toast(t("cardComingSoon"), { icon: "💳" }); }} className="mt-1 h-5 w-5 shrink-0 accent-amber-500" />
-                <span className="pr-12"><strong className="flex items-center gap-2 text-sm text-gray-950"><CreditCard size={17} />{t('cardPayment')}</strong><small className="mt-1 block leading-relaxed text-gray-500">{requiresCardPayment ? t('cardComingSoonLargeOrder') : t('cardComingSoonHelp')}</small></span>
+                <input type="radio" name="payment_method_choice" value="card" disabled aria-describedby="card-payment-help" className="mt-1 h-5 w-5 shrink-0 accent-amber-500" />
+                <span className="pr-12"><strong className="flex items-center gap-2 text-sm text-gray-950"><CreditCard size={17} />{t('cardPayment')}</strong><small id="card-payment-help" className="mt-1 block leading-relaxed text-gray-500">{t('cardComingSoonHelp')}</small></span>
               </label>
             </div>
           </fieldset>
-          {requiresCardPayment && (
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-bold text-blue-800">
-              {t("cardRequiredLargeOrder")}
-            </div>
-          )}
           {form.payment_method === "card" && (
-            <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900"><p className="font-black">{t("cardComingSoon")}</p><p className="mt-1 leading-6">{requiresCardPayment ? t("cardComingSoonLargeOrder") : t("cardComingSoonHelp")}</p></div>
+            <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-sm text-amber-900"><p className="font-black">{t("cardComingSoon")}</p><p className="mt-1 leading-6">{t("cardComingSoonHelp")}</p></div>
           )}
 
           <input
@@ -485,8 +476,8 @@ export default function Checkout() {
             onChange={(e) => setForm({ ...form, coupon_code: e.target.value.toUpperCase() })}
           />
 
-          <button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-400" disabled={loading || retrySeconds > 0 || form.payment_method === "card"}>
-            {form.payment_method === "card" ? t("cardComingSoon") : retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : t("confirmOrder")}
+          <button className="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 px-6 py-4 font-black text-white shadow-lg shadow-emerald-100 transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:bg-none disabled:bg-gray-400" disabled={loading || retrySeconds > 0}>
+            {retrySeconds > 0 ? t("retryIn", { seconds: retrySeconds }) : loading ? t("loading") : !user ? (authMode === "login" ? t("authAndOrder") : t("registerAndOrder")) : t("confirmOrder")}
           </button>
         </form>
 
